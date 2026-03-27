@@ -257,6 +257,22 @@ msgstr "Fejl ved upload af logo."
 msgid "Error saving registration. Please try again."
 msgstr "Fejl ved gemning af tilmelding. Prøv igen."
 
+#: src/Admin/Menu.php
+msgid "Competitions"
+msgstr "Konkurrencer"
+
+#: src/Admin/CompetitionsPage.php
+msgid "Competition functionality will be added later."
+msgstr "Konkurrencefunktionen bliver tilføjet senere."
+
+#: src/Admin/CompetitionsPage.php
+msgid "Create Competition"
+msgstr "Opret konkurrence"
+
+#: src/Admin/CompetitionsPage.php
+msgid "The create competition flow is planned and will be implemented in a future update."
+msgstr "Oprettelse af konkurrencer er planlagt og bliver implementeret i en kommende opdatering."
+
 #: includes/Ajax/ParticipantHandler.php
 msgid "Registration submitted successfully! Your registration is pending approval."
 msgstr "Tilmelding sendt! Din tilmelding afventer godkendelse."

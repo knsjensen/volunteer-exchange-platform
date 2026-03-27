@@ -57,6 +57,7 @@ require_once VEP_PLUGIN_DIR . 'src/Admin/ParticipantTypesPage.php';
 require_once VEP_PLUGIN_DIR . 'src/Admin/TagsListTable.php';
 require_once VEP_PLUGIN_DIR . 'src/Admin/TagsPage.php';
 require_once VEP_PLUGIN_DIR . 'src/Admin/EventDisplayPage.php';
+require_once VEP_PLUGIN_DIR . 'src/Admin/CompetitionsPage.php';
 require_once VEP_PLUGIN_DIR . 'src/Admin/Menu.php';
 
 require_once VEP_PLUGIN_DIR . 'src/Ajax/ParticipantHandler.php';
