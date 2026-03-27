@@ -1,0 +1,676 @@
+/**
+ * Admin Styles for Volunteer Exchange Platform
+ */
+
+.vep-admin-page {
+    margin: 20px 0;
+}
+
+.vep-admin-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.vep-admin-actions {
+    display: flex;
+    gap: 10px;
+}
+
+@font-face {
+    font-family: 'VEP Timer';
+    src:
+        url('../fonts/vep-timer/ShareTechMono-Regular.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+/* Form styling */
+.vep-admin-form .form-table th {
+    width: 200px;
+    padding: 15px 10px;
+}
+
+.vep-admin-form .form-table td {
+    padding: 15px 10px;
+}
+
+/* List table enhancements */
+.widefat .column-is_active,
+.widefat .column-is_approved {
+    width: 80px;
+    text-align: center;
+}
+
+/* Status indicators */
+.vep-status-active {
+    color: #46b450;
+    font-weight: bold;
+}
+
+.vep-status-inactive {
+    color: #999;
+}
+
+.vep-status-pending {
+    color: #f90;
+}
+
+/* Fullscreen Display Modal */
+.vep-fullscreen-display {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #7e22ce 100%);
+    z-index: 999999;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 40px;
+}
+
+.vep-fireworks-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 999998;
+    display: none;
+}
+
+.vep-display-content {
+    width: 100%;
+    max-width: 1400px;
+    text-align: center;
+    position: relative;
+    z-index: 999999;
+}
+
+.vep-close-display {
+    position: fixed;
+    top: 30px;
+    right: 30px;
+    background: rgba(255, 255, 255, 0.2);
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    color: #fff;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    z-index: 1000000;
+}
+
+.vep-close-display:hover {
+    background: rgba(255, 255, 255, 0.35);
+    transform: scale(1.1);
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.4);
+}
+
+.vep-close-display .dashicons {
+    font-size: 30px;
+    width: 30px;
+    height: 30px;
+}
+
+.vep-display-header h1 {
+    color: #fff;
+    font-size: 48px;
+    font-weight: 700;
+    margin: 0 0 40px 0;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.vep-display-main-content {
+    display: flex;
+    gap: 40px;
+    align-items: flex-start;
+    width: 100%;
+}
+
+.vep-display-left {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.vep-display-right {
+    width: 400px;
+    flex-shrink: 0;
+}
+
+.vep-display-countdown {
+    width: 100%;
+}
+
+.vep-fullscreen-display .vep-countdown-timer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.vep-countdown-clock {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-radius: 30px;
+    padding: 50px 80px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    width: 100%;
+    max-width: 760px;
+    min-width: 400px;
+}
+
+.vep-timer-time {
+    display: inline-block;
+    font-family: 'VEP Timer', "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+    font-weight: 400;
+    font-size: clamp(70px, 10vw, 140px);
+    line-height: 1;
+    letter-spacing: -0.04em;
+    font-variant-numeric: tabular-nums;
+    color: #ffffff;
+    white-space: nowrap;
+    text-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+}
+
+.vep-clock-digit {
+    font-size: 120px;
+    font-weight: bold;
+    color: #4ade80;
+    font-family: 'Courier New', monospace;
+    text-shadow: 0 0 20px rgba(74, 222, 128, 0.8), 0 0 40px rgba(74, 222, 128, 0.4);
+    letter-spacing: 5px;
+    min-width: 140px;
+    text-align: center;
+}
+
+.vep-clock-separator {
+    font-size: 120px;
+    font-weight: bold;
+    color: #4ade80;
+    margin: 0 0px;
+    text-shadow: 0 0 20px rgba(74, 222, 128, 0.8);
+    animation: blink 1s ease-in-out infinite;
+}
+
+@keyframes blink {
+    0%, 49% {
+        opacity: 1;
+    }
+    50%, 100% {
+        opacity: 0.3;
+    }
+}
+
+.vep-fullscreen-display .vep-countdown-segment {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 20px;
+    padding: 40px 50px;
+    min-width: 180px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    transition: transform 0.3s ease;
+}
+
+.vep-fullscreen-display .vep-countdown-segment:hover {
+    transform: translateY(-10px);
+}
+
+.vep-fullscreen-display .vep-countdown-value {
+    display: block;
+    font-size: 96px;
+    font-weight: bold;
+    color: #fff;
+    line-height: 1;
+    margin-bottom: 15px;
+    font-family: 'Courier New', monospace;
+    text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.vep-fullscreen-display .vep-countdown-label {
+    display: block;
+    font-size: 20px;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.95);
+    font-weight: 600;
+    letter-spacing: 2px;
+}
+
+.vep-fullscreen-display .vep-countdown-expired {
+    background: rgba(255, 255, 255, 0.2);
+    border: 3px solid rgba(255, 255, 255, 0.4);
+    border-radius: 20px;
+    padding: 60px;
+    backdrop-filter: blur(10px);
+}
+
+.vep-fullscreen-display .vep-countdown-expired p {
+    font-size: 72px;
+    font-weight: bold;
+    color: #fff;
+    margin: 0;
+    text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.vep-display-agreements {
+    margin: 40px 0;
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+.vep-agreements-box {
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-radius: 30px;
+    width: 100%;
+    max-width: 760px;
+    padding: 50px 80px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    min-width: 400px;
+}
+
+/* Leaderboard */
+.vep-leaderboard {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.vep-leaderboard-title {
+    color: #fff;
+    font-size: 28px;
+    font-weight: 700;
+    margin: 0 0 25px 0;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.vep-leaderboard-title .dashicons {
+    font-size: 32px;
+    width: 32px;
+    height: 32px;
+    color: #fbbf24;
+    filter: drop-shadow(0 0 10px rgba(251, 191, 36, 0.5));
+}
+
+.vep-leaderboard-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.vep-leaderboard-empty {
+    color: rgba(255, 255, 255, 0.7);
+    text-align: center;
+    font-size: 18px;
+    padding: 20px;
+    margin: 0;
+}
+
+@media screen and (max-width: 1200px) {
+    .vep-display-main-content {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .vep-display-right {
+        width: 100%;
+        max-width: 500px;
+    }
+}
+
+.vep-leaderboard-item {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    padding: 15px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    transition: all 0.3s ease;
+}
+
+.vep-leaderboard-item:hover {
+    background: rgba(255, 255, 255, 0.15);
+    transform: translateX(5px);
+}
+
+.vep-leaderboard-top {
+    background: rgba(251, 191, 36, 0.2);
+    border: 2px solid rgba(251, 191, 36, 0.4);
+}
+
+.vep-leaderboard-position {
+    font-size: 24px;
+    font-weight: bold;
+    color: #fff;
+    min-width: 40px;
+    text-align: center;
+}
+
+.vep-leaderboard-logo {
+    width: 50px;
+    height: 50px;
+    border-radius: 8px;
+    object-fit: cover;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.vep-leaderboard-logo-placeholder {
+    width: 50px;
+    height: 50px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.vep-leaderboard-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.vep-leaderboard-name {
+    color: #fff;
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.vep-leaderboard-count {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 14px;
+}
+
+.vep-agreements-icon {
+    margin-bottom: 20px;
+}
+
+.vep-agreements-icon .dashicons {
+    font-size: 60px;
+    width: 60px;
+    height: 60px;
+    color: #4ade80;
+    filter: drop-shadow(0 0 10px rgba(74, 222, 128, 0.5));
+}
+
+.vep-agreements-count {
+    font-size: 120px;
+    font-weight: bold;
+    color: #fff;
+    line-height: 1;
+    /* margin: 20px 0; */
+    font-family: 'VEP Timer', 'Courier New', monospace;
+    font-variant-numeric: tabular-nums;
+    text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3);
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+.vep-agreements-label {
+    font-size: 24px;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.95);
+    font-weight: 600;
+    letter-spacing: 3px;
+}
+
+/* Responsive adjustments */
+@media screen and (max-width: 1200px) {
+    .vep-display-header h1 {
+        font-size: 36px;
+    }
+    
+    .vep-fullscreen-display .vep-countdown-value {
+        font-size: 72px;
+    }
+    
+    .vep-fullscreen-display .vep-countdown-segment {
+        padding: 30px 40px;
+        min-width: 150px;
+    }
+    
+    .vep-agreements-count {
+        font-size: 90px;
+    }
+}
+
+@media screen and (max-width: 768px) {
+    .vep-display-header h1 {
+        font-size: 28px;
+        margin-bottom: 40px;
+    }
+    
+    .vep-fullscreen-display .vep-countdown-value {
+        font-size: 56px;
+    }
+    
+    .vep-fullscreen-display .vep-countdown-label {
+        font-size: 16px;
+    }
+    
+    .vep-fullscreen-display .vep-countdown-segment {
+        padding: 20px 30px;
+        min-width: 120px;
+    }
+    
+    .vep-agreements-count {
+        font-size: 72px;
+    }
+    
+    .vep-agreements-box {
+        padding: 40px 60px;
+        min-width: 300px;
+    }
+}
+
+/* Responsive tables */
+@media screen and (max-width: 782px) {
+    .vep-admin-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .vep-admin-actions {
+        margin-top: 10px;
+        width: 100%;
+    }
+}
+
+.vep-icon-picker {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.vep-icon-preview {
+    font-size: 24px;
+    color: #0073aa;
+    min-width: 120px;
+    text-align: center;
+    line-height: 1.4;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 120px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: #f9f9f9;
+}
+
+.vep-icon-placeholder {
+    font-size: 12px;
+    color: #999;
+    font-weight: normal;
+}
+
+.wp-list-table .column-icon {
+    width: 48px;
+    text-align: center;
+}
+
+.wp-list-table td.column-icon {
+    padding-left: 8px;
+    padding-right: 8px;
+}
+
+.vep-icon-modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.vep-icon-modal {
+    background: white;
+    border-radius: 5px;
+    width: 90%;
+    max-width: 700px;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 2px 20px rgba(0, 0, 0, 0.2);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+.vep-icon-modal-header {
+    padding: 20px;
+    border-bottom: 1px solid #e0e0e0;
+    position: sticky;
+    top: 0;
+    background: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.vep-icon-modal-header h2 {
+    margin: 0;
+    font-size: 18px;
+}
+
+#icon-search {
+    width: 100%;
+    padding: 12px 20px;
+    border: none;
+    border-bottom: 1px solid #ddd;
+    border-radius: 0;
+    font-size: 14px;
+    box-sizing: border-box;
+}
+
+#icon-search:focus {
+    outline: none;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.vep-icon-modal-close {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: none;
+    border: none;
+    font-size: 28px;
+    cursor: pointer;
+    color: #666;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.vep-icon-modal-close:hover {
+    color: #333;
+}
+
+.vep-icon-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 8px;
+    padding: 15px 20px;
+    overflow-y: scroll;
+    flex: 1;
+    max-height: 500px;
+}
+
+.vep-icon-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    min-height: 75px;
+}
+
+.vep-icon-item:hover {
+    background: #f5f5f5;
+    border-color: #0073aa;
+    box-shadow: 0 2px 8px rgba(0, 115, 170, 0.2);
+}
+
+.vep-icon-item i {
+    font-size: 24px;
+    margin-bottom: 6px;
+    color: #0073aa;
+}
+
+.vep-icon-item span {
+    font-size: 10px;
+    text-align: center;
+    color: #666;
+    text-transform: capitalize;
+    word-break: break-word;
+    line-height: 1.2;
+}

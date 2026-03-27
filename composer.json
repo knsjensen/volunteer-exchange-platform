@@ -1,0 +1,14 @@
+{
+  "name": "knsjensen/volunteer-exchange-platform",
+  "description": "Volunteer Exchange Platform WordPress plugin",
+  "type": "wordpress-plugin",
+  "license": "GPL-2.0-or-later",
+  "require": {
+    "php": ">=7.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "VEP\\": "src/"
+    }
+  }
+}

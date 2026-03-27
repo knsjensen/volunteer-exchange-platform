@@ -1,0 +1,708 @@
+/**
+ * Frontend Styles for Volunteer Exchange Platform
+ */
+
+/* Messages */
+.vep-message {
+    padding: 15px;
+    margin: 20px 0;
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+.vep-message.vep-success {
+    background-color: #d4edda;
+    border: 1px solid #c3e6cb;
+    color: #155724;
+}
+
+.vep-message.vep-error {
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    color: #721c24;
+}
+
+.vep-message.vep-info {
+    background-color: #d1ecf1;
+    border: 1px solid #bee5eb;
+    color: #0c5460;
+}
+
+/* Form Styles */
+.vep-form {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.vep-form-group {
+    margin-bottom: 20px;
+}
+
+.vep-form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #333;
+}
+
+.vep-form-group .required {
+    color: #dc3545;
+}
+
+.vep-form-group input[type="text"],
+.vep-form-group input[type="email"],
+.vep-form-group input[type="tel"],
+.vep-form-group input[type="file"],
+.vep-form-group select,
+.vep-form-group textarea {
+    width: 100%;
+    padding: 10px 15px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 16px;
+    transition: border-color 0.3s;
+}
+
+.vep-form-group input:focus,
+.vep-form-group select:focus,
+.vep-form-group textarea:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.vep-form-group small {
+    display: block;
+    margin-top: 5px;
+    color: #666;
+    font-size: 14px;
+}
+
+/* Checkbox Group */
+.vep-checkbox-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.vep-checkbox-label {
+    display: flex;
+    align-items: flex-start;
+    cursor: pointer;
+    padding: 10px;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.vep-checkbox-label:hover {
+    background-color: #f8f9fa;
+}
+
+.vep-checkbox-label input[type="checkbox"] {
+    margin-right: 10px;
+    margin-top: 3px;
+    width: auto;
+}
+
+.vep-checkbox-label span {
+    font-weight: 500;
+}
+
+.vep-tag-description {
+    display: block;
+    margin-top: 4px;
+    color: #666;
+    font-size: 13px;
+    font-weight: normal;
+}
+
+/* Button Styles */
+.vep-button {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 4px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.vep-button-primary {
+    background-color: #007bff;
+    color: #fff;
+}
+
+.vep-button-primary:hover {
+    background-color: #0056b3;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+}
+
+.vep-button-secondary {
+    background-color: #6c757d;
+    color: #fff;
+}
+
+.vep-button-secondary:hover {
+    background-color: #545b62;
+}
+
+.vep-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.vep-form-label-with-action {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.vep-inline-action {
+    background: transparent;
+    border: 0;
+    color: #6c757d;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: underline;
+    padding: 0;
+}
+
+.vep-inline-action:hover {
+    color: #343a40;
+}
+
+.vep-participant-preference-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    z-index: 9999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.vep-participant-preference-modal-dialog {
+    background: #fff;
+    border-radius: 8px;
+    width: 100%;
+    max-width: 520px;
+    padding: 24px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+}
+
+.vep-participant-preference-modal-dialog h3 {
+    margin: 0 0 8px;
+}
+
+.vep-participant-preference-modal-dialog p {
+    margin: 0 0 16px;
+    color: #666;
+}
+
+.vep-participant-preference-options {
+    display: grid;
+    gap: 10px;
+}
+
+.vep-participant-preference-options .vep-button {
+    width: 100%;
+    text-align: left;
+}
+
+/* Participants Grid */
+.vep-participants-grid {
+    margin: 40px 0;
+}
+
+.vep-grid-filter {
+    margin-bottom: 20px;
+}
+
+.vep-grid-filter-label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #333;
+}
+
+.vep-grid-tag-filter-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.vep-grid-tag-filter-button {
+    border: 1px solid #d0d7de;
+    background-color: #fff;
+    color: #1f2328;
+    border-radius: 999px;
+    padding: 6px 12px;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.2;
+    cursor: pointer;
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.vep-grid-tag-filter-button:hover {
+    border-color: #9aa4b2;
+    background-color: #f6f8fa;
+}
+
+.vep-grid-tag-filter-button.is-active {
+    background-color: #2271b1;
+    border-color: #2271b1;
+    color: #fff;
+}
+
+.vep-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 24px;
+    margin-top: 30px;
+    align-items: stretch;
+}
+
+.vep-grid-item {
+    display: flex;
+}
+
+.vep-participant-card {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    transition: all 0.3s;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.vep-participant-card:hover {
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    transform: translateY(-4px);
+}
+
+.vep-participant-logo {
+    width: 120px;
+    height: 120px;
+    margin: 0 auto 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border-radius: 8px;
+}
+
+.vep-participant-logo img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.vep-participant-info h3 {
+    font-size: 18px;
+    margin: 0 0 8px;
+    color: #333;
+}
+
+.vep-participant-type {
+    color: #666;
+    font-size: 14px;
+    margin-bottom: 12px;
+}
+
+.vep-participant-info {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.vep-view-details {
+    margin-top: auto;
+}
+
+.vep-participant-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+    margin: 15px 0;
+}
+
+/* Agreements List */
+.vep-agreements-list {
+    margin: 30px 0;
+}
+
+.vep-agreements-search {
+    margin-bottom: 14px;
+    max-width: 420px;
+}
+
+.vep-agreements-title {
+    margin: 0 0 15px;
+}
+
+.vep-agreements-table-wrap {
+    overflow-x: auto;
+}
+
+.vep-agreements-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.vep-agreements-table th,
+.vep-agreements-table td {
+    padding: 12px 14px;
+    border-bottom: 1px solid #eee;
+    vertical-align: top;
+    text-align: left;
+}
+
+.vep-agreements-table thead th {
+    background: #f8f9fa;
+    font-weight: 700;
+    color: #333;
+}
+
+.vep-agreements-table tbody tr:nth-child(even) {
+    background: #fcfcfc;
+}
+
+.vep-agreements-col-num {
+    width: 48px;
+    text-align: right;
+    white-space: nowrap;
+    color: #555;
+}
+
+.vep-participants-table .vep-participants-table-col-action {
+    text-align: right;
+}
+
+.vep-tag {
+    display: inline-block;
+    padding: 4px 10px;
+    background-color: #e7f3ff;
+    color: #0056b3;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+    font-family: 'Sora', sans-serif;
+}
+
+/* Agreement Form */
+.vep-agreement-form {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.vep-form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.vep-form-half {
+    flex: 1;
+}
+
+.vep-radio-label {
+    display: flex;
+    align-items: center;
+    margin-top: 10px;
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.vep-radio-label input[type="radio"] {
+    margin-right: 8px;
+    width: auto;
+}
+
+.vep-initiator-label {
+    border: 2px solid transparent;
+    transition: all 0.2s;
+}
+
+.vep-initiator-label:has(input:checked) {
+    background-color: #e7f3ff;
+    border-color: #007bff;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .vep-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+    }
+    
+    .vep-form-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    .vep-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Multistep Registration */
+.vep-registration-multistep .vep-step {
+    display: none;
+}
+
+.vep-registration-multistep .vep-step.is-active {
+    display: block;
+}
+
+.vep-registration-multistep .vep-form-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: space-between;
+    margin-top: 16px;
+}
+
+.vep-registration-multistep .vep-steps-indicator {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    justify-content: center;
+    margin: 10px 0 18px;
+}
+
+.vep-registration-multistep .vep-step-dot {
+    width: 24px;
+    height: 24px;
+    border-radius: 999px;
+    background: #cbd5e1;
+    color: #334155;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.vep-registration-multistep .vep-step-dot.is-active {
+    background: #2563eb;
+    color: #ffffff;
+}
+
+/* Participant Detail Page */
+.vep-page-wrapper {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.vep-participant-detail-page {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    margin: 20px 0;
+}
+
+.vep-participant-detail-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 500%);
+    padding: 30px 20px;
+    text-align: center;
+    color: #fff;
+}
+
+.vep-participant-detail-logo {
+    width: 200px;
+    height: 200px;
+    margin: 0 auto 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fff;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+.vep-participant-detail-logo img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.vep-participant-detail-header h1 {
+    margin: 0 0 15px;
+    font-size: 42px;
+    font-weight: 700;
+    color: #fff;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.vep-participant-detail-header h2 {
+    font-size: 24px;
+    font-weight: 600;
+    color: #fff;
+    margin: 0;
+    opacity: 0.95;
+}
+
+.vep-participant-detail-content {
+    padding: 50px 60px;
+}
+
+.vep-detail-section {
+    margin-bottom: 45px;
+    padding-bottom: 35px;
+    border-bottom: 2px solid #e8e8e8;
+}
+
+.vep-detail-section:last-of-type {
+    border-bottom: none;
+}
+
+.vep-detail-section h2 {
+    font-size: 28px;
+    margin: 0 0 25px;
+    color: #333;
+    font-weight: 700;
+    position: relative;
+    padding-bottom: 10px;
+}
+
+.vep-detail-section h2:after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 60px;
+    height: 4px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 2px;
+}
+
+.vep-detail-item {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 18px;
+    line-height: 1.8;
+    font-size: 16px;
+}
+
+.vep-detail-item strong {
+    min-width: 140px;
+    color: #555;
+    font-weight: 700;
+}
+
+.vep-detail-item span,
+.vep-detail-item a {
+    color: #333;
+    flex: 1;
+}
+
+.vep-detail-item a {
+    color: #667eea;
+    text-decoration: none;
+    transition: all 0.2s;
+    font-weight: 500;
+}
+
+.vep-detail-item a:hover {
+    color: #764ba2;
+    text-decoration: underline;
+}
+
+.vep-detail-description {
+    line-height: 1.9;
+    color: #444;
+    font-size: 17px;
+}
+
+.vep-detail-actions {
+    margin-top: 50px;
+    text-align: center;
+}
+
+.vep-detail-actions .vep-button {
+    min-width: 240px;
+    padding: 15px 30px;
+    font-size: 17px;
+}
+
+@media (max-width: 768px) {
+    .vep-page-wrapper {
+        padding: 10px;
+    }
+    
+    .vep-participant-detail-page {
+        border-radius: 8px;
+    }
+    
+    .vep-participant-detail-header {
+        padding: 40px 25px;
+    }
+    
+    .vep-participant-detail-logo {
+        width: 150px;
+        height: 150px;
+        margin-bottom: 20px;
+    }
+    
+    .vep-participant-detail-header h1 {
+        font-size: 28px;
+    }
+    
+    .vep-participant-detail-header h2 {
+        font-size: 18px;
+    }
+    
+    .vep-participant-detail-content {
+        padding: 30px 25px;
+    }
+    
+    .vep-detail-section h2 {
+        font-size: 22px;
+    }
+    
+    .vep-detail-item {
+        flex-direction: column;
+        gap: 5px;
+    }
+    
+    .vep-detail-item strong {
+        min-width: auto;
+    }
+}
+
+@media (max-width: 480px) {
+    .vep-participant-detail-header h1 {
+        font-size: 24px;
+    }
+    
+    .vep-detail-section h2 {
+        font-size: 20px;
+    }
+    
+    .vep-detail-actions .vep-button {
+        min-width: 100%;
+    }
+}

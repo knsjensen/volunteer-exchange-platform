@@ -1,0 +1,1013 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Volunteer Exchange Platform\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-03-04 08:36+0000
+"
+"PO-Revision-Date: 2026-03-04 08:36+0000
+"
+"Last-Translator: knsj\n"
+"Language-Team: \n"
+"Language: da_DK\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: GitHub Copilot\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+
+#: volunteer-exchange-platform.php
+msgid "Search..."
+msgstr "Søg..."
+
+#: volunteer-exchange-platform.php
+msgid "Press to select"
+msgstr "Tryk for at vælge"
+
+#: volunteer-exchange-platform.php
+msgid "No results found"
+msgstr "Ingen resultater fundet"
+
+#: volunteer-exchange-platform.php
+msgid "No options available"
+msgstr "Ingen valgmuligheder"
+
+#: volunteer-exchange-platform.php
+msgid "Submitting..."
+msgstr "Sender..."
+
+#: volunteer-exchange-platform.php
+msgid "Creating..."
+msgstr "Opretter..."
+
+#: volunteer-exchange-platform.php
+msgid "An error occurred. Please try again."
+msgstr "Der opstod en fejl. Prøv igen."
+
+#: includes/Shortcodes/Registration.php
+msgid "No active event at the moment."
+msgstr "Der er ingen aktiv begivenhed i øjeblikket."
+
+#: includes/Shortcodes/Registration.php
+msgid "Organization Name"
+msgstr "Navnet på din organisation/projekt/afdeling"
+
+#: includes/Shortcodes/Registration.php
+msgid "Organization Description"
+msgstr "Organisationsbeskrivelse"
+
+#: includes/Shortcodes/Registration.php
+msgid "Tell us about your organization..."
+msgstr "Fortæl os om din organisation..."
+
+#: includes/Shortcodes/Registration.php
+msgid "Describe what your organization does and what makes you unique."
+msgstr "Beskriv hvad din organisation laver, og hvad der gør den unik."
+
+#: includes/Shortcodes/Registration.php
+msgid "Participants Expected"
+msgstr "Forventede deltagere"
+
+#: includes/Shortcodes/Registration.php
+msgid "e.g., 12"
+msgstr "f.eks. 12"
+
+#: includes/Shortcodes/Registration.php
+msgid "The number of participants expected to attend the event."
+msgstr "Antallet af deltagere, der forventes at deltage i begivenheden."
+
+#: includes/Shortcodes/Registration.php
+msgid "Participant Names"
+msgstr "Deltagernavne"
+
+#: includes/Shortcodes/Registration.php
+msgid "e.g., Jane, John"
+msgstr "f.eks. Jens, Maria, mf."
+
+#: includes/Shortcodes/Registration.php
+msgid "The names of the participants expected to attend the event."
+msgstr "Navnene på de deltagere, der forventes at deltage i begivenheden."
+
+#: includes/Shortcodes/Registration.php
+msgid "Organization Type"
+msgstr "Hvilket område repræsenterer du?"
+
+#: includes/Shortcodes/Registration.php
+msgid "Select Type"
+msgstr "Vælg type"
+
+#: includes/Shortcodes/Registration.php
+msgid "Your Name"
+msgstr "Dit navn"
+
+#: includes/Shortcodes/Registration.php
+msgid "Email"
+msgstr "E-mail"
+
+#: includes/Shortcodes/Registration.php
+msgid "Phone"
+msgstr "Telefon"
+
+#: includes/Shortcodes/Registration.php
+msgid "Organization Logo"
+msgstr "Organisationslogo"
+
+#: includes/Shortcodes/Registration.php
+msgid "Supported formats: JPG, PNG, GIF. Max size: 2MB"
+msgstr "Understøttede formater: JPG, PNG, GIF. Maks. størrelse: 2 MB"
+
+#: includes/Shortcodes/Registration.php
+msgid "What We Offer"
+msgstr "Det du tilbyder"
+
+#: includes/Shortcodes/Registration.php
+msgid "Register"
+msgstr "Tilmeld"
+
+#: includes/Shortcodes/Registration.php
+msgid "Next"
+msgstr "Næste"
+
+#: includes/Shortcodes/Registration.php
+msgid "Back"
+msgstr "Tilbage"
+
+#: volunteer-exchange-platform.php
+msgid "Please select at least one option."
+msgstr "Vælg mindst én mulighed."
+
+#: includes/Shortcodes/AgreementForm.php
+msgid "At least 2 approved participants are required to create agreements."
+msgstr "Der kræves mindst 2 godkendte deltagere for at oprette aftaler."
+
+#: includes/Shortcodes/AgreementForm.php
+msgid "Participant 1"
+msgstr "Deltager 1"
+
+#: includes/Shortcodes/AgreementForm.php
+msgid "Participant 2"
+msgstr "Deltager 2"
+
+#: includes/Shortcodes/AgreementForm.php
+msgid "Select participant..."
+msgstr "Vælg deltager..."
+
+#: includes/Shortcodes/AgreementForm.php
+msgid "This participant initiates"
+msgstr "Denne deltager er initiativtager"
+
+#: includes/Shortcodes/AgreementForm.php
+msgid "Agreement Description"
+msgstr "Beskriv aftalen"
+
+#: includes/Shortcodes/AgreementForm.php
+msgid "Describe what the agreement is about and what each party will do."
+msgstr "Beskriv hvad aftalen handler om, og hvad hver part skal gøre."
+
+#: includes/Shortcodes/AgreementForm.php
+msgid "Create Agreement"
+msgstr "Opret aftale"
+
+#: includes/Shortcodes/AgreementsList.php
+msgid "No agreements yet."
+msgstr "Ingen aftaler endnu."
+
+#: includes/Shortcodes/AgreementsList.php
+msgid "Agreements for %s"
+msgstr "Aftaler for %s"
+
+#: includes/Shortcodes/AgreementsList.php
+msgid "#"
+msgstr "#"
+
+#: includes/Shortcodes/AgreementsList.php
+msgid "Description"
+msgstr "Beskrivelse"
+
+#: includes/Shortcodes/ParticipantsGrid.php
+msgid "No participants yet."
+msgstr "Ingen deltagere endnu."
+
+#: includes/Shortcodes/ParticipantsGrid.php
+msgid "View Details"
+msgstr "Se detaljer"
+
+#: includes/Shortcodes/ParticipantsGrid.php
+msgid "Participant #"
+msgstr "Deltager #"
+
+#: includes/Shortcodes/ParticipantsGrid.php
+msgid "Type:"
+msgstr "Type:"
+
+#: includes/Shortcodes/ParticipantsGrid.php
+msgid "About:"
+msgstr "Om:"
+
+#: includes/Shortcodes/ParticipantsGrid.php
+msgid "What We Offer:"
+msgstr "Det du tilbyder:"
+
+#: includes/Shortcodes/ParticipantsGrid.php
+msgid "Close"
+msgstr "Luk"
+
+#: includes/Ajax/AgreementHandler.php
+#: includes/Ajax/ParticipantHandler.php
+msgid "Security check failed."
+msgstr "Sikkerhedstjek mislykkedes."
+
+#: includes/Ajax/AgreementHandler.php
+#: includes/Ajax/ParticipantHandler.php
+msgid "Please fill in all required fields."
+msgstr "Udfyld alle obligatoriske felter."
+
+#: includes/Ajax/AgreementHandler.php
+msgid "Please select two different participants."
+msgstr "Vælg to forskellige deltagere."
+
+#: includes/Ajax/AgreementHandler.php
+msgid "Please select who initiates the agreement."
+msgstr "Vælg hvem der initierer aftalen."
+
+#: includes/Ajax/AgreementHandler.php
+msgid "Error creating agreement. Please try again."
+msgstr "Fejl ved oprettelse af aftalen. Prøv igen."
+
+#: includes/Ajax/AgreementHandler.php
+msgid "Agreement created successfully!"
+msgstr "Aftalen blev oprettet!"
+
+#: includes/Ajax/ParticipantHandler.php
+msgid "Please select at least one tag for what you offer."
+msgstr "Vælg mindst ét tag for det, du tilbyder."
+
+#: includes/Ajax/ParticipantHandler.php
+msgid "Logo file size must be less than 2MB."
+msgstr "Logoets filstørrelse skal være under 2 MB."
+
+#: includes/Ajax/ParticipantHandler.php
+msgid "Logo must be JPG, PNG, or GIF format."
+msgstr "Logoet skal være i JPG-, PNG- eller GIF-format."
+
+#: includes/Ajax/ParticipantHandler.php
+msgid "Error uploading logo."
+msgstr "Fejl ved upload af logo."
+
+#: includes/Ajax/ParticipantHandler.php
+msgid "Error saving registration. Please try again."
+msgstr "Fejl ved gemning af tilmelding. Prøv igen."
+
+#: includes/Ajax/ParticipantHandler.php
+msgid "Registration submitted successfully! Your registration is pending approval."
+msgstr "Tilmelding sendt! Din tilmelding afventer godkendelse."
+
+#: includes/Admin/EventsListTable.php
+#: includes/Admin/EventsPage.php
+msgid "Active"
+msgstr "Aktiv"
+
+#: includes/Admin/EventDisplayPage.php
+msgid "Active Event:"
+msgstr "Aktiv begivenhed:"
+
+#: includes/Admin/EventsPage.php
+#: includes/Admin/ParticipantsPage.php
+#: includes/Admin/ParticipantTypesPage.php
+#: includes/Admin/TagsPage.php
+msgid "Add New"
+msgstr "Tilføj ny"
+
+#: includes/Admin/EventsPage.php
+msgid "Add New Event"
+msgstr "Tilføj ny begivenhed"
+
+#: includes/Admin/ParticipantsPage.php
+msgid "Add New Participant"
+msgstr "Tilføj ny deltager"
+
+#: includes/Admin/ParticipantTypesPage.php
+msgid "Add New Participant Type"
+msgstr "Tilføj ny deltagertype"
+
+#: includes/Admin/TagsPage.php
+msgid "Add New Tag"
+msgstr "Tilføj nyt tag"
+
+#: includes/Admin/EventDisplayPage.php
+msgid "Agreements"
+msgstr "Aftaler"
+
+#: includes/Admin/EventsPage.php
+msgid "Agreements for this Event"
+msgstr "Aftaler for denne begivenhed"
+
+#: includes/Admin/EventDisplayPage.php
+msgid "Agreements Made"
+msgstr "Indgåede aftaler"
+
+#: includes/Admin/ParticipantsListTable.php
+msgid "All"
+msgstr "Alle"
+
+#: includes/Admin/ParticipantsListTable.php
+msgid "All Events"
+msgstr "Alle begivenheder"
+
+#: includes/Admin/ParticipantsListTable.php
+msgid "✗ Unapprove"
+msgstr "✗ Fjern godkendelse"
+
+#: includes/Admin/ParticipantsPage.php
+msgid "✗ Unapprove Participant"
+msgstr "✗ Fjern godkendelse af deltager"
+
+#: src/Shortcodes/ParticipantsGrid.php:106
+msgid "Filter by tag"
+msgstr "Filtrer efter tag"
+
+#: src/Shortcodes/ParticipantsGrid.php:127
+msgid "Filter by participant type"
+msgstr "Filtrer efter deltagertype"
+
+#: src/Shortcodes/ParticipantsGrid.php:109
+msgid "All"
+msgstr "Alle"
+
+#: src/Shortcodes/AgreementsList.php:57
+msgid "Search agreements"
+msgstr "Søg i aftaler"
+
+#: src/Shortcodes/AgreementsList.php:63
+msgid "Type to search all columns..."
+msgstr "Skriv for at søge i alle kolonner..."
+
+#: src/Plugin/WPBakeryIntegration.php:67
+msgid "Participants table"
+msgstr "Deltager tabel"
+
+#: src/Plugin/WPBakeryIntegration.php:71
+msgid "Simple table of participants sorted by participant number."
+msgstr "Enkel tabel med deltagere sorteret efter deltagernummer."
+
+#: src/Plugin/WPBakeryIntegration.php:75
+msgid "Show details button"
+msgstr "Vis detaljeknap"
+
+#: src/Plugin/WPBakeryIntegration.php:78
+msgid "Show button linking to participant details page."
+msgstr "Vis knap med link til deltagersiden."
+
+#: includes/Admin/ParticipantsListTable.php
+msgid "✓ Approve"
+msgstr "✓ Godkend"
+
+#: includes/Admin/ParticipantsPage.php
+msgid "✓ Approve Participant"
+msgstr "✓ Godkend deltager"
+
+#: includes/Admin/ParticipantsListTable.php
+msgid "Approve"
+msgstr "Godkend"
+
+#: includes/Admin/ParticipantsPage.php
+msgid "Approve this participant"
+msgstr "Godkend denne deltager"
+
+#: includes/Admin/ParticipantsListTable.php
+#: includes/Admin/ParticipantsPage.php
+msgid "Approved"
+msgstr "Godkendt"
+
+#: includes/Admin/EventsPage.php
+msgid "Approved Participants"
+msgstr "Godkendte deltagere"
+
+#: includes/Admin/ParticipantsListTable.php
+msgid "Are you sure you want to delete this participant?"
+msgstr "Er du sikker på, at du vil slette denne deltager?"
+
+#: includes/Admin/ParticipantsListTable.php
+msgid "Are you sure?"
+msgstr "Er du sikker?"
+
+#: includes/Admin/EventsPage.php
+msgid "Back to Events"
+msgstr "Tilbage til begivenheder"
+
+#: includes/Admin/ParticipantsPage.php
+msgid "Back to Participants"
+msgstr "Tilbage til deltagere"
+
+#: includes/Admin/EventsPage.php
+#: includes/Admin/ParticipantsPage.php
+#: includes/Admin/ParticipantTypesPage.php
+#: includes/Admin/TagsPage.php
+msgid "Cancel"
+msgstr "Annuller"
+
+#: includes/Admin/EventDisplayPage.php
+msgid "Click the button below to launch the fullscreen event display."
+msgstr "Klik på knappen nedenfor for at åbne begivenhedsvisningen i fuld skærm."
+
+#: includes/Admin/EventDisplayPage.php
+msgid "Close Display (ESC)"
+msgstr "Luk visning (ESC)"
+
+#: includes/Admin/ParticipantsPage.php
+msgid "Contact Email"
+msgstr "Kontakt e-mail"
+
+#: includes/Admin/ParticipantsListTable.php
+msgid "Contact Person"
+msgstr "Kontaktperson"
+
+#: includes/Admin/ParticipantsPage.php
+msgid "Contact Person Name"
+msgstr "Kontaktpersonens navn"
+
+#: includes/Admin/ParticipantsPage.php
+msgid "Contact Phone"
+msgstr "Kontakttelefon"
+
+#: includes/Admin/EventDisplayPage.php
+msgid "Countdown Target Time"
+msgstr "Nedtællingens sluttidspunkt"
+
+#: includes/Admin/ParticipantTypesListTable.php
+#: includes/Admin/TagsListTable.php
+msgid "Create"
+msgstr "Opret"
+
+#: includes/Admin/ParticipantsPage.php
+msgid "Create Event"
+msgstr "Opret begivenhed"
+
+#: includes/Admin/ParticipantsPage.php
+msgid "Create Participant"
+msgstr "Opret deltager"
+
+#: includes/Admin/EventsListTable.php
+#: includes/Admin/EventsPage.php
+#: includes/Admin/ParticipantsListTable.php
+msgid "Created"
+msgstr "Oprettet"
+
+#: includes/Admin/EventsListTable.php
+msgid "Deactivate"
+msgstr "Deaktiver"
+
+#: includes/Admin/ParticipantsListTable.php
+#: includes/Admin/ParticipantTypesListTable.php
+#: includes/Admin/TagsListTable.php
+msgid "Delete"
+msgstr "Slet"
+
+#: includes/Admin/ParticipantsPage.php
+msgid "Describe what this organization does."
+msgstr "Beskriv hvad denne organisation laver."
+
+#: includes/Admin/EventDisplayPage.php
+msgid "Display Control"
+msgstr "Visningskontrol"
+
+#: includes/Admin/EventDisplayPage.php
+msgid "Display Settings"
+msgstr "Visningsindstillinger"
+
+#: includes/Admin/EventDisplayPage.php
+msgid "Display Title"
+msgstr "Visningstitel"
+
+#: includes/Admin/EventDisplayPage.php
+msgid "e.g., Welcome to Our Event"
+msgstr "f.eks. Velkommen til vores begivenhed"
+
+#: includes/Admin/EventsListTable.php
+#: includes/Admin/ParticipantsListTable.php
+#: includes/Admin/ParticipantTypesListTable.php
+#: includes/Admin/TagsListTable.php
+msgid "Edit"
+msgstr "Rediger"
+
+#: includes/Admin/EventsPage.php
+msgid "Edit Event"
+msgstr "Rediger begivenhed"
+
+#: includes/Admin/ParticipantsPage.php
+msgid "Edit Participant"
+msgstr "Rediger deltager"
+
+#: includes/Admin/ParticipantTypesPage.php
+msgid "Edit Participant Type"
+msgstr "Rediger deltagertype"
+
+#: includes/Admin/TagsPage.php
+msgid "Edit Tag"
+msgstr "Rediger tag"
+
+#: includes/Admin/EventsListTable.php
+#: includes/Admin/EventsPage.php
+msgid "End Date"
+msgstr "Slutdato"
+
+#: includes/Admin/EventDisplayPage.php
+msgid "Enter the countdown target date and time. Format: YYYY-MM-DD HH:MM:SS (e.g., 2026-02-15 18:00:00)"
+msgstr "Indtast nedtællingens måldato og -tid. Format: ÅÅÅÅ-MM-DD TT:MM:SS (f.eks. 2026-02-15 18:00:00)"
+
+#: includes/Admin/EventDisplayPage.php
+msgid "Enter the title to display in the fullscreen view."
+msgstr "Indtast titlen der skal vises i fuldskærmsvisningen."
+
+#: includes/Admin/ParticipantsListTable.php
+#: includes/Admin/ParticipantsPage.php
+msgid "Event"
+msgstr "Begivenhed"
+
+#: includes/Admin/EventsPage.php
+msgid "Event created successfully and set as active."
+msgstr "Begivenheden blev oprettet og sat som aktiv."
+
+#: includes/Admin/EventsPage.php
+msgid "Event deactivated."
+msgstr "Begivenheden blev deaktiveret."
+
+#: includes/Admin/EventsPage.php
+msgid "Event Details"
+msgstr "Begivenhedsdetaljer"
+
+#: includes/Admin/Menu.php
+#: includes/Admin/EventDisplayPage.php
+msgid "Event Display"
+msgstr "Begivenhedsvisning"
+
+#: includes/Admin/EventsPage.php
+msgid "Event Name"
+msgstr "Begivenhedsnavn"
+
+#: includes/Admin/EventsPage.php
+msgid "Event not found."
+msgstr "Begivenheden blev ikke fundet."
+
+#: includes/Admin/EventsPage.php
+msgid "Event updated successfully."
+msgstr "Begivenheden blev opdateret."
+
+#: includes/Admin/Menu.php
+#: includes/Admin/EventsPage.php
+msgid "Events"
+msgstr "Begivenheder"
+
+#: includes/Admin/EventsPage.php
+msgid "Expected Participants (Approved)"
+msgstr "Forventede deltagere (godkendte)"
+
+#: includes/Admin/ParticipantsListTable.php
+msgid "Filter by event"
+msgstr "Filtrér efter begivenhed"
+
+#: includes/Admin/EventsPage.php
+msgid "ID"
+msgstr "ID"
+
+#: includes/Admin/EventsPage.php
+msgid "Inactive"
+msgstr "Inaktiv"
+
+#: includes/Admin/EventsPage.php
+msgid "Initiator"
+msgstr "Initiativtager"
+
+#: includes/Admin/ParticipantsPage.php
+msgid "Logo"
+msgstr "Logo"
+
+#: includes/Admin/EventsListTable.php
+#: includes/Admin/ParticipantTypesListTable.php
+#: includes/Admin/TagsListTable.php
+msgid "Name"
+msgstr "Navn"
+
+#: includes/Admin/ParticipantsPage.php
+msgid "New participants are automatically added to the active event."
+msgstr "Nye deltagere tilføjes automatisk til den aktive begivenhed."
+
+#: includes/Admin/ParticipantsPage.php
+msgid "No active event found. Please create and activate an event before adding participants."
+msgstr "Ingen aktiv begivenhed fundet. Opret og aktivér en begivenhed før du tilføjer deltagere."
+
+#: includes/Admin/EventDisplayPage.php
+msgid "No active event found. Please create and activate an event first."
+msgstr "Ingen aktiv begivenhed fundet. Opret og aktivér en begivenhed først."
+
+#: includes/Admin/EventDisplayPage.php
+msgid "No agreements yet..."
+msgstr "Ingen aftaler endnu..."
+
+#: includes/Admin/ParticipantsPage.php
+msgid "No tags"
+msgstr "Ingen tags"
+
+#: includes/Admin/ParticipantsListTable.php
+msgid "Organization"
+msgstr "Organisation"
+
+#: includes/Admin/EventsPage.php
+msgid "Other Participant"
+msgstr "Anden deltager"
+
+#: includes/Admin/ParticipantsPage.php
+msgid "Participant approved."
+msgstr "Deltageren blev godkendt."
+
+#: includes/Admin/ParticipantsPage.php
+msgid "Participant deleted."
+msgstr "Deltageren blev slettet."
+
+#: includes/Admin/ParticipantsPage.php
+msgid "Participant Details"
+msgstr "Deltagerdetaljer"
+
+#: includes/Admin/ParticipantsPage.php
+msgid "Participant not found."
+msgstr "Deltageren blev ikke fundet."
+
+#: includes/Admin/ParticipantsPage.php
+msgid "Participant Number"
+msgstr "Deltagernummer"
+
+#: includes/Admin/ParticipantsPage.php
+msgid "Participant saved successfully."
+msgstr "Deltageren blev gemt."
+
+#: includes/Admin/ParticipantsPage.php
+msgid "Participant Type"
+msgstr "Deltagertype"
+
+#: includes/Admin/Menu.php
+#: includes/Admin/ParticipantTypesPage.php
+msgid "Participant Types"
+msgstr "Deltagertyper"
+
+#: includes/Admin/Menu.php
+#: includes/Admin/ParticipantsPage.php
+msgid "Participants"
+msgstr "Deltagere"
+
+#: includes/Admin/ParticipantsListTable.php
+msgid "Pending Approval"
+msgstr "Afventer godkendelse"
+
+#: includes/Admin/EventDisplayPage.php
+msgid "Save Settings"
+msgstr "Gem indstillinger"
+
+#: includes/Admin/ParticipantsPage.php
+msgid "Select Event"
+msgstr "Vælg begivenhed"
+
+#: includes/Admin/EventDisplayPage.php
+msgid "Settings saved successfully."
+msgstr "Indstillingerne blev gemt."
+
+#: includes/Admin/EventsListTable.php
+#: includes/Admin/EventsPage.php
+msgid "Start Date"
+msgstr "Startdato"
+
+#: includes/Admin/EventDisplayPage.php
+msgid "Start Event Display"
+msgstr "Start begivenhedsvisning"
+
+#: includes/Admin/EventsPage.php
+msgid "Status"
+msgstr "Status"
+
+#: includes/Admin/TagsPage.php
+msgid "Tag created successfully."
+msgstr "Tagget blev oprettet."
+
+#: includes/Admin/TagsPage.php
+msgid "Tag deleted."
+msgstr "Tagget blev slettet."
+
+#: includes/Admin/TagsPage.php
+msgid "Tag updated successfully."
+msgstr "Tagget blev opdateret."
+
+#: includes/Admin/EventDisplayPage.php
+msgid "This will open a fullscreen display with countdown timer and live agreement count. Press ESC to exit fullscreen."
+msgstr "Dette åbner en fuldskærmsvisning med nedtælling og live optælling af aftaler. Tryk ESC for at afslutte fuld skærm."
+
+#: includes/Admin/EventDisplayPage.php
+msgid "Times up!"
+msgstr "Tiden er gået!"
+
+#: includes/Admin/EventDisplayPage.php
+msgid "Top Participants"
+msgstr "Top-deltagere"
+
+#: includes/Admin/ParticipantsListTable.php
+#: includes/Admin/ParticipantsPage.php
+msgid "Type"
+msgstr "Type"
+
+#: includes/Admin/ParticipantTypesPage.php
+msgid "Type created successfully."
+msgstr "Typen blev oprettet."
+
+#: includes/Admin/ParticipantTypesPage.php
+msgid "Type deleted."
+msgstr "Typen blev slettet."
+
+#: includes/Admin/ParticipantTypesPage.php
+msgid "Type updated successfully."
+msgstr "Typen blev opdateret."
+
+#: includes/Admin/EventsPage.php
+#: includes/Admin/ParticipantsPage.php
+#: includes/Admin/ParticipantTypesPage.php
+#: includes/Admin/TagsPage.php
+msgid "Update"
+msgstr "Opdater"
+
+#: includes/Admin/EventsPage.php
+msgid "Update Event"
+msgstr "Opdater begivenhed"
+
+#: includes/Admin/ParticipantsPage.php
+msgid "Update Participant"
+msgstr "Opdater deltager"
+
+#: includes/Admin/ParticipantsPage.php
+msgid "Upload a new logo image."
+msgstr "Upload et nyt logo-billede."
+
+#: includes/Admin/EventsListTable.php
+#: includes/Admin/ParticipantsListTable.php
+#: includes/Admin/ParticipantTypesListTable.php
+#: includes/Admin/TagsListTable.php
+msgid "View"
+msgstr "Vis"
+
+#: includes/Admin/Menu.php
+msgid "Volunteer Exchange"
+msgstr "Frivilligbørs"
+
+#: includes/Admin/EventsPage.php
+msgid "We Offer"
+msgstr "Vi tilbyder"
+
+#: includes/Admin/Menu.php
+#: includes/Admin/ParticipantsPage.php
+#: includes/Admin/TagsPage.php
+msgid "We Offer Tags"
+msgstr "Deltager tags"
+
+#: includes/Admin/EventsPage.php
+msgid "You do not have permission to perform this action."
+msgstr "Du har ikke tilladelse til at udføre denne handling."
+
+#: includes/Admin/ParticipantsPage.php
+msgid "Participant unapproved. Note: Participant number is retained."
+msgstr "Godkendelse fjernet. Bemærk: Deltagernummeret bevares."
+
+#: includes/Admin/EventsPage.php
+msgid "Before you can create an event, you must create at least one Participant Type and at least one We Offer Tag."
+msgstr "Før du kan oprette en begivenhed, skal du oprette mindst én deltagertype og mindst ét Det du tilbyder-tag."
+
+#: includes/Admin/EventsPage.php
+msgid "Go to Participant Types"
+msgstr "Gå til deltagertyper"
+
+#: includes/Admin/EventsPage.php
+msgid "Go to We Offer Tags"
+msgstr "Gå til Det du tilbyder-tags"
+
+#: includes/Frontend/ParticipantPage.php
+msgctxt "URL slug"
+msgid "participant"
+msgstr "deltager"
+
+#: src/Frontend/ParticipantPage.php:159
+msgid "About"
+msgstr "Om"
+
+#: src/Plugin/Activator.php:47
+msgid "An unexpected error occurred during activation."
+msgstr "Der opstod en uventet fejl under aktivering."
+
+#: src/Admin/EventsListTable.php:157
+msgid "Are you sure you want to delete this event?"
+msgstr "Er du sikker på, at du vil slette denne begivenhed?"
+
+#: src/Admin/ParticipantTypesListTable.php:141
+msgid "Are you sure you want to delete this participant type?"
+msgstr "Er du sikker på, at du vil slette denne deltagertype?"
+
+#: src/Admin/TagsListTable.php:138
+msgid "Are you sure you want to delete this tag?"
+msgstr "Er du sikker på, at du vil slette dette tag?"
+
+#: src/Admin/ParticipantTypesPage.php:155
+#: src/Admin/TagsPage.php:155
+msgid "Clear"
+msgstr "Ryd"
+
+#: src/Frontend/ParticipantPage.php:179
+msgid "Contact"
+msgstr "Kontakt"
+
+#: src/Admin/ParticipantsPage.php:637
+msgid "Could not approve participant."
+msgstr "Kunne ikke godkende deltager."
+
+#: src/Admin/ParticipantsPage.php:643
+msgid "Could not delete participant."
+msgstr "Kunne ikke slette deltager."
+
+#: src/Admin/ParticipantsPage.php:640
+msgid "Could not unapprove participant."
+msgstr "Kunne ikke fjerne godkendelse af deltager."
+
+#: src/Shortcodes/Registration.php:149
+#: src/Shortcodes/Registration.php:99
+#: src/Shortcodes/UpdateParticipant.php:110
+msgid "Contact name"
+msgstr "Kontaktperson"
+
+#: src/Shortcodes/Registration.php:104
+#: src/Shortcodes/Registration.php:154
+#: src/Shortcodes/UpdateParticipant.php:115
+msgid "E-mail"
+msgstr "E-mail"
+
+#: src/Frontend/ParticipantPage.php:183
+msgid "Email:"
+msgstr "E-mail:"
+
+#: src/Ajax/ParticipantHandler.php:223
+msgid "Error updating participant tags. Please try again."
+msgstr "Fejl ved opdatering af deltager-tags. Prøv igen."
+
+#: src/Ajax/ParticipantHandler.php:218
+msgid "Error updating participant. Please try again."
+msgstr "Fejl ved opdatering af deltager. Prøv igen."
+
+#: src/Admin/EventsPage.php:463
+msgid "Event and all associated data deleted successfully."
+msgstr "Begivenheden og alle tilknyttede data blev slettet."
+
+#: src/Frontend/ParticipantPage.php:144
+msgid "Event:"
+msgstr "Begivenhed:"
+
+#: src/Admin/ParticipantsListTable.php:293
+msgid "Filter"
+msgstr "Filtrer"
+
+#: src/Admin/ParticipantTypesListTable.php:80
+#: src/Admin/ParticipantTypesPage.php:125
+#: src/Admin/TagsListTable.php:77
+#: src/Admin/TagsPage.php:125
+msgid "Icon"
+msgstr "Ikon"
+
+#: src/Frontend/ParticipantPage.php:140
+msgid "Information"
+msgstr "Information"
+
+#: src/Ajax/ParticipantHandler.php:161
+#: src/Ajax/ParticipantHandler.php:253
+msgid "Invalid participant selection."
+msgstr "Ugyldigt valg af deltager."
+
+#: src/Shortcodes/Registration.php:126
+#: src/Shortcodes/Registration.php:84
+#: src/Shortcodes/UpdateParticipant.php:95
+msgid "Organization Name"
+msgstr "Navnet på din organisation/projekt/afdeling"
+
+#: src/Shortcodes/Registration.php:131
+#: src/Shortcodes/Registration.php:89
+#: src/Shortcodes/UpdateParticipant.php:100
+msgid "Organization Type"
+msgstr "Hvilket område repræsenterer du?"
+
+#: src/Frontend/ParticipantPage.php:112
+msgid "Participant not found or not approved."
+msgstr "Deltager blev ikke fundet eller er ikke godkendt."
+
+#: src/Ajax/ParticipantHandler.php:228
+msgid "Participant updated successfully."
+msgstr "Deltager blev opdateret."
+
+#: src/Ajax/ParticipantHandler.php:156
+#: src/Ajax/ParticipantHandler.php:248
+msgid "Please select a participant."
+msgstr "Vælg en deltager."
+
+#: src/Admin/ParticipantTypesPage.php:151
+#: src/Admin/TagsPage.php:151
+#: src/Plugin/Plugin.php:168
+msgid "Please select icon"
+msgstr "Vælg ikon"
+
+#: src/Plugin/Activator.php:32
+#: src/Plugin/Activator.php:50
+msgid "Plugin Activation Error"
+msgstr "Plugin-aktiveringsfejl"
+
+#: src/Plugin/Activator.php:29
+#: src/Plugin/Activator.php:46
+msgid "Plugin Activation Failed"
+msgstr "Plugin-aktivering mislykkedes"
+
+#: src/Admin/ParticipantsListTable.php:211
+msgid "Remove approval"
+msgstr "Fjern godkendelse"
+
+#: src/Plugin/Activator.php:31
+#: src/Plugin/Activator.php:49
+msgid "Return to Plugins"
+msgstr "Tilbage til plugins"
+
+#: src/Admin/ParticipantTypesPage.php:154
+#: src/Admin/TagsPage.php:154
+msgid "Select Icon"
+msgstr "Vælg ikon"
+
+#: src/Admin/ParticipantTypesPage.php:157
+#: src/Admin/TagsPage.php:157
+msgid "Select an icon from the picker."
+msgstr "Vælg et ikon fra vælgeren."
+
+#: src/Shortcodes/Registration.php:109
+#: src/Shortcodes/Registration.php:159
+#: src/Shortcodes/UpdateParticipant.php:120
+msgid "Phone"
+msgstr "Telefon"
+
+#: src/Plugin/Dependencies.php:60
+msgid "Volunteer Exchange Platform Activation Error:"
+msgstr "Volunteer Exchange Platform aktiveringsfejl:"
+
+#: src/Plugin/Activator.php:30
+msgid "Volunteer Exchange Platform could not be activated because the system requirements are not met."
+msgstr "Volunteer Exchange Platform kunne ikke aktiveres, fordi systemkravene ikke er opfyldt."
+
+#: src/Plugin/Dependencies.php:28
+msgid "Volunteer Exchange Platform requires PHP version %1$s or higher. You are running version %2$s."
+msgstr "Volunteer Exchange Platform kræver PHP-version %1$s eller nyere. Du kører version %2$s."
+
+#: src/Plugin/Dependencies.php:38
+msgid "Volunteer Exchange Platform requires WordPress version %1$s or higher. You are running version %2$s."
+msgstr "Volunteer Exchange Platform kræver WordPress-version %1$s eller nyere. Du kører version %2$s."
+
+#: src/Plugin/Dependencies.php:49
+msgid "Volunteer Exchange Platform requires the PHP %s extension to be installed."
+msgstr "Volunteer Exchange Platform kræver, at PHP-udvidelsen %s er installeret."
+
+#: src/Shortcodes/UpdateParticipant.php:83
+#: src/Shortcodes/UpdateParticipant.php:85
+msgid "Select Organization"
+msgstr "Vælg organisation"
+
+#: src/Frontend/ParticipantPage.php:192
+msgid "Website:"
+msgstr "Website:"
+
+#: src/Shortcodes/UpdateParticipant.php:142
+msgid "e.g., Jane Doe, John Smith"
+msgstr "f.eks. Jane Doe, John Smith"
+
+#: src/Shortcodes/ParticipantsTable.php:103
+msgid "Number"
+msgstr "Deltagernummer"
+
+#: src/Shortcodes/ParticipantsTable.php:104
+msgid "Participant name"
+msgstr "Deltager navn"
+
+#: src/Plugin/Plugin.php
+msgid "agreement"
+msgstr "aftale"
+
+#: src/Plugin/Plugin.php
+msgid "agreements"
+msgstr "aftaler"
+
+#: src/Plugin/Plugin.php
+msgid "No agreements yet..."
+msgstr "Ingen aftaler endnu..."
+
+#: src/Plugin/Plugin.php
+msgid "Please set a countdown time first."
+msgstr "Angiv venligst en nedtællingstid først."
+
+#: src/Shortcodes/AgreementForm.php
+msgid "Which participant are you?"
+msgstr "Hvilken deltager er du?"
+
+#: src/Shortcodes/AgreementForm.php
+msgid "Choose one to preselect as Participant 1 next time."
+msgstr "Vælg en for at forudvælge som Deltager 1 næste gang."
