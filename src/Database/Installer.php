@@ -194,6 +194,10 @@ class Installer {
         if (!$has_randon_key) {
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Direct schema migration query is required; interpolated table name is controlled from $wpdb->prefix.
             $wpdb->query("ALTER TABLE $table_participants ADD COLUMN randon_key varchar(36) DEFAULT NULL");
+
+            // Populate GUID-like keys for pre-existing participants after adding the new column.
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Direct migration update query is required; interpolated table name is controlled from $wpdb->prefix.
+            $wpdb->query("UPDATE $table_participants SET randon_key = UUID() WHERE randon_key IS NULL OR randon_key = ''");
         }
 
         $table_types = $wpdb->prefix . 'vep_participant_types';
