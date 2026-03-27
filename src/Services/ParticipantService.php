@@ -369,6 +369,15 @@ class ParticipantService extends AbstractService {
     }
 
     /**
+     * Generate a UUID v4 random key for a participant.
+     *
+     * @return string
+     */
+    private function generate_randon_key() {
+        return wp_generate_uuid4();
+    }
+
+    /**
      * Create a participant.
      *
      * @param array $data Participant payload.
@@ -379,6 +388,8 @@ class ParticipantService extends AbstractService {
         if ( false === $normalized ) {
             return false;
         }
+
+        $normalized['randon_key'] = $this->generate_randon_key();
 
         return $this->run_guarded(
             function () use ( $normalized ) {
