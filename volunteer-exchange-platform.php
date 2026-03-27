@@ -64,14 +64,20 @@ require_once VEP_PLUGIN_DIR . 'src/Ajax/ParticipantHandler.php';
 require_once VEP_PLUGIN_DIR . 'src/Ajax/AgreementHandler.php';
 require_once VEP_PLUGIN_DIR . 'src/Ajax/EventDisplayHandler.php';
 
+require_once VEP_PLUGIN_DIR . 'src/Email/EmailSettings.php';
+require_once VEP_PLUGIN_DIR . 'src/Email/EmailQueueRepository.php';
+require_once VEP_PLUGIN_DIR . 'src/Email/TransactionalEmailService.php';
+require_once VEP_PLUGIN_DIR . 'src/Email/TransactionalEmailWorker.php';
+require_once VEP_PLUGIN_DIR . 'src/Admin/EmailSettingsPage.php';
+
 require_once VEP_PLUGIN_DIR . 'src/Shortcodes/Registration.php';
-require_once VEP_PLUGIN_DIR . 'src/Shortcodes/UpdateParticipant.php';
 require_once VEP_PLUGIN_DIR . 'src/Shortcodes/ParticipantsGrid.php';
 require_once VEP_PLUGIN_DIR . 'src/Shortcodes/ParticipantsTable.php';
 require_once VEP_PLUGIN_DIR . 'src/Shortcodes/AgreementForm.php';
 require_once VEP_PLUGIN_DIR . 'src/Shortcodes/AgreementsList.php';
 
 require_once VEP_PLUGIN_DIR . 'src/Frontend/ParticipantPage.php';
+require_once VEP_PLUGIN_DIR . 'src/Frontend/UpdateParticipantPage.php';
 
 require_once VEP_PLUGIN_DIR . 'src/Plugin/Activator.php';
 require_once VEP_PLUGIN_DIR . 'src/Plugin/Deactivator.php';
@@ -100,4 +106,17 @@ if (VolunteerExchangePlatform\Plugin\Dependencies::check() && function_exists( '
 	add_action( 'plugins_loaded', function () {
         ( new \VolunteerExchangePlatform\Plugin\Plugin() )->run();
 	});
+}
+
+/**
+ * Queue a transactional email for asynchronous delivery.
+ *
+ * @param array $message Message payload.
+ * @return int|false Queue item ID on success.
+ */
+function vep_queue_transactional_email( $message ) {
+    $service = new \VolunteerExchangePlatform\Email\TransactionalEmailService( null, false );
+    $result = $service->enqueue( $message );
+
+    return apply_filters( 'vep_queue_transactional_email_result', $result, $message );
 }

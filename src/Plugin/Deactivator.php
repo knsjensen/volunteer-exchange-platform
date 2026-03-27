@@ -8,6 +8,8 @@
 
 namespace VolunteerExchangePlatform\Plugin;
 
+use VolunteerExchangePlatform\Email\TransactionalEmailWorker;
+
 // Exit if accessed directly
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -36,6 +38,7 @@ class Deactivator {
      */
     private static function deactivate_for_current_site() {
         delete_transient( 'vep_admin_notices' );
+        TransactionalEmailWorker::unschedule();
         flush_rewrite_rules();
     }
 

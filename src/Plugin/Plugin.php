@@ -9,6 +9,7 @@
 namespace VolunteerExchangePlatform\Plugin;
 
 use VolunteerExchangePlatform\Admin\CompetitionsPage;
+use VolunteerExchangePlatform\Admin\EmailSettingsPage;
 use VolunteerExchangePlatform\Admin\EventDisplayPage;
 use VolunteerExchangePlatform\Admin\EventsPage;
 use VolunteerExchangePlatform\Admin\Menu;
@@ -23,7 +24,10 @@ use VolunteerExchangePlatform\Database\Installer;
 use VolunteerExchangePlatform\Database\ParticipantRepository;
 use VolunteerExchangePlatform\Database\ParticipantTypeRepository;
 use VolunteerExchangePlatform\Database\TagRepository;
+use VolunteerExchangePlatform\Email\TransactionalEmailService;
+use VolunteerExchangePlatform\Email\TransactionalEmailWorker;
 use VolunteerExchangePlatform\Frontend\ParticipantPage;
+use VolunteerExchangePlatform\Frontend\UpdateParticipantPage;
 use VolunteerExchangePlatform\Services\EventService;
 use VolunteerExchangePlatform\Services\ParticipantService;
 use VolunteerExchangePlatform\Services\ParticipantTypeService;
@@ -33,7 +37,6 @@ use VolunteerExchangePlatform\Shortcodes\AgreementsList;
 use VolunteerExchangePlatform\Shortcodes\ParticipantsGrid;
 use VolunteerExchangePlatform\Shortcodes\ParticipantsTable;
 use VolunteerExchangePlatform\Shortcodes\Registration;
-use VolunteerExchangePlatform\Shortcodes\UpdateParticipant;
 
 // Exit if accessed directly
 if ( ! defined( 'ABSPATH' ) ) {
@@ -79,6 +82,7 @@ class Plugin {
         }
 
         $this->init_public( $services );
+        $this->init_email();
         new WPBakeryIntegration();
         $this->init_ajax( $services );
         $this->register_hooks();
@@ -123,7 +127,8 @@ class Plugin {
         $participant_types_page = new ParticipantTypesPage( $services['participant_type'] );
         $tags_page = new TagsPage( $services['tag'] );
         $event_display_page = new EventDisplayPage( $services['event'] );
-        $competitions_page = new CompetitionsPage();
+        $competitions_page   = new CompetitionsPage();
+        $email_settings_page = new EmailSettingsPage();
 
         new Menu(
             $events_page,
@@ -131,7 +136,8 @@ class Plugin {
             $participant_types_page,
             $tags_page,
             $event_display_page,
-            $competitions_page
+            $competitions_page,
+            $email_settings_page
         );
     }
 
@@ -141,14 +147,19 @@ class Plugin {
         new ParticipantsTable( $services['event'], $services['participant'] );
         new AgreementForm( $services['event'], $services['participant'] );
         new AgreementsList( $services['event'] );
-        new UpdateParticipant( $services['event'], $services['participant'], $services['participant_type'], $services['tag'] );
         new ParticipantPage( $services['participant'] );
+        new UpdateParticipantPage( $services['participant'], $services['participant_type'], $services['tag'] );
     }
 
     private function init_ajax( array $services ) {
         new ParticipantHandler( $services['participant'] );
         new AgreementHandler( $services['event'] );
         new EventDisplayHandler( $services['event'] );
+    }
+
+    private function init_email() {
+        new TransactionalEmailService();
+        new TransactionalEmailWorker();
     }
 
     private function register_hooks() {

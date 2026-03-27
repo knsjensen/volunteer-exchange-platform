@@ -28,6 +28,7 @@ class Menu {
     private $tagsPage;
     private $eventDisplayPage;
     private $competitionsPage;
+    private $emailSettingsPage;
 
     /**
         * Constructor.
@@ -46,7 +47,8 @@ class Menu {
         ?ParticipantTypesPage $participant_types_page = null,
         ?TagsPage $tags_page = null,
             ?EventDisplayPage $event_display_page = null,
-            ?CompetitionsPage $competitions_page = null
+            ?CompetitionsPage $competitions_page = null,
+        ?EmailSettingsPage $email_settings_page = null
     ) {
         $this->eventsPage = $events_page ?: new EventsPage();
         $this->participantsPage = $participants_page ?: new ParticipantsPage();
@@ -54,6 +56,7 @@ class Menu {
         $this->tagsPage = $tags_page ?: new TagsPage();
         $this->eventDisplayPage = $event_display_page ?: new EventDisplayPage();
             $this->competitionsPage = $competitions_page ?: new CompetitionsPage();
+        $this->emailSettingsPage = $email_settings_page ?: new EmailSettingsPage();
 
         add_action('admin_menu', array($this, 'add_menu_pages'));
     }
@@ -133,6 +136,16 @@ class Menu {
             'manage_options',
             'volunteer-exchange-competitions',
             array($this->competitionsPage, 'render')
+        );
+
+        // Email Settings submenu
+        add_submenu_page(
+            'volunteer-exchange',
+            __('Email Settings', 'volunteer-exchange-platform'),
+            __('Email Settings', 'volunteer-exchange-platform'),
+            'manage_options',
+            'vep-email-settings',
+            array($this->emailSettingsPage, 'render')
         );
 
         // Remove duplicate main menu item

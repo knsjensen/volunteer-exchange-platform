@@ -52,6 +52,7 @@
 .vep-form-group input[type="text"],
 .vep-form-group input[type="email"],
 .vep-form-group input[type="tel"],
+.vep-form-group input[type="number"],
 .vep-form-group input[type="file"],
 .vep-form-group select,
 .vep-form-group textarea {
@@ -648,6 +649,94 @@
     font-size: 17px;
 }
 
+/* Update Participant Page */
+.vep-update-participant-page {
+    border: 1px solid #d8e2f0;
+    box-shadow: 0 14px 36px rgba(25, 42, 70, 0.12);
+}
+
+.vep-update-participant-page .vep-page-title {
+    margin: 0;
+    padding: 26px 34px 20px;
+    font-size: 32px;
+    line-height: 1.2;
+    font-weight: 800;
+    color: #16324f;
+    border-bottom: 1px solid #dbe6f4;
+    background: linear-gradient(140deg, #f7fbff 0%, #eef5ff 100%);
+}
+
+.vep-update-participant-page .vep-participant-detail-content {
+    background: linear-gradient(180deg, #ffffff 0%, #f7f9fc 100%);
+}
+
+.vep-update-participant-page .vep-update-participant-form {
+    max-width: 900px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px 22px;
+}
+
+.vep-update-participant-page .vep-form-group {
+    margin-bottom: 0;
+}
+
+.vep-update-participant-page .vep-form-group:nth-of-type(5),
+.vep-update-participant-page .vep-form-group:nth-of-type(6),
+.vep-update-participant-page .vep-form-group:nth-of-type(7),
+.vep-update-participant-page .vep-form-group:nth-of-type(8),
+.vep-update-participant-page .vep-form-group:nth-of-type(9),
+.vep-update-participant-page .vep-form-group:nth-of-type(10),
+.vep-update-participant-page .vep-form-group:nth-of-type(11) {
+    grid-column: 1 / -1;
+}
+
+.vep-update-participant-page .vep-form-group input[type="text"],
+.vep-update-participant-page .vep-form-group input[type="email"],
+.vep-update-participant-page .vep-form-group input[type="tel"],
+.vep-update-participant-page .vep-form-group input[type="number"],
+.vep-update-participant-page .vep-form-group input[type="file"],
+.vep-update-participant-page .vep-form-group select,
+.vep-update-participant-page .vep-form-group textarea {
+    border-color: #c9d8ec;
+    background: #ffffff;
+}
+
+.vep-update-participant-page .vep-form-group input:focus,
+.vep-update-participant-page .vep-form-group select:focus,
+.vep-update-participant-page .vep-form-group textarea:focus {
+    border-color: #2e6fbe;
+    box-shadow: 0 0 0 4px rgba(46, 111, 190, 0.16);
+}
+
+.vep-update-participant-page .vep-checkbox-group {
+    max-height: none;
+    overflow: visible;
+    padding: 4px;
+    border: 1px solid #d7e2ef;
+    border-radius: 10px;
+    background: #f8fbff;
+}
+
+.vep-update-participant-page .vep-current-logo-preview {
+    margin-top: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 140px;
+    height: 140px;
+    padding: 10px;
+    border: 1px solid #d7e2ef;
+    border-radius: 12px;
+    background: #ffffff;
+}
+
+.vep-update-participant-page .vep-current-logo-preview img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
 @media (max-width: 768px) {
     .vep-page-wrapper {
         padding: 10px;
@@ -690,6 +779,25 @@
     
     .vep-detail-item strong {
         min-width: auto;
+    }
+
+    .vep-update-participant-page .vep-participant-detail-content {
+        padding: 24px 18px;
+    }
+
+    .vep-update-participant-page .vep-page-title {
+        font-size: 24px;
+        padding: 20px 20px 16px;
+    }
+
+    .vep-update-participant-page .vep-update-participant-form {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .vep-update-participant-page .vep-current-logo-preview {
+        width: 120px;
+        height: 120px;
     }
 }
 

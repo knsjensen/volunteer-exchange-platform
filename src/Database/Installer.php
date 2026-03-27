@@ -136,6 +136,28 @@ class Installer {
             KEY initiator_id (initiator_id)
         ) $charset_collate;";
         dbDelta($sql_agreements);
+
+        // Create vep_transactional_emails table
+        $table_transactional_emails = $wpdb->prefix . 'vep_transactional_emails';
+        $sql_transactional_emails = "CREATE TABLE $table_transactional_emails (
+            id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+            status varchar(20) NOT NULL DEFAULT 'pending',
+            attempts int(11) NOT NULL DEFAULT 0,
+            max_attempts int(11) NOT NULL DEFAULT 3,
+            scheduled_at datetime NOT NULL,
+            payload longtext NOT NULL,
+            provider_message_id varchar(255) DEFAULT NULL,
+            last_error text,
+            lock_token varchar(64) DEFAULT NULL,
+            locked_at datetime DEFAULT NULL,
+            sent_at datetime DEFAULT NULL,
+            created_at datetime DEFAULT CURRENT_TIMESTAMP,
+            updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            KEY status_scheduled (status, scheduled_at),
+            KEY lock_token (lock_token)
+        ) $charset_collate;";
+        dbDelta($sql_transactional_emails);
         
         // Update version
         update_option('vep_db_version', VEP_VERSION);
@@ -236,6 +258,38 @@ class Installer {
                 // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Direct schema migration query is required; interpolated table name is controlled from $wpdb->prefix.
                 $wpdb->query("ALTER TABLE $table_tags ADD COLUMN icon varchar(255) DEFAULT ''");
             }
+        }
+
+        $table_transactional_emails = $wpdb->prefix . 'vep_transactional_emails';
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Direct schema inspection query is required during install/upgrade.
+        $emails_exists = $wpdb->get_var($wpdb->prepare(
+            'SHOW TABLES LIKE %s',
+            $table_transactional_emails
+        ));
+        if ($emails_exists !== $table_transactional_emails) {
+            $charset_collate = $wpdb->get_charset_collate();
+            require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+
+            $sql_transactional_emails = "CREATE TABLE $table_transactional_emails (
+                id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+                status varchar(20) NOT NULL DEFAULT 'pending',
+                attempts int(11) NOT NULL DEFAULT 0,
+                max_attempts int(11) NOT NULL DEFAULT 3,
+                scheduled_at datetime NOT NULL,
+                payload longtext NOT NULL,
+                provider_message_id varchar(255) DEFAULT NULL,
+                last_error text,
+                lock_token varchar(64) DEFAULT NULL,
+                locked_at datetime DEFAULT NULL,
+                sent_at datetime DEFAULT NULL,
+                created_at datetime DEFAULT CURRENT_TIMESTAMP,
+                updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                PRIMARY KEY (id),
+                KEY status_scheduled (status, scheduled_at),
+                KEY lock_token (lock_token)
+            ) $charset_collate;";
+
+            dbDelta($sql_transactional_emails);
         }
     }
 

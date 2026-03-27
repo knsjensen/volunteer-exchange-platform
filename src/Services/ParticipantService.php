@@ -85,6 +85,26 @@ class ParticipantService extends AbstractService {
     }
 
     /**
+     * Get participant by random key.
+     *
+     * @param string $randon_key Random participant key.
+     * @return object|null
+     */
+    public function get_by_randon_key( $randon_key ) {
+        $randon_key = sanitize_text_field( (string) $randon_key );
+        if ( '' === $randon_key ) {
+            return null;
+        }
+
+        return $this->run_guarded(
+            function () use ( $randon_key ) {
+                return $this->repository->get_by_randon_key( $randon_key );
+            },
+            null
+        );
+    }
+
+    /**
      * Get participant by ID including related details.
      *
      * @param int $participant_id Participant ID.
@@ -416,12 +436,22 @@ class ParticipantService extends AbstractService {
             return false;
         }
 
-        return $this->run_guarded(
+        $existing = $this->get_by_id( $participant_id );
+        $was_approved = $existing ? ! empty( $existing->is_approved ) : false;
+
+        $updated = $this->run_guarded(
             function () use ( $participant_id, $normalized ) {
                 return $this->repository->update_participant( (int) $participant_id, $normalized );
             },
             false
         );
+
+        $is_now_approved = isset( $normalized['is_approved'] ) ? ( 1 === (int) $normalized['is_approved'] ) : false;
+        if ( $updated && $is_now_approved && ! $was_approved ) {
+            $this->queue_participant_approved_email( $participant_id );
+        }
+
+        return $updated;
     }
 
     /**
@@ -497,7 +527,10 @@ class ParticipantService extends AbstractService {
             return false;
         }
 
-        return $this->run_guarded(
+        $existing = $this->get_by_id( $participant_id );
+        $was_approved = $existing ? ! empty( $existing->is_approved ) : false;
+
+        $approved = $this->run_guarded(
             function () use ( $participant_id ) {
                 $participant = $this->repository->get_approval_context( (int) $participant_id );
                 if ( ! $participant ) {
@@ -512,6 +545,53 @@ class ParticipantService extends AbstractService {
                 return $this->repository->set_approval( (int) $participant_id, 1 );
             },
             false
+        );
+
+        if ( $approved && ! $was_approved ) {
+            $this->queue_participant_approved_email( $participant_id );
+        }
+
+        return $approved;
+    }
+
+    /**
+     * Queue approval confirmation email to participant contact address.
+     *
+     * @param int $participant_id Participant ID.
+     * @return void
+     */
+    private function queue_participant_approved_email( $participant_id ) {
+        if ( ! function_exists( 'vep_queue_transactional_email' ) ) {
+            return;
+        }
+
+        $participant = $this->get_by_id_with_details( $participant_id );
+        if ( ! $participant ) {
+            return;
+        }
+
+        $email = isset( $participant->contact_email ) ? sanitize_email( $participant->contact_email ) : '';
+        if ( '' === $email ) {
+            return;
+        }
+
+        $random_key = isset( $participant->randon_key ) ? sanitize_text_field( (string) $participant->randon_key ) : '';
+        if ( '' === $random_key ) {
+            return;
+        }
+
+        $confirm_url = home_url( '/vep/updateparticipant/' . rawurlencode( $random_key ) );
+
+        vep_queue_transactional_email(
+            array(
+                'to'           => array( $email ),
+                'template_key' => 'participant_approved',
+                'template_data' => array(
+                    'contact_name'      => (string) ( $participant->contact_person_name ?? '' ),
+                    'event_name'        => (string) ( $participant->event_name ?? '' ),
+                    'confirm_url'       => $confirm_url,
+                ),
+            )
         );
     }
 

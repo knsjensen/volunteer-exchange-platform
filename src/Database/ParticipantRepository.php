@@ -93,6 +93,16 @@ class ParticipantRepository extends AbstractRepository {
     }
 
     /**
+     * Get participant by random key.
+     *
+     * @param string $randon_key Random participant key.
+     * @return object|null
+     */
+    public function get_by_randon_key( $randon_key ) {
+        return $this->get_row( "SELECT * FROM {$this->table()} WHERE randon_key = %s", array( $randon_key ) );
+    }
+
+    /**
      * Get participant by ID with joined details.
      *
      * @param int $participant_id Participant ID.

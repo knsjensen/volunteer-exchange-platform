@@ -828,13 +828,15 @@ msgstr ""
 
 #: src/Shortcodes/Registration.php:149
 #: src/Shortcodes/Registration.php:99
-#: src/Shortcodes/UpdateParticipant.php:110
 msgid "Contact name"
+msgstr ""
+
+#: src/Frontend/ParticipantPage.php:182
+msgid "Contact name:"
 msgstr ""
 
 #: src/Shortcodes/Registration.php:104
 #: src/Shortcodes/Registration.php:154
-#: src/Shortcodes/UpdateParticipant.php:115
 msgid "E-mail"
 msgstr ""
 
@@ -880,13 +882,11 @@ msgstr ""
 
 #: src/Shortcodes/Registration.php:126
 #: src/Shortcodes/Registration.php:84
-#: src/Shortcodes/UpdateParticipant.php:95
 msgid "Organization Name"
 msgstr ""
 
 #: src/Shortcodes/Registration.php:131
 #: src/Shortcodes/Registration.php:89
-#: src/Shortcodes/UpdateParticipant.php:100
 msgid "Organization Type"
 msgstr ""
 
@@ -940,8 +940,11 @@ msgstr ""
 
 #: src/Shortcodes/Registration.php:109
 #: src/Shortcodes/Registration.php:159
-#: src/Shortcodes/UpdateParticipant.php:120
 msgid "Phone"
+msgstr ""
+
+#: src/Frontend/ParticipantPage.php:198
+msgid "Phone:"
 msgstr ""
 
 #: src/Plugin/Dependencies.php:60
@@ -964,8 +967,6 @@ msgstr ""
 msgid "Volunteer Exchange Platform requires the PHP %s extension to be installed."
 msgstr ""
 
-#: src/Shortcodes/UpdateParticipant.php:83
-#: src/Shortcodes/UpdateParticipant.php:85
 msgid "Select Organization"
 msgstr ""
 

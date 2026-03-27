@@ -108,16 +108,5 @@ class WPBakeryIntegration {
                 'params' => array(),
             )
         );
-
-        call_user_func( 'vc_map',
-            array(
-                'name' => __( 'Opdater deltager formular', 'volunteer-exchange-platform' ),
-                'base' => 'vep_update_participant',
-                'icon' => 'dashicons dashicons-feedback',
-                'category' => $category,
-                'description' => __( 'Allow participants to update registration.', 'volunteer-exchange-platform' ),
-                'params' => array(),
-            )
-        );
     }
 }

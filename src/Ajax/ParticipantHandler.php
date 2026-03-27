@@ -151,6 +151,7 @@ class ParticipantHandler {
 
         $participant_id = isset( $_POST['participant_id'] ) ? absint( wp_unslash( $_POST['participant_id'] ) ) : 0;
         $event_id       = isset( $_POST['event_id'] ) ? absint( wp_unslash( $_POST['event_id'] ) ) : 0;
+        $randon_key     = isset( $_POST['randon_key'] ) ? sanitize_text_field( wp_unslash( $_POST['randon_key'] ) ) : '';
 
         if ( ! $participant_id || ! $event_id ) {
             wp_send_json_error( array( 'message' => __( 'Please select a participant.', 'volunteer-exchange-platform' ) ) );
@@ -158,6 +159,10 @@ class ParticipantHandler {
 
         $participant = $this->participant_service->get_by_id( $participant_id );
         if ( ! $participant || (int) $participant->event_id !== (int) $event_id ) {
+            wp_send_json_error( array( 'message' => __( 'Invalid participant selection.', 'volunteer-exchange-platform' ) ) );
+        }
+
+        if ( '' === $randon_key || ! isset( $participant->randon_key ) || (string) $participant->randon_key !== (string) $randon_key ) {
             wp_send_json_error( array( 'message' => __( 'Invalid participant selection.', 'volunteer-exchange-platform' ) ) );
         }
 

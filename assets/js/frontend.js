@@ -354,17 +354,19 @@
                     messageDiv.textContent = data.data.message;
                     messageDiv.style.display = 'block';
 
-                    form.reset();
+                    if (participantSelect) {
+                        form.reset();
 
-                    const choicesElements = form.querySelectorAll('.vep-choices');
-                    choicesElements.forEach(element => {
-                        if (element.choicesInstance) {
-                            element.choicesInstance.setChoiceByValue('');
-                        }
-                    });
+                        const choicesElements = form.querySelectorAll('.vep-choices');
+                        choicesElements.forEach(element => {
+                            if (element.choicesInstance) {
+                                element.choicesInstance.setChoiceByValue('');
+                            }
+                        });
 
-                    clearUpdateFields();
-                    toggleUpdateFields();
+                        clearUpdateFields();
+                        toggleUpdateFields();
+                    }
 
                     messageDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                 } else {

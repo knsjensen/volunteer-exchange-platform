@@ -154,7 +154,6 @@
 [vep_participants_table show_button="yes"]
 [vep_agreement_form]
 [vep_agreements_list]
-[vep_update_participant]
 ```
 
 ### Hvad de enkelte shortcodes gør
@@ -184,8 +183,9 @@
    - Viser aftaler for aktivt event i tabelform.
    - Indeholder tekstsøgning på tværs af alle kolonner.
 
-- `[vep_update_participant]`
-   - Formular hvor en deltager kan opdatere sine data.
+Opdatering af deltager sker via unik URL med nøgle:
+- `.../vep/updateparticipant/{random_key}` (EN)
+- `.../vep/opdaterdeltager/{random_key}` (DA)
 
 ### Registrering: simpel vs. multistep
 - `form_type` (valgfri)
