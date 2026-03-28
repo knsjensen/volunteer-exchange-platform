@@ -40,15 +40,22 @@ class EmailQueueRepository {
         $scheduled_at = ! empty( $message['scheduled_at'] ) ? gmdate( 'Y-m-d H:i:s', (int) $message['scheduled_at'] ) : gmdate( 'Y-m-d H:i:s' );
         $max_attempts = isset( $message['max_attempts'] ) ? max( 1, (int) $message['max_attempts'] ) : 3;
 
+        $to = array();
+        if ( isset( $message['to'] ) && is_array( $message['to'] ) ) {
+            $to = array_values( array_filter( array_map( 'strval', $message['to'] ) ) );
+        } elseif ( isset( $message['to'] ) && '' !== trim( (string) $message['to'] ) ) {
+            $to = array( (string) $message['to'] );
+        }
+
         $payload = array(
-            'to'           => isset( $message['to'] ) ? (string) $message['to'] : '',
+            'to'           => $to,
+            'sender'       => isset( $message['sender'] ) ? (string) $message['sender'] : '',
             'subject'      => isset( $message['subject'] ) ? (string) $message['subject'] : '',
-            'html'         => isset( $message['html'] ) ? (string) $message['html'] : '',
-            'text'         => isset( $message['text'] ) ? (string) $message['text'] : '',
-            'template'     => isset( $message['template'] ) ? (string) $message['template'] : '',
-            'templateData' => isset( $message['templateData'] ) && is_array( $message['templateData'] ) ? $message['templateData'] : array(),
-            'headers'      => isset( $message['headers'] ) && is_array( $message['headers'] ) ? $message['headers'] : array(),
-            'meta'         => isset( $message['meta'] ) && is_array( $message['meta'] ) ? $message['meta'] : array(),
+            'html_body'    => isset( $message['html_body'] ) ? (string) $message['html_body'] : '',
+            'text_body'    => isset( $message['text_body'] ) ? (string) $message['text_body'] : '',
+            'template_key' => isset( $message['template_key'] ) ? (string) $message['template_key'] : '',
+            'template_id'  => isset( $message['template_id'] ) ? (string) $message['template_id'] : '',
+            'template_data'=> isset( $message['template_data'] ) && is_array( $message['template_data'] ) ? $message['template_data'] : array(),
         );
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Queue writes are core plugin behavior.
@@ -142,6 +149,27 @@ class EmailQueueRepository {
             array( '%s', '%s', '%s', '%s', '%s', '%s', '%s' ),
             array( '%d' )
         );
+    }
+
+    /**
+     * Delete email log rows older than the given number of days.
+     *
+     * @param int $days Minimum age in days. Must be ≥ 1.
+     * @return int|false Number of rows deleted, or false on error.
+     */
+    public function delete_older_than_days( $days ) {
+        $days = max( 1, (int) $days );
+        $cutoff = gmdate( 'Y-m-d H:i:s', strtotime( "-{$days} days" ) );
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Intentional batch cleanup operation.
+        $result = $this->wpdb->query(
+            $this->wpdb->prepare(
+                "DELETE FROM {$this->table} WHERE created_at < %s",
+                $cutoff
+            )
+        );
+
+        return $result;
     }
 
     /**

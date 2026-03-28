@@ -113,12 +113,53 @@ class ParticipantRepository extends AbstractRepository {
         $events_table = $this->wpdb->prefix . 'vep_events';
 
         return $this->get_row(
-            "SELECT p.*, pt.name as type_name, e.name as event_name
+            "SELECT p.*, pt.name as type_name, e.name as event_name, e.start_date as event_date
              FROM {$this->table()} p
              LEFT JOIN {$types_table} pt ON p.participant_type_id = pt.id
              LEFT JOIN {$events_table} e ON p.event_id = e.id
              WHERE p.id = %d",
             array( $participant_id )
+        );
+    }
+
+    /**
+     * Get approved participants who should receive a reminder on a target event date.
+     *
+     * A participant is considered incomplete (eligible for reminder) when one or more
+     * of these are missing: logo_url, description, at least one we_offer tag.
+     *
+     * @param string $target_date Date in Y-m-d format.
+     * @return array
+     */
+    public function get_reminder_candidates_by_event_date( $target_date ) {
+        $events_table = $this->wpdb->prefix . 'vep_events';
+        $participant_tags_table = $this->wpdb->prefix . 'vep_participant_tags';
+
+        return $this->get_results(
+            "SELECT
+                p.id,
+                p.organization_name,
+                p.contact_person_name,
+                p.contact_email,
+                p.logo_url,
+                p.description,
+                p.randon_key,
+                e.name as event_name,
+                e.start_date as event_date,
+                COUNT(pt.tag_id) as tag_count
+             FROM {$this->table()} p
+             INNER JOIN {$events_table} e ON p.event_id = e.id
+             LEFT JOIN {$participant_tags_table} pt ON p.id = pt.participant_id
+             WHERE p.is_approved = 1
+               AND p.contact_email <> ''
+               AND DATE(e.start_date) = %s
+             GROUP BY p.id
+             HAVING (
+                (p.logo_url IS NULL OR p.logo_url = '')
+                OR (p.description IS NULL OR p.description = '')
+                OR COUNT(pt.tag_id) = 0
+             )",
+            array( $target_date )
         );
     }
 

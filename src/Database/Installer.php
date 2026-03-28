@@ -158,6 +158,19 @@ class Installer {
             KEY lock_token (lock_token)
         ) $charset_collate;";
         dbDelta($sql_transactional_emails);
+
+        // Create vep_participant_reminders table
+        $table_participant_reminders = $wpdb->prefix . 'vep_participant_reminders';
+        $sql_participant_reminders = "CREATE TABLE $table_participant_reminders (
+            participant_id bigint(20) UNSIGNED NOT NULL,
+            reminder_type varchar(20) NOT NULL,
+            sent_at datetime NOT NULL,
+            created_at datetime DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (participant_id, reminder_type),
+            KEY reminder_type (reminder_type),
+            KEY sent_at (sent_at)
+        ) $charset_collate;";
+        dbDelta($sql_participant_reminders);
         
         // Update version
         update_option('vep_db_version', VEP_VERSION);
@@ -290,6 +303,29 @@ class Installer {
             ) $charset_collate;";
 
             dbDelta($sql_transactional_emails);
+        }
+
+        $table_participant_reminders = $wpdb->prefix . 'vep_participant_reminders';
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Direct schema inspection query is required during install/upgrade.
+        $reminders_exists = $wpdb->get_var($wpdb->prepare(
+            'SHOW TABLES LIKE %s',
+            $table_participant_reminders
+        ));
+        if ($reminders_exists !== $table_participant_reminders) {
+            $charset_collate = $wpdb->get_charset_collate();
+            require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+
+            $sql_participant_reminders = "CREATE TABLE $table_participant_reminders (
+                participant_id bigint(20) UNSIGNED NOT NULL,
+                reminder_type varchar(20) NOT NULL,
+                sent_at datetime NOT NULL,
+                created_at datetime DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (participant_id, reminder_type),
+                KEY reminder_type (reminder_type),
+                KEY sent_at (sent_at)
+            ) $charset_collate;";
+
+            dbDelta($sql_participant_reminders);
         }
     }
 

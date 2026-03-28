@@ -25,7 +25,9 @@ use VolunteerExchangePlatform\Database\ParticipantRepository;
 use VolunteerExchangePlatform\Database\ParticipantTypeRepository;
 use VolunteerExchangePlatform\Database\TagRepository;
 use VolunteerExchangePlatform\Email\TransactionalEmailService;
+use VolunteerExchangePlatform\Email\EmailCleanupWorker;
 use VolunteerExchangePlatform\Email\TransactionalEmailWorker;
+use VolunteerExchangePlatform\Email\ParticipantReminderWorker;
 use VolunteerExchangePlatform\Frontend\ParticipantPage;
 use VolunteerExchangePlatform\Frontend\UpdateParticipantPage;
 use VolunteerExchangePlatform\Services\EventService;
@@ -160,6 +162,8 @@ class Plugin {
     private function init_email() {
         new TransactionalEmailService();
         new TransactionalEmailWorker();
+        new ParticipantReminderWorker();
+        new EmailCleanupWorker();
     }
 
     private function register_hooks() {

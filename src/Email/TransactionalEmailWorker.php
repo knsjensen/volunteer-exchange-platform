@@ -110,8 +110,10 @@ class TransactionalEmailWorker {
             return new \WP_Error( 'vep_email_missing_to', 'Transactional email has no recipients.' );
         }
 
-        // ── Build SMTP2GO email object ─────────────────────────────────
-        $email = array(
+        // ── Build SMTP2GO /v3/email/send request body ──────────────────
+        // api_key goes in the body per SMTP2GO's canonical examples.
+        $request_body = array(
+            'api_key' => $api_key,
             'to'      => $to,
             'sender'  => ( isset( $payload['sender'] ) && '' !== $payload['sender'] )
                 ? $payload['sender']
@@ -121,34 +123,35 @@ class TransactionalEmailWorker {
 
         $template_id = isset( $payload['template_id'] ) ? (string) $payload['template_id'] : '';
         if ( '' !== $template_id ) {
-            $email['template_id'] = $template_id;
+            $request_body['template_id'] = $template_id;
         }
 
         if ( ! empty( $payload['template_data'] ) && is_array( $payload['template_data'] ) ) {
-            $email['template_data'] = $payload['template_data'];
+            $request_body['template_data'] = $payload['template_data'];
         }
 
         if ( ! empty( $payload['html_body'] ) ) {
-            $email['html_body'] = (string) $payload['html_body'];
+            $request_body['html_body'] = (string) $payload['html_body'];
         }
 
         if ( ! empty( $payload['text_body'] ) ) {
-            $email['text_body'] = (string) $payload['text_body'];
+            $request_body['text_body'] = (string) $payload['text_body'];
         }
 
-        // ── POST to SMTP2GO batch endpoint ─────────────────────────────
-        $endpoint = (string) apply_filters( 'vep_smtp2go_batch_endpoint', 'https://api.smtp2go.com/v3/email/batch' );
+        // ── POST to SMTP2GO send endpoint ──────────────────────────────
+        // Uses /v3/email/send (standard API key permission) rather than
+        // /v3/email/batch which requires a separate batch-sending permission.
+        $endpoint = (string) apply_filters( 'vep_smtp2go_send_endpoint', 'https://api.smtp2go.com/v3/email/send' );
 
         $response = wp_remote_post(
             $endpoint,
             array(
                 'timeout' => 15,
                 'headers' => array(
-                    'Content-Type'      => 'application/json',
-                    'accept'            => 'application/json',
-                    'X-Smtp2go-Api-Key' => $api_key,
+                    'Content-Type' => 'application/json',
+                    'accept'       => 'application/json',
                 ),
-                'body' => wp_json_encode( array( 'emails' => array( $email ) ) ),
+                'body' => wp_json_encode( $request_body ),
             )
         );
 
@@ -157,31 +160,33 @@ class TransactionalEmailWorker {
         }
 
         $status_code = (int) wp_remote_retrieve_response_code( $response );
-        $body        = (string) wp_remote_retrieve_body( $response );
+        $body_text   = (string) wp_remote_retrieve_body( $response );
 
         if ( $status_code < 200 || $status_code >= 300 ) {
             return new \WP_Error(
                 'vep_email_http_failure',
-                sprintf( 'SMTP2GO returned HTTP %d. Body: %s', $status_code, substr( $body, 0, 500 ) )
+                sprintf( 'SMTP2GO returned HTTP %d. Body: %s', $status_code, substr( $body_text, 0, 500 ) )
             );
         }
 
-        $decoded = json_decode( $body, true );
+        $decoded = json_decode( $body_text, true );
 
-        // ── Check API-level failure ────────────────────────────────────
-        $failed = ( isset( $decoded['data']['failed'] ) && is_array( $decoded['data']['failed'] ) )
-            ? $decoded['data']['failed']
-            : array();
-
-        if ( ! empty( $failed ) ) {
-            $reason = isset( $failed[0]['error'] ) ? (string) $failed[0]['error'] : 'SMTP2GO reported delivery failure.';
+        // ── Check API-level failures ───────────────────────────────────
+        // /v3/email/send returns data.failed (int) and data.failures (array).
+        if ( isset( $decoded['data']['failed'] ) && (int) $decoded['data']['failed'] > 0 ) {
+            $failures = isset( $decoded['data']['failures'] ) && is_array( $decoded['data']['failures'] )
+                ? $decoded['data']['failures']
+                : array();
+            $reason = isset( $failures[0]['error'] ) ? (string) $failures[0]['error'] : 'SMTP2GO reported delivery failure.';
             return new \WP_Error( 'vep_email_provider_failure', $reason );
         }
 
         // ── Extract message_id ─────────────────────────────────────────
         $provider_message_id = '';
-        if ( isset( $decoded['data']['succeeded'][0]['message_id'] ) ) {
-            $provider_message_id = (string) $decoded['data']['succeeded'][0]['message_id'];
+        if ( isset( $decoded['data']['email_id'] ) ) {
+            $provider_message_id = (string) $decoded['data']['email_id'];
+        } elseif ( isset( $decoded['data']['transaction_id'] ) ) {
+            $provider_message_id = (string) $decoded['data']['transaction_id'];
         }
 
         return array( 'provider_message_id' => $provider_message_id );

@@ -8,7 +8,9 @@
 
 namespace VolunteerExchangePlatform\Plugin;
 
+use VolunteerExchangePlatform\Email\EmailCleanupWorker;
 use VolunteerExchangePlatform\Email\TransactionalEmailWorker;
+use VolunteerExchangePlatform\Email\ParticipantReminderWorker;
 
 // Exit if accessed directly
 if ( ! defined( 'ABSPATH' ) ) {
@@ -39,6 +41,8 @@ class Deactivator {
     private static function deactivate_for_current_site() {
         delete_transient( 'vep_admin_notices' );
         TransactionalEmailWorker::unschedule();
+        ParticipantReminderWorker::unschedule();
+        EmailCleanupWorker::unschedule();
         flush_rewrite_rules();
     }
 

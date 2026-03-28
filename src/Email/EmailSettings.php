@@ -26,9 +26,10 @@ class EmailSettings {
     public static function get_all() {
         $saved    = get_option( self::OPTION_KEY, array() );
         $defaults = array(
-            'api_key'          => '',
-            'sender_name'      => '',
-            'sender_email'     => '',
+            'api_key'           => '',
+            'sender_name'       => '',
+            'sender_email'      => '',
+            'log_retention_days' => 365,
             'template_profiles' => array(),
         );
 
@@ -74,6 +75,16 @@ class EmailSettings {
     public static function sender_email() {
         $settings = self::get_all();
         return (string) $settings['sender_email'];
+    }
+
+    /**
+     * Number of days to keep email log records. 0 = never delete.
+     *
+     * @return int
+     */
+    public static function log_retention_days() {
+        $settings = self::get_all();
+        return max( 0, (int) $settings['log_retention_days'] );
     }
 
     /**
@@ -132,11 +143,15 @@ class EmailSettings {
         $submitted_key = isset( $raw['api_key'] ) ? sanitize_text_field( $raw['api_key'] ) : '';
         $api_key = '' !== $submitted_key ? $submitted_key : $existing['api_key'];
 
+        $retention_raw = isset( $raw['log_retention_days'] ) ? (int) $raw['log_retention_days'] : 365;
+        $log_retention_days = max( 0, $retention_raw );
+
         $settings = array(
-            'api_key'           => $api_key,
-            'sender_name'       => isset( $raw['sender_name'] ) ? sanitize_text_field( $raw['sender_name'] ) : '',
-            'sender_email'      => isset( $raw['sender_email'] ) ? sanitize_email( $raw['sender_email'] ) : '',
-            'template_profiles' => array(),
+            'api_key'            => $api_key,
+            'sender_name'        => isset( $raw['sender_name'] ) ? sanitize_text_field( $raw['sender_name'] ) : '',
+            'sender_email'       => isset( $raw['sender_email'] ) ? sanitize_email( $raw['sender_email'] ) : '',
+            'log_retention_days' => $log_retention_days,
+            'template_profiles'  => array(),
         );
 
         // Template profiles come in as parallel arrays.

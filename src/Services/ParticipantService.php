@@ -596,6 +596,101 @@ class ParticipantService extends AbstractService {
     }
 
     /**
+     * Determine whether a participant still needs update reminders.
+     *
+     * Reminder is needed when at least one of these is missing:
+     * logo, organization description, or we_offer tags.
+     *
+     * @param int $participant_id Participant ID.
+     * @return bool
+     */
+    public function should_send_update_reminder( $participant_id ) {
+        $participant = $this->get_by_id( $participant_id );
+        if ( ! $participant || empty( $participant->is_approved ) ) {
+            return false;
+        }
+
+        $has_logo = ! empty( $participant->logo_url );
+        $has_description = ! empty( trim( (string) $participant->description ) );
+        $has_tags = ! empty( $this->get_tag_ids( $participant_id ) );
+
+        return ! ( $has_logo && $has_description && $has_tags );
+    }
+
+    /**
+     * Queue update reminder email for a participant.
+     *
+     * @param int $participant_id Participant ID.
+     * @return bool True when queued, false when skipped/invalid.
+     */
+    public function queue_update_participant_reminder( $participant_id ) {
+        if ( ! function_exists( 'vep_queue_transactional_email' ) ) {
+            return false;
+        }
+
+        if ( ! $this->should_send_update_reminder( $participant_id ) ) {
+            return false;
+        }
+
+        $participant = $this->get_by_id_with_details( $participant_id );
+        if ( ! $participant ) {
+            return false;
+        }
+
+        $email = isset( $participant->contact_email ) ? sanitize_email( $participant->contact_email ) : '';
+        if ( '' === $email ) {
+            return false;
+        }
+
+        $random_key = isset( $participant->randon_key ) ? sanitize_text_field( (string) $participant->randon_key ) : '';
+        if ( '' === $random_key ) {
+            return false;
+        }
+
+        $confirm_url = home_url( '/vep/updateparticipant/' . rawurlencode( $random_key ) );
+        $event_name = isset( $participant->event_name ) ? (string) $participant->event_name : '';
+        $event_date = '';
+        if ( ! empty( $participant->event_date ) ) {
+            $event_date = date_i18n( get_option( 'date_format' ), strtotime( (string) $participant->event_date ) );
+        }
+
+        $queued = vep_queue_transactional_email(
+            array(
+                'to'           => array( $email ),
+                'template_key' => 'update_participant',
+                'template_data' => array(
+                    'event_name'   => $event_name,
+                    'event_date'   => $event_date,
+                    'contact_name' => (string) ( $participant->contact_person_name ?? '' ),
+                    'confirm_url'  => $confirm_url,
+                ),
+            )
+        );
+
+        return false !== $queued;
+    }
+
+    /**
+     * Get participants needing reminders for a target event date.
+     *
+     * @param string $target_date Date in Y-m-d format.
+     * @return array
+     */
+    public function get_reminder_candidates_by_event_date( $target_date ) {
+        $target_date = sanitize_text_field( (string) $target_date );
+        if ( ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $target_date ) ) {
+            return array();
+        }
+
+        return $this->run_guarded(
+            function () use ( $target_date ) {
+                return $this->repository->get_reminder_candidates_by_event_date( $target_date );
+            },
+            array()
+        );
+    }
+
+    /**
      * Remove participant approval.
      *
      * @param int $participant_id Participant ID.

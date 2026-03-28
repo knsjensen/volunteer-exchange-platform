@@ -58,6 +58,7 @@ require_once VEP_PLUGIN_DIR . 'src/Admin/TagsListTable.php';
 require_once VEP_PLUGIN_DIR . 'src/Admin/TagsPage.php';
 require_once VEP_PLUGIN_DIR . 'src/Admin/EventDisplayPage.php';
 require_once VEP_PLUGIN_DIR . 'src/Admin/CompetitionsPage.php';
+require_once VEP_PLUGIN_DIR . 'src/Admin/TransactionalEmailsListTable.php';
 require_once VEP_PLUGIN_DIR . 'src/Admin/Menu.php';
 
 require_once VEP_PLUGIN_DIR . 'src/Ajax/ParticipantHandler.php';
@@ -68,6 +69,8 @@ require_once VEP_PLUGIN_DIR . 'src/Email/EmailSettings.php';
 require_once VEP_PLUGIN_DIR . 'src/Email/EmailQueueRepository.php';
 require_once VEP_PLUGIN_DIR . 'src/Email/TransactionalEmailService.php';
 require_once VEP_PLUGIN_DIR . 'src/Email/TransactionalEmailWorker.php';
+require_once VEP_PLUGIN_DIR . 'src/Email/ParticipantReminderWorker.php';
+require_once VEP_PLUGIN_DIR . 'src/Email/EmailCleanupWorker.php';
 require_once VEP_PLUGIN_DIR . 'src/Admin/EmailSettingsPage.php';
 
 require_once VEP_PLUGIN_DIR . 'src/Shortcodes/Registration.php';

@@ -390,6 +390,7 @@ class ParticipantsPage {
         
         // Get agreements
         $agreements = $this->participant_service->get_agreements_for_participant($participant_id);
+        $show_reminder_button = $this->participant_service->should_send_update_reminder($participant_id);
         ?>
         <div class="wrap">
             <h1>
@@ -476,6 +477,16 @@ class ParticipantsPage {
                         <?php endif; ?>
                     </td>
                 </tr>
+                <?php if ( $show_reminder_button ) : ?>
+                <tr>
+                    <th><?php esc_html_e('Reminder', 'volunteer-exchange-platform'); ?></th>
+                    <td>
+                        <a class="button button-secondary" href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin.php?page=volunteer-exchange-participants&action=send_reminder&id=' . $participant_id ), 'vep_participant_send_reminder_' . $participant_id ) ); ?>">
+                            <?php esc_html_e('Send Reminder', 'volunteer-exchange-platform'); ?>
+                        </a>
+                    </td>
+                </tr>
+                <?php endif; ?>
             </table>
             
             <h2><?php esc_html_e('Agreements', 'volunteer-exchange-platform'); ?></h2>
@@ -619,7 +630,7 @@ class ParticipantsPage {
         $action = sanitize_key( wp_unslash( $_GET['action'] ) );
         $participant_id = absint( wp_unslash( $_GET['id'] ) );
         
-        if (!in_array($action, array('approve', 'unapprove', 'delete'))) {
+        if (!in_array($action, array('approve', 'unapprove', 'delete', 'send_reminder'))) {
             return;
         }
         
@@ -640,6 +651,9 @@ class ParticipantsPage {
         } elseif ($action === 'unapprove') {
             $result = $this->participant_service->unapprove_participant($participant_id);
             $message = $result ? __('Participant unapproved. Note: Participant number is retained.', 'volunteer-exchange-platform') : __('Could not unapprove participant.', 'volunteer-exchange-platform');
+        } elseif ($action === 'send_reminder') {
+            $result = $this->participant_service->queue_update_participant_reminder($participant_id);
+            $message = $result ? __('Reminder queued for sending.', 'volunteer-exchange-platform') : __('Reminder was not sent (participant may already be fully updated or missing required data).', 'volunteer-exchange-platform');
         } elseif ($action === 'delete') {
             $result = $this->participant_service->delete_participant($participant_id);
             $message = $result ? __('Participant deleted.', 'volunteer-exchange-platform') : __('Could not delete participant.', 'volunteer-exchange-platform');
