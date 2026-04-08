@@ -743,7 +743,7 @@ class ParticipantService extends AbstractService {
             return false;
         }
 
-        $recipient = \VolunteerExchangePlatform\Email\EmailSettings::info_email_recipient();
+        $recipient = \VolunteerExchangePlatform\Email\Settings::info_email_recipient();
         if ( '' === $recipient ) {
             return false;
         }

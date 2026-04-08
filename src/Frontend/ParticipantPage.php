@@ -10,6 +10,7 @@
 
 namespace VolunteerExchangePlatform\Frontend;
 
+use VolunteerExchangePlatform\Email\Settings;
 use VolunteerExchangePlatform\Services\ParticipantService;
 
 // Exit if accessed directly
@@ -30,6 +31,59 @@ class ParticipantPage
      * @var ParticipantService
      */
     private $participant_service;
+
+    /**
+     * Build inline style for action buttons based on settings color.
+     *
+     * @return string
+     */
+    private function get_button_style()
+    {
+        $settings = Settings::get_all();
+        $background_color = isset($settings['button_background_color']) ? sanitize_hex_color((string) $settings['button_background_color']) : '';
+        $border_color = isset($settings['button_border_color']) ? sanitize_hex_color((string) $settings['button_border_color']) : '';
+        $text_color = isset($settings['button_text_color']) ? sanitize_hex_color((string) $settings['button_text_color']) : '';
+
+        if (! $background_color) {
+            return '';
+        }
+
+        if (! $border_color) {
+            $border_color = $background_color;
+        }
+
+        if (! $text_color) {
+            $text_color = $this->get_contrasting_text_color($background_color);
+        }
+
+        return sprintf(
+            'background-color: %1$s; border-color: %2$s; color: %3$s;',
+            $background_color,
+            $border_color,
+            $text_color
+        );
+    }
+
+    /**
+     * Pick a readable text color for a hex background.
+     *
+     * @param string $hex_color Hex color with leading #.
+     * @return string
+     */
+    private function get_contrasting_text_color($hex_color)
+    {
+        $hex = ltrim($hex_color, '#');
+        if (6 !== strlen($hex)) {
+            return '#ffffff';
+        }
+
+        $red = hexdec(substr($hex, 0, 2));
+        $green = hexdec(substr($hex, 2, 2));
+        $blue = hexdec(substr($hex, 4, 2));
+        $brightness = (($red * 299) + ($green * 587) + ($blue * 114)) / 1000;
+
+        return $brightness >= 140 ? '#1f2328' : '#ffffff';
+    }
 
     /**
      * Constructor.
@@ -121,6 +175,7 @@ class ParticipantPage
 
         // Get tags for this participant
         $tags = $this->participant_service->get_tags_for_participant($participant_id);
+        $button_style = $this->get_button_style();
 
         ob_start();
 ?>
@@ -194,7 +249,7 @@ class ParticipantPage
                 <?php endif; ?>
 
                 <div class="vep-detail-actions">
-                    <a href="<?php echo esc_url($this->get_back_url()); ?>" class="vep-button vep-button-secondary">
+                    <a href="<?php echo esc_url($this->get_back_url()); ?>" class="vep-button vep-button-secondary"<?php echo '' !== $button_style ? ' style="' . esc_attr($button_style) . '"' : ''; ?>>
                         <?php esc_html_e('Back to Participants', 'volunteer-exchange-platform'); ?>
                     </a>
                 </div>

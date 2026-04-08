@@ -40,6 +40,23 @@ class ParticipantTypesPage {
         $this->service = $service ?: new ParticipantTypeService();
         add_action('admin_init', array($this, 'handle_form_submission'));
         add_action('admin_init', array($this, 'handle_delete'));
+        add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
+    }
+
+    /**
+     * Enqueue admin assets for participant types page.
+     *
+     * @param string $hook Current admin hook.
+     * @return void
+     */
+    public function enqueue_scripts( $hook ) {
+        if ( false === strpos( $hook, 'volunteer-exchange-participant-types' ) ) {
+            return;
+        }
+
+        wp_enqueue_style( 'wp-color-picker' );
+        wp_enqueue_script( 'wp-color-picker' );
+        wp_add_inline_script( 'wp-color-picker', 'jQuery(function($){$(".vep-color-picker").wpColorPicker();});' );
     }
 
     /**
@@ -168,6 +185,20 @@ class ParticipantTypesPage {
                     </tr>
                     <tr>
                         <th scope="row">
+                            <label for="type_color"><?php esc_html_e('Color', 'volunteer-exchange-platform'); ?></label>
+                        </th>
+                        <td>
+                            <input
+                                type="text"
+                                id="type_color"
+                                name="type_color"
+                                class="regular-text vep-color-picker"
+                                value="<?php echo $type && isset( $type->color ) ? esc_attr( $type->color ) : ''; ?>"
+                            >
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">
                             <label for="type_description"><?php esc_html_e('Description', 'volunteer-exchange-platform'); ?></label>
                         </th>
                         <td>
@@ -219,7 +250,8 @@ class ParticipantTypesPage {
         $data    = array(
             'name'        => isset( $_POST['type_name'] ) ? sanitize_text_field( wp_unslash( $_POST['type_name'] ) ) : '',
             'description' => isset( $_POST['type_description'] ) ? sanitize_textarea_field( wp_unslash( $_POST['type_description'] ) ) : '',
-            'icon'        => isset( $_POST['type_icon'] ) ? sanitize_text_field( wp_unslash( $_POST['type_icon'] ) ) : ''
+            'icon'        => isset( $_POST['type_icon'] ) ? sanitize_text_field( wp_unslash( $_POST['type_icon'] ) ) : '',
+            'color'       => isset( $_POST['type_color'] ) ? sanitize_text_field( wp_unslash( $_POST['type_color'] ) ) : '',
         );
 
         if ($type_id > 0) {

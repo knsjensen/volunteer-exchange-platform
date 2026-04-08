@@ -47,7 +47,7 @@ class EmailCleanupWorker {
      * @return void
      */
     public function run_cleanup() {
-        $days = EmailSettings::log_retention_days();
+        $days = Settings::log_retention_days();
 
         if ( $days <= 0 ) {
             // 0 means "never delete".

@@ -99,7 +99,7 @@ class TransactionalEmailWorker {
         }
 
         // ── Guard: API key ─────────────────────────────────────────────
-        $api_key = \VolunteerExchangePlatform\Email\EmailSettings::api_key();
+        $api_key = \VolunteerExchangePlatform\Email\Settings::api_key();
         if ( '' === $api_key ) {
             return new \WP_Error( 'vep_email_missing_api_key', 'SMTP2GO API key is not configured.' );
         }
@@ -117,7 +117,7 @@ class TransactionalEmailWorker {
             'to'      => $to,
             'sender'  => ( isset( $payload['sender'] ) && '' !== $payload['sender'] )
                 ? $payload['sender']
-                : \VolunteerExchangePlatform\Email\EmailSettings::sender(),
+                : \VolunteerExchangePlatform\Email\Settings::sender(),
             'subject' => isset( $payload['subject'] ) ? (string) $payload['subject'] : '',
         );
 

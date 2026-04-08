@@ -9,7 +9,7 @@
 
 namespace VolunteerExchangePlatform\Ajax;
 
-use VolunteerExchangePlatform\Email\EmailSettings;
+use VolunteerExchangePlatform\Email\Settings;
 use VolunteerExchangePlatform\Services\ParticipantService;
 
 // Exit if accessed directly
@@ -217,7 +217,7 @@ class ParticipantHandler {
             $data['expected_participants_count'] = null;
         } else {
             $expected_count = absint( $expected_count_raw );
-            $max_count = EmailSettings::max_participants_per_organization();
+            $max_count = Settings::max_participants_per_organization();
             
             if ( $expected_count < 1 ) {
                 wp_send_json_error(

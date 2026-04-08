@@ -8,7 +8,7 @@
 
 namespace VolunteerExchangePlatform\Admin;
 
-use VolunteerExchangePlatform\Email\EmailSettings;
+use VolunteerExchangePlatform\Email\Settings;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -70,12 +70,12 @@ class SettingsPage {
                 $errors[] = __( 'Security check failed. Please try again.', 'volunteer-exchange-platform' );
             } else {
                 // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified above.
-                EmailSettings::save( wp_unslash( $_POST ) );
+                Settings::save( wp_unslash( $_POST ) );
                 $saved = true;
             }
         }
 
-        $settings = EmailSettings::get_all();
+        $settings = Settings::get_all();
         $profiles = $settings['template_profiles'];
         ?>
         <div class="wrap vep-email-settings">
@@ -163,19 +163,47 @@ class SettingsPage {
 
                 <?php elseif ( 'design' === $tab ) : ?>
 
-                <h2 class="title"><?php esc_html_e( 'Design', 'volunteer-exchange-platform' ); ?></h2>
+                <h2 class="title"><?php esc_html_e( 'Buttons', 'volunteer-exchange-platform' ); ?></h2>
                 <table class="form-table" role="presentation">
                     <tr>
                         <th scope="row">
-                            <label for="vep_button_color"><?php esc_html_e( 'Button', 'volunteer-exchange-platform' ); ?></label>
+                            <label for="vep_button_background_color"><?php esc_html_e( 'Button background', 'volunteer-exchange-platform' ); ?></label>
                         </th>
                         <td>
                             <input
                                 type="text"
-                                id="vep_button_color"
-                                name="button_color"
+                                id="vep_button_background_color"
+                                name="button_background_color"
                                 class="regular-text vep-color-picker"
-                                value="<?php echo esc_attr( $settings['button_color'] ); ?>"
+                                value="<?php echo esc_attr( $settings['button_background_color'] ); ?>"
+                            >
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">
+                            <label for="vep_button_border_color"><?php esc_html_e( 'Button border', 'volunteer-exchange-platform' ); ?></label>
+                        </th>
+                        <td>
+                            <input
+                                type="text"
+                                id="vep_button_border_color"
+                                name="button_border_color"
+                                class="regular-text vep-color-picker"
+                                value="<?php echo esc_attr( $settings['button_border_color'] ); ?>"
+                            >
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">
+                            <label for="vep_button_text_color"><?php esc_html_e( 'Button text', 'volunteer-exchange-platform' ); ?></label>
+                        </th>
+                        <td>
+                            <input
+                                type="text"
+                                id="vep_button_text_color"
+                                name="button_text_color"
+                                class="regular-text vep-color-picker"
+                                value="<?php echo esc_attr( $settings['button_text_color'] ); ?>"
                             >
                         </td>
                     </tr>

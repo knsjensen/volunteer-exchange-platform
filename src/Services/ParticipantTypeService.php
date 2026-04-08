@@ -106,6 +106,7 @@ class ParticipantTypeService extends AbstractService {
             'name' => $name,
             'description' => sanitize_textarea_field( $data['description'] ?? '' ),
             'icon' => $this->sanitize_icon_value( $data['icon'] ?? '' ),
+            'color' => sanitize_hex_color( $data['color'] ?? '' ) ?: '',
         );
     }
 

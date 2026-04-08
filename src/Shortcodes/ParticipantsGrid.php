@@ -10,6 +10,7 @@
 
 namespace VolunteerExchangePlatform\Shortcodes;
 
+use VolunteerExchangePlatform\Email\Settings;
 use VolunteerExchangePlatform\Services\EventService;
 use VolunteerExchangePlatform\Services\ParticipantService;
 
@@ -46,6 +47,91 @@ class ParticipantsGrid {
         $this->event_service = $event_service ?: new EventService();
         $this->participant_service = $participant_service ?: new ParticipantService();
         add_shortcode('vep_participants_grid', array($this, 'render'));
+    }
+
+    /**
+     * Build inline style for a participant type badge.
+     *
+     * @param mixed $color Raw hex color.
+     * @return string
+     */
+    private function get_participant_type_style( $color ) {
+        $hex_color = sanitize_hex_color( (string) $color );
+        if ( ! $hex_color ) {
+            return '';
+        }
+
+        return sprintf(
+            'background-color: %1$s; color: %2$s;',
+            $hex_color,
+            $this->get_contrasting_text_color( $hex_color )
+        );
+    }
+
+    /**
+     * Build inline style for participant card border using type color.
+     *
+     * @param mixed $color Raw hex color.
+     * @return string
+     */
+    private function get_participant_card_style( $color ) {
+        $hex_color = sanitize_hex_color( (string) $color );
+        if ( ! $hex_color ) {
+            return '';
+        }
+
+        return sprintf( 'border: 2px solid %s;', $hex_color );
+    }
+
+    /**
+     * Pick a readable text color for a hex background.
+     *
+     * @param string $hex_color Hex color with leading #.
+     * @return string
+     */
+    private function get_contrasting_text_color( $hex_color ) {
+        $hex = ltrim( $hex_color, '#' );
+        if ( 6 !== strlen( $hex ) ) {
+            return '#ffffff';
+        }
+
+        $red = hexdec( substr( $hex, 0, 2 ) );
+        $green = hexdec( substr( $hex, 2, 2 ) );
+        $blue = hexdec( substr( $hex, 4, 2 ) );
+        $brightness = ( ( $red * 299 ) + ( $green * 587 ) + ( $blue * 114 ) ) / 1000;
+
+        return $brightness >= 140 ? '#1f2328' : '#ffffff';
+    }
+
+    /**
+     * Build inline style for action buttons based on settings color.
+     *
+     * @return string
+     */
+    private function get_button_style() {
+        $settings = Settings::get_all();
+        $background_color = isset( $settings['button_background_color'] ) ? sanitize_hex_color( (string) $settings['button_background_color'] ) : '';
+        $border_color = isset( $settings['button_border_color'] ) ? sanitize_hex_color( (string) $settings['button_border_color'] ) : '';
+        $text_color = isset( $settings['button_text_color'] ) ? sanitize_hex_color( (string) $settings['button_text_color'] ) : '';
+
+        if ( ! $background_color ) {
+            return '';
+        }
+
+        if ( ! $border_color ) {
+            $border_color = $background_color;
+        }
+
+        if ( ! $text_color ) {
+            $text_color = $this->get_contrasting_text_color( $background_color );
+        }
+
+        return sprintf(
+            'background-color: %1$s; border-color: %2$s; color: %3$s;',
+            $background_color,
+            $border_color,
+            $text_color
+        );
     }
     
     /**
@@ -140,6 +226,8 @@ class ParticipantsGrid {
             asort( $available_tags, SORT_NATURAL | SORT_FLAG_CASE );
         }
 
+        $button_style = $this->get_button_style();
+
         ob_start();
         ?>
         <div class="vep-participants-grid">
@@ -190,9 +278,11 @@ class ParticipantsGrid {
                 <?php foreach ($participants as $participant):
                     $participant_keys = isset( $participant_tag_keys[ (int) $participant->id ] ) ? $participant_tag_keys[ (int) $participant->id ] : array();
                     $participant_type_key = isset( $participant_type_keys[ (int) $participant->id ] ) ? $participant_type_keys[ (int) $participant->id ] : '';
+                    $participant_type_style = $this->get_participant_type_style( $participant->type_color ?? '' );
+                    $participant_card_style = $this->get_participant_card_style( $participant->type_color ?? '' );
                 ?>
                     <div class="vep-grid-item" data-participant-id="<?php echo esc_attr($participant->id); ?>" data-tag-ids="<?php echo esc_attr( implode( ',', $participant_keys ) ); ?>" data-participant-type="<?php echo esc_attr( $participant_type_key ); ?>">
-                        <div class="vep-participant-card">
+                        <div class="vep-participant-card"<?php echo '' !== $participant_card_style ? ' style="' . esc_attr( $participant_card_style ) . '"' : ''; ?>>
                             <?php if ($participant->logo_url): ?>
                                 <div class="vep-participant-logo">
                                     <img src="<?php echo esc_url($participant->logo_url); ?>" alt="<?php echo esc_attr($participant->organization_name); ?>">
@@ -201,8 +291,8 @@ class ParticipantsGrid {
                             
                             <div class="vep-participant-info">
                                 <h3><?php echo esc_html($participant->participant_number); ?>: <?php echo esc_html($participant->organization_name); ?></h3>
-                                <p class="vep-participant-type"><?php echo esc_html($participant->type_name ?? ''); ?></p>
-                                <a href="<?php echo esc_url( add_query_arg( 'vep_back', get_permalink(), \VolunteerExchangePlatform\Frontend\ParticipantPage::get_participant_url($participant->id) ) ); ?>" class="vep-button vep-button-secondary vep-view-details">
+                                <p class="vep-participant-type"<?php echo '' !== $participant_type_style ? ' style="' . esc_attr( $participant_type_style ) . '"' : ''; ?>><?php echo esc_html($participant->type_name ?? ''); ?></p>
+                                <a href="<?php echo esc_url( add_query_arg( 'vep_back', get_permalink(), \VolunteerExchangePlatform\Frontend\ParticipantPage::get_participant_url($participant->id) ) ); ?>" class="vep-button vep-button-secondary vep-view-details"<?php echo '' !== $button_style ? ' style="' . esc_attr( $button_style ) . '"' : ''; ?>>
                                     <?php esc_html_e('View Details', 'volunteer-exchange-platform'); ?>
                                 </a>
                             </div>

@@ -396,6 +396,26 @@ msgstr "Design"
 msgid "Button"
 msgstr "Knap"
 
+#: src/Admin/SettingsPage.php:170
+msgid "Button background"
+msgstr "Knap baggrund"
+
+#: src/Admin/SettingsPage.php:166
+msgid "Buttons"
+msgstr "Knapper"
+
+#: src/Admin/SettingsPage.php:184
+msgid "Button border"
+msgstr "Knap kant"
+
+#: src/Admin/SettingsPage.php:198
+msgid "Button text"
+msgstr "Knap tekst"
+
+#: src/Admin/ParticipantTypesPage.php:188
+msgid "Color"
+msgstr "Farve"
+
 #: src/Admin/SettingsPage.php:295
 msgid "SMTP2GO"
 msgstr "SMTP2GO"

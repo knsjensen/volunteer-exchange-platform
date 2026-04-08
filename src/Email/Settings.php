@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-class EmailSettings {
+class Settings {
     const OPTION_KEY = 'vep_email_settings';
 
     /**
@@ -32,7 +32,9 @@ class EmailSettings {
             'info_email_recipient'   => '',
             'max_participants_per_organization' => 3,
             'log_retention_days'     => 365,
-            'button_color'           => '#f69603',
+            'button_background_color' => '#f69603',
+            'button_border_color'    => '#f69603',
+            'button_text_color'      => '#ffffff',
             'template_profiles'      => array(),
         );
 
@@ -41,6 +43,21 @@ class EmailSettings {
         }
 
         $merged = array_merge( $defaults, $saved );
+
+        // Backward compatibility: migrate old single button color to new button color fields.
+        if ( empty( $saved['button_background_color'] ) && ! empty( $saved['button_color'] ) ) {
+            $legacy_color = sanitize_hex_color( (string) $saved['button_color'] );
+            if ( $legacy_color ) {
+                $merged['button_background_color'] = $legacy_color;
+            }
+        }
+
+        if ( empty( $saved['button_border_color'] ) && ! empty( $saved['button_color'] ) ) {
+            $legacy_color = sanitize_hex_color( (string) $saved['button_color'] );
+            if ( $legacy_color ) {
+                $merged['button_border_color'] = $legacy_color;
+            }
+        }
 
         // Ensure template_profiles is always an array.
         if ( ! is_array( $merged['template_profiles'] ) ) {
@@ -173,7 +190,9 @@ class EmailSettings {
             'info_email_recipient'   => $existing['info_email_recipient'],
             'max_participants_per_organization' => max( 1, (int) $existing['max_participants_per_organization'] ),
             'log_retention_days'     => max( 0, (int) $existing['log_retention_days'] ),
-            'button_color'           => isset( $existing['button_color'] ) ? (string) $existing['button_color'] : '#f69603',
+            'button_background_color' => isset( $existing['button_background_color'] ) ? (string) $existing['button_background_color'] : '#f69603',
+            'button_border_color'    => isset( $existing['button_border_color'] ) ? (string) $existing['button_border_color'] : '#f69603',
+            'button_text_color'      => isset( $existing['button_text_color'] ) ? (string) $existing['button_text_color'] : '#ffffff',
             'template_profiles'      => $existing['template_profiles'],
         );
 
@@ -197,10 +216,36 @@ class EmailSettings {
             $settings['log_retention_days'] = max( 0, (int) $raw['log_retention_days'] );
         }
 
-        if ( isset( $raw['button_color'] ) ) {
-            $button_color = sanitize_hex_color( $raw['button_color'] );
-            if ( false !== $button_color ) {
-                $settings['button_color'] = $button_color;
+        if ( isset( $raw['button_background_color'] ) ) {
+            $button_background_color = sanitize_hex_color( $raw['button_background_color'] );
+            if ( false !== $button_background_color ) {
+                $settings['button_background_color'] = $button_background_color;
+            }
+        }
+
+        if ( isset( $raw['button_border_color'] ) ) {
+            $button_border_color = sanitize_hex_color( $raw['button_border_color'] );
+            if ( false !== $button_border_color ) {
+                $settings['button_border_color'] = $button_border_color;
+            }
+        }
+
+        if ( isset( $raw['button_text_color'] ) ) {
+            $button_text_color = sanitize_hex_color( $raw['button_text_color'] );
+            if ( false !== $button_text_color ) {
+                $settings['button_text_color'] = $button_text_color;
+            }
+        }
+
+        // Keep legacy key in sync for backward compatibility with any older integrations.
+        $settings['button_color'] = $settings['button_background_color'];
+
+        if ( isset( $raw['button_color'] ) && ! isset( $raw['button_background_color'] ) ) {
+            $legacy_button_color = sanitize_hex_color( $raw['button_color'] );
+            if ( false !== $legacy_button_color ) {
+                $settings['button_background_color'] = $legacy_button_color;
+                $settings['button_border_color'] = $legacy_button_color;
+                $settings['button_color'] = $legacy_button_color;
             }
         }
 

@@ -1049,6 +1049,26 @@ msgstr ""
 msgid "Button"
 msgstr ""
 
+#: src/Admin/SettingsPage.php:170
+msgid "Button background"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:166
+msgid "Buttons"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:184
+msgid "Button border"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:198
+msgid "Button text"
+msgstr ""
+
+#: src/Admin/ParticipantTypesPage.php:188
+msgid "Color"
+msgstr ""
+
 #: src/Admin/SettingsPage.php:295
 msgid "SMTP2GO"
 msgstr ""

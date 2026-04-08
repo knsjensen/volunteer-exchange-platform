@@ -63,7 +63,7 @@ class TransactionalEmailService {
         $profile_text_body = '';
 
         if ( '' !== $template_key ) {
-            $profile = \VolunteerExchangePlatform\Email\EmailSettings::get_profile( $template_key );
+            $profile = \VolunteerExchangePlatform\Email\Settings::get_profile( $template_key );
             if ( null === $profile ) {
                 return false;
             }
@@ -99,7 +99,7 @@ class TransactionalEmailService {
         // ── Sender ─────────────────────────────────────────────────────
         $sender = ( isset( $message['sender'] ) && '' !== $message['sender'] )
             ? sanitize_text_field( $message['sender'] )
-            : \VolunteerExchangePlatform\Email\EmailSettings::sender();
+            : \VolunteerExchangePlatform\Email\Settings::sender();
 
         // ── Body ───────────────────────────────────────────────────────
         $html_body = isset( $message['html_body'] ) ? (string) $message['html_body'] : $profile_html_body;

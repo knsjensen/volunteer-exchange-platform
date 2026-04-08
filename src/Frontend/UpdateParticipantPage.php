@@ -9,7 +9,7 @@
 
 namespace VolunteerExchangePlatform\Frontend;
 
-use VolunteerExchangePlatform\Email\EmailSettings;
+use VolunteerExchangePlatform\Email\Settings;
 use VolunteerExchangePlatform\Services\ParticipantService;
 use VolunteerExchangePlatform\Services\ParticipantTypeService;
 use VolunteerExchangePlatform\Services\TagService;
@@ -125,7 +125,7 @@ class UpdateParticipantPage {
     private function render_update_form( $participant, $randon_key ) {
         $types = $this->participant_type_service->get_all_for_select();
         $tags = $this->tag_service->get_paginated( 1000, 0, 'name', 'ASC' );
-        $max_participants = EmailSettings::max_participants_per_organization();
+        $max_participants = Settings::max_participants_per_organization();
         $selected_tag_ids = array_map( 'absint', $this->participant_service->get_tag_ids( (int) $participant->id ) );
         $logo_url = isset( $participant->logo_url ) ? trim( (string) $participant->logo_url ) : '';
         if ( '' !== $logo_url ) {
