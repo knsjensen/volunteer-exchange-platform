@@ -175,6 +175,31 @@
         const expectedCountInput = form.querySelector('#update_expected_participants_count');
         const expectedNamesInput = form.querySelector('#update_expected_participants_names');
         const tagsInputs = Array.from(form.querySelectorAll('input[type="checkbox"][name="tags[]"]'));
+        const logoWrapper = form.querySelector('.vep-current-logo-wrapper');
+        const logoPreviewImage = form.querySelector('.vep-current-logo-preview img');
+        const logoRemoveBtn = form.querySelector('.vep-logo-remove-btn');
+        const removeLogoInput = form.querySelector('#update_remove_logo');
+        const logoFileInput = form.querySelector('#update_logo');
+        const defaultLogoSrc = logoPreviewImage ? String(logoPreviewImage.getAttribute('src') || '') : '';
+        let previewObjectUrl = null;
+
+        function releasePreviewObjectUrl() {
+            if (!previewObjectUrl) return;
+            URL.revokeObjectURL(previewObjectUrl);
+            previewObjectUrl = null;
+        }
+
+        function showLogoPreview(src) {
+            if (!logoWrapper || !logoPreviewImage) return;
+            logoPreviewImage.src = src;
+            logoWrapper.classList.remove('is-hidden');
+        }
+
+        function hideLogoPreview() {
+            if (!logoWrapper || !logoPreviewImage) return;
+            logoPreviewImage.removeAttribute('src');
+            logoWrapper.classList.add('is-hidden');
+        }
 
         function setSelectValue(selectElement, value) {
             if (!selectElement) return;
@@ -324,15 +349,13 @@
             toggleUpdateFields();
         }
 
-        // Logo remove button (X) interaction
-        const logoWrapper = form.querySelector('.vep-current-logo-wrapper');
-        const logoRemoveBtn = form.querySelector('.vep-logo-remove-btn');
-        const removeLogoInput = form.querySelector('#update_remove_logo');
-        const logoFileInput = form.querySelector('#update_logo');
-
         if (logoRemoveBtn && logoWrapper && removeLogoInput) {
             logoRemoveBtn.addEventListener('click', function() {
-                logoWrapper.style.display = 'none';
+                releasePreviewObjectUrl();
+                if (logoFileInput) {
+                    logoFileInput.value = '';
+                }
+                hideLogoPreview();
                 removeLogoInput.value = '1';
             });
         }
@@ -340,8 +363,18 @@
         if (logoFileInput && removeLogoInput) {
             logoFileInput.addEventListener('change', function() {
                 if (logoFileInput.files && logoFileInput.files.length > 0) {
-                    // New file selected — cancel any pending remove.
+                    releasePreviewObjectUrl();
+                    previewObjectUrl = URL.createObjectURL(logoFileInput.files[0]);
+                    showLogoPreview(previewObjectUrl);
                     removeLogoInput.value = '0';
+                } else {
+                    releasePreviewObjectUrl();
+                    if (defaultLogoSrc) {
+                        showLogoPreview(defaultLogoSrc);
+                        removeLogoInput.value = '0';
+                    } else {
+                        hideLogoPreview();
+                    }
                 }
             });
         }

@@ -177,15 +177,13 @@ class UpdateParticipantPage {
                     <label for="update_logo"><?php esc_html_e( 'Organization Logo', 'volunteer-exchange-platform' ); ?></label>
                     <input type="file" id="update_logo" name="logo" accept="image/*">
                     <small><?php esc_html_e( 'Supported formats: JPG, PNG, GIF. Max size: 2MB', 'volunteer-exchange-platform' ); ?></small>
-                    <?php if ( '' !== $logo_url ) : ?>
-                        <div class="vep-current-logo-wrapper">
-                            <div class="vep-current-logo-preview">
-                                <img src="<?php echo esc_url( $logo_url ); ?>" alt="<?php echo esc_attr( (string) $participant->organization_name ); ?>" loading="lazy" decoding="async">
-                                <button type="button" class="vep-logo-remove-btn" aria-label="<?php esc_attr_e( 'Remove current logo', 'volunteer-exchange-platform' ); ?>">&#x2715;</button>
-                            </div>
-                            <input type="hidden" id="update_remove_logo" name="remove_logo" value="0">
+                    <div class="vep-current-logo-wrapper<?php echo '' === $logo_url ? ' is-hidden' : ''; ?>">
+                        <div class="vep-current-logo-preview">
+                            <img src="<?php echo esc_url( $logo_url ); ?>" alt="<?php echo esc_attr( (string) $participant->organization_name ); ?>" loading="lazy" decoding="async">
+                            <button type="button" class="vep-logo-remove-btn" aria-label="<?php esc_attr_e( 'Remove current logo', 'volunteer-exchange-platform' ); ?>">&#x2715;</button>
                         </div>
-                    <?php endif; ?>
+                        <input type="hidden" id="update_remove_logo" name="remove_logo" value="0">
+                    </div>
                 </div>
 
                 <div class="vep-form-group">

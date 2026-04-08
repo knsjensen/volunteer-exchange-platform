@@ -723,6 +723,10 @@
     margin-top: 12px;
 }
 
+.vep-update-participant-page .vep-current-logo-wrapper.is-hidden {
+    display: none;
+}
+
 .vep-update-participant-page .vep-current-logo-preview {
     display: inline-flex;
     align-items: center;
