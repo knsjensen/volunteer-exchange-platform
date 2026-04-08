@@ -733,6 +733,43 @@ class ParticipantService extends AbstractService {
     }
 
     /**
+     * Queue a new-registration notification email to the system info recipient.
+     *
+     * @param int $participant_id
+     * @return bool
+     */
+    public function queue_new_registration_notification( $participant_id ) {
+        if ( ! function_exists( 'vep_queue_transactional_email' ) ) {
+            return false;
+        }
+
+        $recipient = \VolunteerExchangePlatform\Email\EmailSettings::info_email_recipient();
+        if ( '' === $recipient ) {
+            return false;
+        }
+
+        $participant = $this->get_by_id_with_details( $participant_id );
+        if ( ! $participant ) {
+            return false;
+        }
+
+        $event_name = isset( $participant->event_name ) ? (string) $participant->event_name : '';
+
+        $queued = vep_queue_transactional_email(
+            array(
+                'to'            => array( $recipient ),
+                'template_key'  => 'new_participant_registration',
+                'template_data' => array(
+                    'event_name' => $event_name,
+                    'admin_url'  => admin_url(),
+                ),
+            )
+        );
+
+        return false !== $queued;
+    }
+
+    /**
      * Get participants needing reminders for a target event date.
      *
      * @param string $target_date Date in Y-m-d format.

@@ -96,6 +96,26 @@ class EmailSettingsPage {
             <form method="post" action="">
                 <?php wp_nonce_field( 'vep_email_settings_save', 'vep_email_settings_nonce' ); ?>
 
+                <!-- ── General ────────────────────────────────────────── -->
+                <h2 class="title"><?php esc_html_e( 'General', 'volunteer-exchange-platform' ); ?></h2>
+                <table class="form-table" role="presentation">
+                    <tr>
+                        <th scope="row">
+                            <label for="vep_info_email_recipient"><?php esc_html_e( 'Info emails recipient', 'volunteer-exchange-platform' ); ?></label>
+                        </th>
+                        <td>
+                            <input
+                                type="email"
+                                id="vep_info_email_recipient"
+                                name="info_email_recipient"
+                                class="regular-text"
+                                value="<?php echo esc_attr( $settings['info_email_recipient'] ); ?>"
+                            >
+                            <p class="description"><?php esc_html_e( 'Email address that receives system notifications, e.g. new participant registrations.', 'volunteer-exchange-platform' ); ?></p>
+                        </td>
+                    </tr>
+                </table>
+
                 <!-- ── SMTP2GO connection ───────────────────────────────── -->
                 <h2 class="title"><?php esc_html_e( 'SMTP2GO Connection', 'volunteer-exchange-platform' ); ?></h2>
                 <table class="form-table" role="presentation">
@@ -287,8 +307,20 @@ class EmailSettingsPage {
                 <tr>
                     <th><label><?php esc_html_e( 'Internal Key', 'volunteer-exchange-platform' ); ?></label></th>
                     <td>
-                        <input type="text" name="profile_key[<?php echo esc_attr( $index ); ?>]" value="<?php echo esc_attr( $key ); ?>" class="regular-text" placeholder="e.g. participant_confirmation">
-                        <p class="description"><?php esc_html_e( 'Unique slug used in code, e.g. participant_confirmation. Lowercase, no spaces.', 'volunteer-exchange-platform' ); ?></p>
+                        <?php
+                        $known_keys = array(
+                            'participant_approved'          => __( 'participant_approved', 'volunteer-exchange-platform' ),
+                            'update_participant'            => __( 'update_participant', 'volunteer-exchange-platform' ),
+                            'new_participant_registration'  => __( 'new_participant_registration', 'volunteer-exchange-platform' ),
+                        );
+                        ?>
+                        <select name="profile_key[<?php echo esc_attr( $index ); ?>]" class="regular-text">
+                            <option value=""><?php esc_html_e( '— Select a key —', 'volunteer-exchange-platform' ); ?></option>
+                            <?php foreach ( $known_keys as $k => $label ) : ?>
+                                <option value="<?php echo esc_attr( $k ); ?>" <?php selected( $key, $k ); ?>><?php echo esc_html( $label ); ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                        <p class="description"><?php esc_html_e( 'The internal template key used in code to queue this email.', 'volunteer-exchange-platform' ); ?></p>
                     </td>
                 </tr>
                 <tr>
@@ -345,16 +377,130 @@ class EmailSettingsPage {
 jQuery(function ($) {
     var $container = $('#vep-template-profiles');
     var $template  = $('#vep-profile-row-template').html();
+    var $addButton = $('#vep-add-profile');
     var index      = $container.find('.vep-profile-row').length;
+    var allKeyOptions = [];
+
+    function profileSelects() {
+        return $container.find('select[name^="profile_key["]');
+    }
+
+    function collectAllKeyOptions() {
+        if (allKeyOptions.length > 0) {
+            return;
+        }
+
+        var $firstSelect = profileSelects().first();
+        if (!$firstSelect.length) {
+            return;
+        }
+
+        $firstSelect.find('option').each(function () {
+            var value = $(this).attr('value');
+            if (value) {
+                allKeyOptions.push({
+                    value: value,
+                    label: $(this).text()
+                });
+            }
+        });
+    }
+
+    function selectedKeyValues() {
+        var selected = [];
+        profileSelects().each(function () {
+            var value = $(this).val();
+            if (value) {
+                selected.push(value);
+            }
+        });
+        return selected;
+    }
+
+    function enforceUniqueSelections() {
+        var seen = {};
+        profileSelects().each(function () {
+            var $select = $(this);
+            var value = $select.val();
+
+            if (!value) {
+                return;
+            }
+
+            if (seen[value]) {
+                $select.val('');
+                return;
+            }
+
+            seen[value] = true;
+        });
+    }
+
+    function rebuildSelectOptions() {
+        var selected = selectedKeyValues();
+
+        profileSelects().each(function () {
+            var $select = $(this);
+            var currentValue = $select.val();
+
+            $select.empty();
+            $select.append($('<option>', {
+                value: '',
+                text: '\u2014 Select a key \u2014'
+            }));
+
+            allKeyOptions.forEach(function (option) {
+                var isSelectedElsewhere = selected.indexOf(option.value) !== -1 && option.value !== currentValue;
+                if (isSelectedElsewhere) {
+                    return;
+                }
+
+                $select.append($('<option>', {
+                    value: option.value,
+                    text: option.label
+                }));
+            });
+
+            if (currentValue && $select.find('option[value="' + currentValue.replace(/"/g, '\\"') + '"]').length) {
+                $select.val(currentValue);
+            } else {
+                $select.val('');
+            }
+        });
+    }
+
+    function updateAddButtonVisibility() {
+        var usedCount = selectedKeyValues().length;
+        $addButton.toggle(usedCount < allKeyOptions.length);
+    }
+
+    function refreshKeyUI() {
+        collectAllKeyOptions();
+        enforceUniqueSelections();
+        rebuildSelectOptions();
+        updateAddButtonVisibility();
+    }
+
+    refreshKeyUI();
 
     $('#vep-add-profile').on('click', function () {
+        if (selectedKeyValues().length >= allKeyOptions.length) {
+            return;
+        }
+
         var html = $template.replace(/__INDEX__/g, index);
         $container.append(html);
         index++;
+        refreshKeyUI();
     });
 
     $container.on('click', '.remove-profile', function () {
         $(this).closest('.vep-profile-row').remove();
+        refreshKeyUI();
+    });
+
+    $container.on('change', 'select[name^="profile_key["]', function () {
+        refreshKeyUI();
     });
 });
 JS;

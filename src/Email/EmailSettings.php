@@ -26,11 +26,12 @@ class EmailSettings {
     public static function get_all() {
         $saved    = get_option( self::OPTION_KEY, array() );
         $defaults = array(
-            'api_key'           => '',
-            'sender_name'       => '',
-            'sender_email'      => '',
-            'log_retention_days' => 365,
-            'template_profiles' => array(),
+            'api_key'                => '',
+            'sender_name'            => '',
+            'sender_email'           => '',
+            'info_email_recipient'   => '',
+            'log_retention_days'     => 365,
+            'template_profiles'      => array(),
         );
 
         if ( ! is_array( $saved ) ) {
@@ -85,6 +86,16 @@ class EmailSettings {
     public static function log_retention_days() {
         $settings = self::get_all();
         return max( 0, (int) $settings['log_retention_days'] );
+    }
+
+    /**
+     * Info emails recipient address.
+     *
+     * @return string
+     */
+    public static function info_email_recipient() {
+        $settings = self::get_all();
+        return (string) $settings['info_email_recipient'];
     }
 
     /**
@@ -147,11 +158,12 @@ class EmailSettings {
         $log_retention_days = max( 0, $retention_raw );
 
         $settings = array(
-            'api_key'            => $api_key,
-            'sender_name'        => isset( $raw['sender_name'] ) ? sanitize_text_field( $raw['sender_name'] ) : '',
-            'sender_email'       => isset( $raw['sender_email'] ) ? sanitize_email( $raw['sender_email'] ) : '',
-            'log_retention_days' => $log_retention_days,
-            'template_profiles'  => array(),
+            'api_key'              => $api_key,
+            'sender_name'          => isset( $raw['sender_name'] ) ? sanitize_text_field( $raw['sender_name'] ) : '',
+            'sender_email'         => isset( $raw['sender_email'] ) ? sanitize_email( $raw['sender_email'] ) : '',
+            'info_email_recipient' => isset( $raw['info_email_recipient'] ) ? sanitize_email( $raw['info_email_recipient'] ) : '',
+            'log_retention_days'   => $log_retention_days,
+            'template_profiles'    => array(),
         );
 
         // Template profiles come in as parallel arrays.

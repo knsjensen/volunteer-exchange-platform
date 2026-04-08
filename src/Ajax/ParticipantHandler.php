@@ -129,9 +129,11 @@ class ParticipantHandler {
 
         $participant_id = $this->participant_service->create_with_tags($data, $tag_ids);
 
-        if ($participant_id === false) {
+        if ( false === $participant_id ) {
             wp_send_json_error(array('message' => __('Error saving registration. Please try again.', 'volunteer-exchange-platform')));
         }
+
+        $this->participant_service->queue_new_registration_notification( $participant_id );
         
         wp_send_json_success(array(
             'message' => __('Registration submitted successfully! Your registration is pending approval.', 'volunteer-exchange-platform')
