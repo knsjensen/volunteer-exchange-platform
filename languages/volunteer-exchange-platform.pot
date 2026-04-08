@@ -1081,3 +1081,11 @@ msgstr ""
 #: src/Ajax/ParticipantHandler.php:233
 msgid "Participants Expected must be empty or between 1 and %d."
 msgstr ""
+
+#: src/Frontend/UpdateParticipantPage.php:190
+msgid "e.g., 3"
+msgstr ""
+
+#: src/Frontend/UpdateParticipantPage.php
+msgid "Remove current logo"
+msgstr ""

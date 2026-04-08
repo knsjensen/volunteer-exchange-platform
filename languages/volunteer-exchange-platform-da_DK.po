@@ -1054,12 +1054,20 @@ msgstr "Den interne templatesnøgle, som bruges i koden til at sætte denne e-ma
 
 #: src/Frontend/UpdateParticipantPage.php:189
 msgid "Participants Expected (1-%d)"
-msgstr "Forventede deltagere (1-%d)"
+msgstr "Forventede antal deltagere (1-%d)"
 
 #: src/Ajax/ParticipantHandler.php:223
 msgid "Participants Expected must be empty or at least 1."
-msgstr "Forventede deltagere skal være tomt eller mindst 1."
+msgstr "Forventede antal deltagere skal være tomt eller mindst 1."
 
 #: src/Ajax/ParticipantHandler.php:233
 msgid "Participants Expected must be empty or between 1 and %d."
-msgstr "Forventede deltagere skal være tomt eller mellem 1 og %d."
+msgstr "Forventede antal deltagere skal være tomt eller mellem 1 og %d."
+
+#: src/Frontend/UpdateParticipantPage.php:190
+msgid "e.g., 3"
+msgstr "f.eks. 3"
+
+#: src/Frontend/UpdateParticipantPage.php
+msgid "Remove current logo"
+msgstr "Fjern nuværende logo"

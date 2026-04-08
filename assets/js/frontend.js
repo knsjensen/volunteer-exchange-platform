@@ -324,6 +324,28 @@
             toggleUpdateFields();
         }
 
+        // Logo remove button (X) interaction
+        const logoWrapper = form.querySelector('.vep-current-logo-wrapper');
+        const logoRemoveBtn = form.querySelector('.vep-logo-remove-btn');
+        const removeLogoInput = form.querySelector('#update_remove_logo');
+        const logoFileInput = form.querySelector('#update_logo');
+
+        if (logoRemoveBtn && logoWrapper && removeLogoInput) {
+            logoRemoveBtn.addEventListener('click', function() {
+                logoWrapper.style.display = 'none';
+                removeLogoInput.value = '1';
+            });
+        }
+
+        if (logoFileInput && removeLogoInput) {
+            logoFileInput.addEventListener('change', function() {
+                if (logoFileInput.files && logoFileInput.files.length > 0) {
+                    // New file selected — cancel any pending remove.
+                    removeLogoInput.value = '0';
+                }
+            });
+        }
+
         form.addEventListener('submit', function(e) {
             e.preventDefault();
 

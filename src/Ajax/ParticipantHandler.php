@@ -169,6 +169,8 @@ class ParticipantHandler {
             wp_send_json_error( array( 'message' => __( 'Invalid participant selection.', 'volunteer-exchange-platform' ) ) );
         }
 
+        $remove_logo = isset( $_POST['remove_logo'] ) && '1' === sanitize_text_field( wp_unslash( $_POST['remove_logo'] ) );
+
         $logo_url  = null;
         $logo_name = isset( $_FILES['logo']['name'] ) ? sanitize_file_name( wp_unslash( $_FILES['logo']['name'] ) ) : '';
         if ( '' !== $logo_name ) {
@@ -241,7 +243,10 @@ class ParticipantHandler {
         }
 
         if ( null !== $logo_url ) {
+            // A new file was uploaded — always takes priority over the remove flag.
             $data['logo_url'] = $logo_url;
+        } elseif ( $remove_logo ) {
+            $data['logo_url'] = '';
         }
 
         $updated = $this->participant_service->update_participant( $participant_id, $data );

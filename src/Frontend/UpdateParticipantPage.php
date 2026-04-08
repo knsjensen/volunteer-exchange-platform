@@ -127,6 +127,10 @@ class UpdateParticipantPage {
         $tags = $this->tag_service->get_paginated( 1000, 0, 'name', 'ASC' );
         $max_participants = EmailSettings::max_participants_per_organization();
         $selected_tag_ids = array_map( 'absint', $this->participant_service->get_tag_ids( (int) $participant->id ) );
+        $logo_url = isset( $participant->logo_url ) ? trim( (string) $participant->logo_url ) : '';
+        if ( '' !== $logo_url ) {
+            $logo_url = set_url_scheme( $logo_url, is_ssl() ? 'https' : 'http' );
+        }
 
         ob_start();
         ?>
@@ -173,9 +177,13 @@ class UpdateParticipantPage {
                     <label for="update_logo"><?php esc_html_e( 'Organization Logo', 'volunteer-exchange-platform' ); ?></label>
                     <input type="file" id="update_logo" name="logo" accept="image/*">
                     <small><?php esc_html_e( 'Supported formats: JPG, PNG, GIF. Max size: 2MB', 'volunteer-exchange-platform' ); ?></small>
-                    <?php if ( ! empty( $participant->logo_url ) ) : ?>
-                        <div class="vep-current-logo-preview">
-                            <img src="<?php echo esc_url( (string) $participant->logo_url ); ?>" alt="<?php echo esc_attr( (string) $participant->organization_name ); ?>">
+                    <?php if ( '' !== $logo_url ) : ?>
+                        <div class="vep-current-logo-wrapper">
+                            <div class="vep-current-logo-preview">
+                                <img src="<?php echo esc_url( $logo_url ); ?>" alt="<?php echo esc_attr( (string) $participant->organization_name ); ?>" loading="lazy" decoding="async">
+                                <button type="button" class="vep-logo-remove-btn" aria-label="<?php esc_attr_e( 'Remove current logo', 'volunteer-exchange-platform' ); ?>">&#x2715;</button>
+                            </div>
+                            <input type="hidden" id="update_remove_logo" name="remove_logo" value="0">
                         </div>
                     <?php endif; ?>
                 </div>
@@ -187,7 +195,7 @@ class UpdateParticipantPage {
 
                 <div class="vep-form-group">
                     <label for="update_expected_participants_count"><?php printf( esc_html__( 'Participants Expected (1-%d)', 'volunteer-exchange-platform' ), (int) $max_participants ); ?></label>
-                    <input type="number" id="update_expected_participants_count" name="expected_participants_count" min="1" max="<?php echo esc_attr( (int) $max_participants ); ?>" step="1" placeholder="<?php esc_attr_e( 'e.g., 12', 'volunteer-exchange-platform' ); ?>" value="<?php echo esc_attr( isset( $participant->expected_participants_count ) ? (string) $participant->expected_participants_count : '' ); ?>">
+                    <input type="number" id="update_expected_participants_count" name="expected_participants_count" min="1" max="<?php echo esc_attr( (int) $max_participants ); ?>" step="1" placeholder="<?php esc_attr_e( 'e.g., 3', 'volunteer-exchange-platform' ); ?>" value="<?php echo esc_attr( isset( $participant->expected_participants_count ) ? (string) $participant->expected_participants_count : '' ); ?>">
                 </div>
 
                 <div class="vep-form-group">
