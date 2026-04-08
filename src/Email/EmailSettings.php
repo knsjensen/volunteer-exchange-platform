@@ -32,6 +32,7 @@ class EmailSettings {
             'info_email_recipient'   => '',
             'max_participants_per_organization' => 3,
             'log_retention_days'     => 365,
+            'button_color'           => '#f69603',
             'template_profiles'      => array(),
         );
 
@@ -165,54 +166,83 @@ class EmailSettings {
         $submitted_key = isset( $raw['api_key'] ) ? sanitize_text_field( $raw['api_key'] ) : '';
         $api_key = '' !== $submitted_key ? $submitted_key : $existing['api_key'];
 
-        $retention_raw = isset( $raw['log_retention_days'] ) ? (int) $raw['log_retention_days'] : 365;
-        $log_retention_days = max( 0, $retention_raw );
-
         $settings = array(
-            'api_key'              => $api_key,
-            'sender_name'          => isset( $raw['sender_name'] ) ? sanitize_text_field( $raw['sender_name'] ) : '',
-            'sender_email'         => isset( $raw['sender_email'] ) ? sanitize_email( $raw['sender_email'] ) : '',
-            'info_email_recipient' => isset( $raw['info_email_recipient'] ) ? sanitize_email( $raw['info_email_recipient'] ) : '',
-            'max_participants_per_organization' => isset( $raw['max_participants_per_organization'] ) ? max( 1, (int) $raw['max_participants_per_organization'] ) : 3,
-            'log_retention_days'   => $log_retention_days,
-            'template_profiles'    => array(),
+            'api_key'                => $api_key,
+            'sender_name'            => $existing['sender_name'],
+            'sender_email'           => $existing['sender_email'],
+            'info_email_recipient'   => $existing['info_email_recipient'],
+            'max_participants_per_organization' => max( 1, (int) $existing['max_participants_per_organization'] ),
+            'log_retention_days'     => max( 0, (int) $existing['log_retention_days'] ),
+            'button_color'           => isset( $existing['button_color'] ) ? (string) $existing['button_color'] : '#f69603',
+            'template_profiles'      => $existing['template_profiles'],
         );
 
+        if ( isset( $raw['sender_name'] ) ) {
+            $settings['sender_name'] = sanitize_text_field( $raw['sender_name'] );
+        }
+
+        if ( isset( $raw['sender_email'] ) ) {
+            $settings['sender_email'] = sanitize_email( $raw['sender_email'] );
+        }
+
+        if ( isset( $raw['info_email_recipient'] ) ) {
+            $settings['info_email_recipient'] = sanitize_email( $raw['info_email_recipient'] );
+        }
+
+        if ( isset( $raw['max_participants_per_organization'] ) ) {
+            $settings['max_participants_per_organization'] = max( 1, (int) $raw['max_participants_per_organization'] );
+        }
+
+        if ( isset( $raw['log_retention_days'] ) ) {
+            $settings['log_retention_days'] = max( 0, (int) $raw['log_retention_days'] );
+        }
+
+        if ( isset( $raw['button_color'] ) ) {
+            $button_color = sanitize_hex_color( $raw['button_color'] );
+            if ( false !== $button_color ) {
+                $settings['button_color'] = $button_color;
+            }
+        }
+
         // Template profiles come in as parallel arrays.
-        $keys        = isset( $raw['profile_key'] ) && is_array( $raw['profile_key'] ) ? $raw['profile_key'] : array();
-        $labels      = isset( $raw['profile_label'] ) && is_array( $raw['profile_label'] ) ? $raw['profile_label'] : array();
-        $tpl_ids     = isset( $raw['profile_template_id'] ) && is_array( $raw['profile_template_id'] ) ? $raw['profile_template_id'] : array();
-        $subjects    = isset( $raw['profile_subject'] ) && is_array( $raw['profile_subject'] ) ? $raw['profile_subject'] : array();
-        $data_keys   = isset( $raw['profile_data_keys'] ) && is_array( $raw['profile_data_keys'] ) ? $raw['profile_data_keys'] : array();
-        $html_bodies = isset( $raw['profile_html_body'] ) && is_array( $raw['profile_html_body'] ) ? $raw['profile_html_body'] : array();
-        $text_bodies = isset( $raw['profile_text_body'] ) && is_array( $raw['profile_text_body'] ) ? $raw['profile_text_body'] : array();
+        if ( isset( $raw['profile_key'] ) && is_array( $raw['profile_key'] ) ) {
+            $settings['template_profiles'] = array();
 
-        $seen_keys = array();
-        foreach ( $keys as $i => $raw_key ) {
-            $profile_key = sanitize_key( $raw_key );
-            if ( '' === $profile_key || in_array( $profile_key, $seen_keys, true ) ) {
-                continue;
-            }
-            $seen_keys[] = $profile_key;
+            $keys        = $raw['profile_key'];
+            $labels      = isset( $raw['profile_label'] ) && is_array( $raw['profile_label'] ) ? $raw['profile_label'] : array();
+            $tpl_ids     = isset( $raw['profile_template_id'] ) && is_array( $raw['profile_template_id'] ) ? $raw['profile_template_id'] : array();
+            $subjects    = isset( $raw['profile_subject'] ) && is_array( $raw['profile_subject'] ) ? $raw['profile_subject'] : array();
+            $data_keys   = isset( $raw['profile_data_keys'] ) && is_array( $raw['profile_data_keys'] ) ? $raw['profile_data_keys'] : array();
+            $html_bodies = isset( $raw['profile_html_body'] ) && is_array( $raw['profile_html_body'] ) ? $raw['profile_html_body'] : array();
+            $text_bodies = isset( $raw['profile_text_body'] ) && is_array( $raw['profile_text_body'] ) ? $raw['profile_text_body'] : array();
 
-            $allowed = array();
-            $data_keys_raw = isset( $data_keys[ $i ] ) ? $data_keys[ $i ] : '';
-            foreach ( preg_split( '/[\r\n,]+/', $data_keys_raw ) as $dk ) {
-                $dk = sanitize_key( trim( $dk ) );
-                if ( '' !== $dk ) {
-                    $allowed[] = $dk;
+            $seen_keys = array();
+            foreach ( $keys as $i => $raw_key ) {
+                $profile_key = sanitize_key( $raw_key );
+                if ( '' === $profile_key || in_array( $profile_key, $seen_keys, true ) ) {
+                    continue;
                 }
-            }
+                $seen_keys[] = $profile_key;
 
-            $settings['template_profiles'][] = array(
-                'key'             => $profile_key,
-                'label'           => isset( $labels[ $i ] ) ? sanitize_text_field( $labels[ $i ] ) : $profile_key,
-                'template_id'     => isset( $tpl_ids[ $i ] ) ? sanitize_text_field( $tpl_ids[ $i ] ) : '',
-                'default_subject' => isset( $subjects[ $i ] ) ? sanitize_text_field( $subjects[ $i ] ) : '',
-                'allowed_data_keys' => $allowed,
-                'default_html_body' => isset( $html_bodies[ $i ] ) ? wp_kses_post( $html_bodies[ $i ] ) : '',
-                'default_text_body' => isset( $text_bodies[ $i ] ) ? sanitize_textarea_field( $text_bodies[ $i ] ) : '',
-            );
+                $allowed = array();
+                $data_keys_raw = isset( $data_keys[ $i ] ) ? $data_keys[ $i ] : '';
+                foreach ( preg_split( '/[\r\n,]+/', $data_keys_raw ) as $dk ) {
+                    $dk = sanitize_key( trim( $dk ) );
+                    if ( '' !== $dk ) {
+                        $allowed[] = $dk;
+                    }
+                }
+
+                $settings['template_profiles'][] = array(
+                    'key'             => $profile_key,
+                    'label'           => isset( $labels[ $i ] ) ? sanitize_text_field( $labels[ $i ] ) : $profile_key,
+                    'template_id'     => isset( $tpl_ids[ $i ] ) ? sanitize_text_field( $tpl_ids[ $i ] ) : '',
+                    'default_subject' => isset( $subjects[ $i ] ) ? sanitize_text_field( $subjects[ $i ] ) : '',
+                    'allowed_data_keys' => $allowed,
+                    'default_html_body' => isset( $html_bodies[ $i ] ) ? wp_kses_post( $html_bodies[ $i ] ) : '',
+                    'default_text_body' => isset( $text_bodies[ $i ] ) ? sanitize_textarea_field( $text_bodies[ $i ] ) : '',
+                );
+            }
         }
 
         update_option( self::OPTION_KEY, $settings );

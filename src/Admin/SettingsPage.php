@@ -1,6 +1,6 @@
 <?php
 /**
- * Email settings admin page.
+ * Settings admin page.
  *
  * @package VEP
  * @subpackage Admin
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-class EmailSettingsPage {
+class SettingsPage {
 
     public function __construct() {
         add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
@@ -30,6 +30,9 @@ class EmailSettingsPage {
         if ( false === strpos( $hook, 'vep-email-settings' ) ) {
             return;
         }
+
+        wp_enqueue_style( 'wp-color-picker' );
+        wp_enqueue_script( 'wp-color-picker' );
 
         // Inline script — no external dependency needed.
         wp_add_inline_script(
@@ -52,14 +55,14 @@ class EmailSettingsPage {
         if ( 'sent-emails' === $tab ) {
             $tab = 'transactional-emails';
         }
-        if ( ! in_array( $tab, array( 'settings', 'transactional-emails' ), true ) ) {
+        if ( ! in_array( $tab, array( 'settings', 'design', 'smtp2go', 'transactional-emails' ), true ) ) {
             $tab = 'settings';
         }
 
         $saved    = false;
         $errors   = array();
 
-        if ( 'settings' === $tab && isset( $_POST['vep_email_settings_nonce'] ) ) {
+        if ( in_array( $tab, array( 'settings', 'design', 'smtp2go' ), true ) && isset( $_POST['vep_email_settings_nonce'] ) ) {
             if ( ! wp_verify_nonce(
                 sanitize_text_field( wp_unslash( $_POST['vep_email_settings_nonce'] ) ),
                 'vep_email_settings_save'
@@ -76,7 +79,7 @@ class EmailSettingsPage {
         $profiles = $settings['template_profiles'];
         ?>
         <div class="wrap vep-email-settings">
-            <h1><?php esc_html_e( 'Email Settings', 'volunteer-exchange-platform' ); ?></h1>
+            <h1><?php esc_html_e( 'Settings', 'volunteer-exchange-platform' ); ?></h1>
 
             <?php $this->render_tabs( $tab ); ?>
 
@@ -95,6 +98,9 @@ class EmailSettingsPage {
             <?php else : ?>
             <form method="post" action="">
                 <?php wp_nonce_field( 'vep_email_settings_save', 'vep_email_settings_nonce' ); ?>
+                <input type="hidden" name="tab" value="<?php echo esc_attr( $tab ); ?>" />
+
+                <?php if ( 'settings' === $tab ) : ?>
 
                 <!-- ── General ────────────────────────────────────────── -->
                 <h2 class="title"><?php esc_html_e( 'General', 'volunteer-exchange-platform' ); ?></h2>
@@ -132,6 +138,50 @@ class EmailSettingsPage {
                         </td>
                     </tr>
                 </table>
+
+                <!-- ── Log retention ──────────────────────────────────── -->
+                <h2 class="title"><?php esc_html_e( 'Email Log Retention', 'volunteer-exchange-platform' ); ?></h2>
+                <table class="form-table" role="presentation">
+                    <tr>
+                        <th scope="row">
+                            <label for="vep_log_retention_days"><?php esc_html_e( 'Delete after (days)', 'volunteer-exchange-platform' ); ?></label>
+                        </th>
+                        <td>
+                            <input
+                                type="number"
+                                id="vep_log_retention_days"
+                                name="log_retention_days"
+                                class="small-text"
+                                min="0"
+                                step="1"
+                                value="<?php echo esc_attr( $settings['log_retention_days'] ); ?>"
+                            >
+                            <p class="description"><?php esc_html_e( 'Transactional email records older than this many days are automatically removed. Set to 0 to keep records indefinitely.', 'volunteer-exchange-platform' ); ?></p>
+                        </td>
+                    </tr>
+                </table>
+
+                <?php elseif ( 'design' === $tab ) : ?>
+
+                <h2 class="title"><?php esc_html_e( 'Design', 'volunteer-exchange-platform' ); ?></h2>
+                <table class="form-table" role="presentation">
+                    <tr>
+                        <th scope="row">
+                            <label for="vep_button_color"><?php esc_html_e( 'Button', 'volunteer-exchange-platform' ); ?></label>
+                        </th>
+                        <td>
+                            <input
+                                type="text"
+                                id="vep_button_color"
+                                name="button_color"
+                                class="regular-text vep-color-picker"
+                                value="<?php echo esc_attr( $settings['button_color'] ); ?>"
+                            >
+                        </td>
+                    </tr>
+                </table>
+
+                <?php elseif ( 'smtp2go' === $tab ) : ?>
 
                 <!-- ── SMTP2GO connection ───────────────────────────────── -->
                 <h2 class="title"><?php esc_html_e( 'SMTP2GO Connection', 'volunteer-exchange-platform' ); ?></h2>
@@ -188,28 +238,6 @@ class EmailSettingsPage {
                     </tr>
                 </table>
 
-                <!-- ── Log retention ──────────────────────────────────── -->
-                <h2 class="title"><?php esc_html_e( 'Email Log Retention', 'volunteer-exchange-platform' ); ?></h2>
-                <table class="form-table" role="presentation">
-                    <tr>
-                        <th scope="row">
-                            <label for="vep_log_retention_days"><?php esc_html_e( 'Delete after (days)', 'volunteer-exchange-platform' ); ?></label>
-                        </th>
-                        <td>
-                            <input
-                                type="number"
-                                id="vep_log_retention_days"
-                                name="log_retention_days"
-                                class="small-text"
-                                min="0"
-                                step="1"
-                                value="<?php echo esc_attr( $settings['log_retention_days'] ); ?>"
-                            >
-                            <p class="description"><?php esc_html_e( 'Transactional email records older than this many days are automatically removed. Set to 0 to keep records indefinitely.', 'volunteer-exchange-platform' ); ?></p>
-                        </td>
-                    </tr>
-                </table>
-
                 <!-- ── Template profiles ───────────────────────────────── -->
                 <h2 class="title"><?php esc_html_e( 'Email Templates', 'volunteer-exchange-platform' ); ?></h2>
                 <p class="description"><?php esc_html_e( 'Each template corresponds to an SMTP2GO template ID. The internal key is used in code to queue the right email.', 'volunteer-exchange-platform' ); ?></p>
@@ -230,12 +258,14 @@ class EmailSettingsPage {
                     </button>
                 </p>
 
+                <?php endif; ?>
+
                 <?php submit_button( __( 'Save Settings', 'volunteer-exchange-platform' ) ); ?>
             </form>
             <?php endif; ?>
         </div>
 
-        <?php if ( 'settings' === $tab ) : ?>
+        <?php if ( 'smtp2go' === $tab ) : ?>
             <!-- Row template used by JS to clone new rows. -->
             <script type="text/html" id="vep-profile-row-template">
                 <?php $this->render_profile_row( '__INDEX__', array() ); ?>
@@ -260,14 +290,22 @@ class EmailSettingsPage {
      */
     private function render_tabs( $active_tab ) {
         $settings_url = admin_url( 'admin.php?page=vep-email-settings&tab=settings' );
+        $design_url = admin_url( 'admin.php?page=vep-email-settings&tab=design' );
+        $smtp2go_url = admin_url( 'admin.php?page=vep-email-settings&tab=smtp2go' );
         $log_url = admin_url( 'admin.php?page=vep-email-settings&tab=transactional-emails' );
         ?>
         <h2 class="nav-tab-wrapper">
             <a href="<?php echo esc_url( $settings_url ); ?>" class="nav-tab <?php echo 'settings' === $active_tab ? 'nav-tab-active' : ''; ?>">
                 <?php esc_html_e( 'Settings', 'volunteer-exchange-platform' ); ?>
             </a>
+            <a href="<?php echo esc_url( $design_url ); ?>" class="nav-tab <?php echo 'design' === $active_tab ? 'nav-tab-active' : ''; ?>">
+                <?php esc_html_e( 'Design', 'volunteer-exchange-platform' ); ?>
+            </a>
+            <a href="<?php echo esc_url( $smtp2go_url ); ?>" class="nav-tab <?php echo 'smtp2go' === $active_tab ? 'nav-tab-active' : ''; ?>">
+                <?php esc_html_e( 'SMTP2GO', 'volunteer-exchange-platform' ); ?>
+            </a>
             <a href="<?php echo esc_url( $log_url ); ?>" class="nav-tab <?php echo 'transactional-emails' === $active_tab ? 'nav-tab-active' : ''; ?>">
-                <?php esc_html_e( 'Transactional Emails', 'volunteer-exchange-platform' ); ?>
+                <?php esc_html_e( 'Sent Mail', 'volunteer-exchange-platform' ); ?>
             </a>
         </h2>
         <?php
@@ -392,6 +430,10 @@ class EmailSettingsPage {
     private function inline_js() {
         return <<<'JS'
 jQuery(function ($) {
+    if ($.fn.wpColorPicker) {
+        $('.vep-color-picker').wpColorPicker();
+    }
+
     var $container = $('#vep-template-profiles');
     var $template  = $('#vep-profile-row-template').html();
     var $addButton = $('#vep-add-profile');

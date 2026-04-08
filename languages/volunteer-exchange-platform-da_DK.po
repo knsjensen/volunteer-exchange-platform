@@ -382,6 +382,172 @@ msgstr "Vis detaljeknap"
 msgid "Show button linking to participant details page."
 msgstr "Vis knap med link til deltagersiden."
 
+#: src/Admin/Menu.php:146
+#: src/Admin/Menu.php:147
+#: src/Admin/SettingsPage.php:72
+msgid "Settings"
+msgstr "Indstillinger"
+
+#: src/Admin/SettingsPage.php:173
+msgid "Design"
+msgstr "Design"
+
+#: src/Admin/SettingsPage.php:177
+msgid "Button"
+msgstr "Knap"
+
+#: src/Admin/SettingsPage.php:295
+msgid "SMTP2GO"
+msgstr "SMTP2GO"
+
+#: src/Admin/SettingsPage.php:298
+msgid "Sent Mail"
+msgstr "Sendte mails"
+
+#: src/Admin/SettingsPage.php:88
+msgid "Settings saved."
+msgstr "Indstillinger gemt."
+
+#: src/Admin/SettingsPage.php:106
+msgid "General"
+msgstr "Generelt"
+
+#: src/Admin/SettingsPage.php:110
+msgid "Info emails recipient"
+msgstr "Modtager af informationsmails"
+
+#: src/Admin/SettingsPage.php:143
+msgid "Email Log Retention"
+msgstr "Logopbevaring for e-mails"
+
+#: src/Admin/SettingsPage.php:147
+msgid "Delete after (days)"
+msgstr "Slet efter (dage)"
+
+#: src/Admin/SettingsPage.php:159
+msgid "Transactional email records older than this many days are automatically removed. Set to 0 to keep records indefinitely."
+msgstr "Transaktionelle e-mailposter, der er ældre end dette antal dage, fjernes automatisk. Sæt til 0 for at beholde poster på ubestemt tid."
+
+#: src/Admin/SettingsPage.php:187
+msgid "SMTP2GO Connection"
+msgstr "SMTP2GO forbindelse"
+
+#: src/Admin/SettingsPage.php:191
+msgid "API Key"
+msgstr "API-nøgle"
+
+#: src/Admin/SettingsPage.php:203
+msgid "A key is already saved. Leave blank to keep the current key, or enter a new one to replace it."
+msgstr "En nøgle er allerede gemt. Lad feltet stå tomt for at beholde den nuværende nøgle, eller indtast en ny for at erstatte den."
+
+#: src/Admin/SettingsPage.php:205
+msgid "Your SMTP2GO API key."
+msgstr "Din SMTP2GO API-nøgle."
+
+#: src/Admin/SettingsPage.php:211
+msgid "Sender Name"
+msgstr "Afsendernavn"
+
+#: src/Admin/SettingsPage.php:221
+msgid "Display name used as email sender, e.g. Frivilligcenter Odense."
+msgstr "Vist navn, der bruges som e-mailafsender, f.eks. Frivilligcenter Odense."
+
+#: src/Admin/SettingsPage.php:226
+msgid "Sender Email"
+msgstr "Afsender e-mail"
+
+#: src/Admin/SettingsPage.php:236
+msgid "From address for all outgoing emails."
+msgstr "Fra-adresse for alle udgående e-mails."
+
+#: src/Admin/SettingsPage.php:242
+msgid "Email Templates"
+msgstr "E-mailskabeloner"
+
+#: src/Admin/SettingsPage.php:243
+msgid "Each template corresponds to an SMTP2GO template ID. The internal key is used in code to queue the right email."
+msgstr "Hver skabelon svarer til et SMTP2GO-skabelon-id. Den interne nøgle bruges i koden til at sætte den rigtige e-mail i kø."
+
+#: src/Admin/SettingsPage.php:257
+msgid "+ Add Template Profile"
+msgstr "+ Tilføj skabelonprofil"
+
+#: src/Admin/SettingsPage.php:358
+msgid "Template Profile"
+msgstr "Skabelonprofil"
+
+#: src/Admin/SettingsPage.php:359
+msgid "Remove"
+msgstr "Fjern"
+
+#: src/Admin/SettingsPage.php:363
+msgid "Internal Key"
+msgstr "Intern nøgle"
+
+#: src/Admin/SettingsPage.php:367
+msgid "participant_approved"
+msgstr "deltager_godkendt"
+
+#: src/Admin/SettingsPage.php:368
+msgid "update_participant"
+msgstr "opdater_deltager"
+
+#: src/Admin/SettingsPage.php:369
+msgid "new_participant_registration"
+msgstr "ny_deltagerregistrering"
+
+#: src/Admin/SettingsPage.php:382
+msgid "Label"
+msgstr "Etiket"
+
+#: src/Admin/SettingsPage.php:388
+msgid "Template ID (SMTP2GO)"
+msgstr "Skabelon-id (SMTP2GO)"
+
+#: src/Admin/SettingsPage.php:394
+msgid "Default Subject"
+msgstr "Standardemne"
+
+#: src/Admin/SettingsPage.php:397
+msgid "Used when no subject is passed in code."
+msgstr "Bruges når der ikke sendes noget emne i koden."
+
+#: src/Admin/SettingsPage.php:401
+msgid "Allowed template_data Keys"
+msgstr "Tilladte template_data-nøgler"
+
+#: src/Admin/SettingsPage.php:404
+msgid "One key per line. Only keys listed here are forwarded to SMTP2GO."
+msgstr "En nøgle pr. linje. Kun nøgler på listen videresendes til SMTP2GO."
+
+#: src/Admin/SettingsPage.php:408
+msgid "Default HTML Body (fallback)"
+msgstr "Standard HTML-indhold (fallback)"
+
+#: src/Admin/SettingsPage.php:411
+msgid "Used when no html_body is passed in code and template ID is not set."
+msgstr "Bruges når der ikke sendes html_body i koden, og skabelon-id ikke er sat."
+
+#: src/Admin/SettingsPage.php:415
+msgid "Default Text Body (fallback)"
+msgstr "Standard tekstindhold (fallback)"
+
+#: src/Admin/TransactionalEmailsListTable.php:115
+msgid "Pending"
+msgstr "Afventer"
+
+#: src/Admin/TransactionalEmailsListTable.php:116
+msgid "Processing"
+msgstr "Behandles"
+
+#: src/Admin/TransactionalEmailsListTable.php:117
+msgid "Sent"
+msgstr "Sendt"
+
+#: src/Admin/TransactionalEmailsListTable.php:118
+msgid "Failed"
+msgstr "Fejlet"
+
 #: includes/Admin/ParticipantsListTable.php
 msgid "✓ Approve"
 msgstr "✓ Godkend"

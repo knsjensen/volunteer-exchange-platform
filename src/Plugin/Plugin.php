@@ -9,12 +9,12 @@
 namespace VolunteerExchangePlatform\Plugin;
 
 use VolunteerExchangePlatform\Admin\CompetitionsPage;
-use VolunteerExchangePlatform\Admin\EmailSettingsPage;
 use VolunteerExchangePlatform\Admin\EventDisplayPage;
 use VolunteerExchangePlatform\Admin\EventsPage;
 use VolunteerExchangePlatform\Admin\Menu;
 use VolunteerExchangePlatform\Admin\ParticipantsPage;
 use VolunteerExchangePlatform\Admin\ParticipantTypesPage;
+use VolunteerExchangePlatform\Admin\SettingsPage;
 use VolunteerExchangePlatform\Admin\TagsPage;
 use VolunteerExchangePlatform\Ajax\AgreementHandler;
 use VolunteerExchangePlatform\Ajax\EventDisplayHandler;
@@ -130,7 +130,7 @@ class Plugin {
         $tags_page = new TagsPage( $services['tag'] );
         $event_display_page = new EventDisplayPage( $services['event'] );
         $competitions_page   = new CompetitionsPage();
-        $email_settings_page = new EmailSettingsPage();
+        $settings_page = new SettingsPage();
 
         new Menu(
             $events_page,
@@ -139,7 +139,7 @@ class Plugin {
             $tags_page,
             $event_display_page,
             $competitions_page,
-            $email_settings_page
+            $settings_page
         );
     }
 

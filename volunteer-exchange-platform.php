@@ -71,7 +71,7 @@ require_once VEP_PLUGIN_DIR . 'src/Email/TransactionalEmailService.php';
 require_once VEP_PLUGIN_DIR . 'src/Email/TransactionalEmailWorker.php';
 require_once VEP_PLUGIN_DIR . 'src/Email/ParticipantReminderWorker.php';
 require_once VEP_PLUGIN_DIR . 'src/Email/EmailCleanupWorker.php';
-require_once VEP_PLUGIN_DIR . 'src/Admin/EmailSettingsPage.php';
+require_once VEP_PLUGIN_DIR . 'src/Admin/SettingsPage.php';
 
 require_once VEP_PLUGIN_DIR . 'src/Shortcodes/Registration.php';
 require_once VEP_PLUGIN_DIR . 'src/Shortcodes/ParticipantsGrid.php';

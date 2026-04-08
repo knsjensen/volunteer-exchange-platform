@@ -1035,6 +1035,172 @@ msgstr ""
 msgid "Participant name"
 msgstr ""
 
+#: src/Admin/Menu.php:146
+#: src/Admin/Menu.php:147
+#: src/Admin/SettingsPage.php:72
+msgid "Settings"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:173
+msgid "Design"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:177
+msgid "Button"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:295
+msgid "SMTP2GO"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:298
+msgid "Sent Mail"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:88
+msgid "Settings saved."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:106
+msgid "General"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:110
+msgid "Info emails recipient"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:143
+msgid "Email Log Retention"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:147
+msgid "Delete after (days)"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:159
+msgid "Transactional email records older than this many days are automatically removed. Set to 0 to keep records indefinitely."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:187
+msgid "SMTP2GO Connection"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:191
+msgid "API Key"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:203
+msgid "A key is already saved. Leave blank to keep the current key, or enter a new one to replace it."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:205
+msgid "Your SMTP2GO API key."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:211
+msgid "Sender Name"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:221
+msgid "Display name used as email sender, e.g. Frivilligcenter Odense."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:226
+msgid "Sender Email"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:236
+msgid "From address for all outgoing emails."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:242
+msgid "Email Templates"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:243
+msgid "Each template corresponds to an SMTP2GO template ID. The internal key is used in code to queue the right email."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:257
+msgid "+ Add Template Profile"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:358
+msgid "Template Profile"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:359
+msgid "Remove"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:363
+msgid "Internal Key"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:367
+msgid "participant_approved"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:368
+msgid "update_participant"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:369
+msgid "new_participant_registration"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:382
+msgid "Label"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:388
+msgid "Template ID (SMTP2GO)"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:394
+msgid "Default Subject"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:397
+msgid "Used when no subject is passed in code."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:401
+msgid "Allowed template_data Keys"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:404
+msgid "One key per line. Only keys listed here are forwarded to SMTP2GO."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:408
+msgid "Default HTML Body (fallback)"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:411
+msgid "Used when no html_body is passed in code and template ID is not set."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:415
+msgid "Default Text Body (fallback)"
+msgstr ""
+
+#: src/Admin/TransactionalEmailsListTable.php:115
+msgid "Pending"
+msgstr ""
+
+#: src/Admin/TransactionalEmailsListTable.php:116
+msgid "Processing"
+msgstr ""
+
+#: src/Admin/TransactionalEmailsListTable.php:117
+msgid "Sent"
+msgstr ""
+
+#: src/Admin/TransactionalEmailsListTable.php:118
+msgid "Failed"
+msgstr ""
+
 #: src/Plugin/Plugin.php
 msgid "agreement"
 msgstr ""

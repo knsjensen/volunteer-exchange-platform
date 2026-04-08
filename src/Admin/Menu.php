@@ -9,6 +9,8 @@
 
 namespace VolunteerExchangePlatform\Admin;
 
+use VolunteerExchangePlatform\Admin\SettingsPage;
+
 // Exit if accessed directly
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -28,7 +30,7 @@ class Menu {
     private $tagsPage;
     private $eventDisplayPage;
     private $competitionsPage;
-    private $emailSettingsPage;
+    private $settingsPage;
 
     /**
         * Constructor.
@@ -48,7 +50,7 @@ class Menu {
         ?TagsPage $tags_page = null,
             ?EventDisplayPage $event_display_page = null,
             ?CompetitionsPage $competitions_page = null,
-        ?EmailSettingsPage $email_settings_page = null
+        ?SettingsPage $settings_page = null
     ) {
         $this->eventsPage = $events_page ?: new EventsPage();
         $this->participantsPage = $participants_page ?: new ParticipantsPage();
@@ -56,7 +58,7 @@ class Menu {
         $this->tagsPage = $tags_page ?: new TagsPage();
         $this->eventDisplayPage = $event_display_page ?: new EventDisplayPage();
             $this->competitionsPage = $competitions_page ?: new CompetitionsPage();
-        $this->emailSettingsPage = $email_settings_page ?: new EmailSettingsPage();
+        $this->settingsPage = $settings_page ?: new SettingsPage();
 
         add_action('admin_menu', array($this, 'add_menu_pages'));
     }
@@ -138,14 +140,14 @@ class Menu {
             array($this->competitionsPage, 'render')
         );
 
-        // Email Settings submenu
+        // Settings submenu
         add_submenu_page(
             'volunteer-exchange',
-            __('Email Settings', 'volunteer-exchange-platform'),
-            __('Email Settings', 'volunteer-exchange-platform'),
+            __('Settings', 'volunteer-exchange-platform'),
+            __('Settings', 'volunteer-exchange-platform'),
             'manage_options',
             'vep-email-settings',
-            array($this->emailSettingsPage, 'render')
+            array($this->settingsPage, 'render')
         );
 
         // Remove duplicate main menu item
