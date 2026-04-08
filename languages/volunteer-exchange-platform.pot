@@ -1049,3 +1049,35 @@ msgstr ""
 #: src/Shortcodes/AgreementForm.php
 msgid "Choose one to preselect as Participant 1 next time."
 msgstr ""
+
+#: src/Admin/EmailSettingsPage.php:114
+msgid "Email address that receives system notifications, e.g. new participant registrations."
+msgstr ""
+
+#: src/Admin/EmailSettingsPage.php:119
+msgid "Max participants per organization"
+msgstr ""
+
+#: src/Admin/EmailSettingsPage.php:131
+msgid "Maximum allowed value for Participants Expected on the update form."
+msgstr ""
+
+#: src/Admin/EmailSettingsPage.php:335
+msgid "— Select a key —"
+msgstr ""
+
+#: src/Admin/EmailSettingsPage.php:340
+msgid "The internal template key used in code to queue this email."
+msgstr ""
+
+#: src/Frontend/UpdateParticipantPage.php:189
+msgid "Participants Expected (1-%d)"
+msgstr ""
+
+#: src/Ajax/ParticipantHandler.php:223
+msgid "Participants Expected must be empty or at least 1."
+msgstr ""
+
+#: src/Ajax/ParticipantHandler.php:233
+msgid "Participants Expected must be empty or between 1 and %d."
+msgstr ""

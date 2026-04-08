@@ -30,6 +30,7 @@ class EmailSettings {
             'sender_name'            => '',
             'sender_email'           => '',
             'info_email_recipient'   => '',
+            'max_participants_per_organization' => 3,
             'log_retention_days'     => 365,
             'template_profiles'      => array(),
         );
@@ -99,6 +100,16 @@ class EmailSettings {
     }
 
     /**
+     * Maximum participants allowed per organization.
+     *
+     * @return int
+     */
+    public static function max_participants_per_organization() {
+        $settings = self::get_all();
+        return max( 1, (int) $settings['max_participants_per_organization'] );
+    }
+
+    /**
      * Build sender string "Name <email>" if both set, else just email.
      *
      * @return string
@@ -162,6 +173,7 @@ class EmailSettings {
             'sender_name'          => isset( $raw['sender_name'] ) ? sanitize_text_field( $raw['sender_name'] ) : '',
             'sender_email'         => isset( $raw['sender_email'] ) ? sanitize_email( $raw['sender_email'] ) : '',
             'info_email_recipient' => isset( $raw['info_email_recipient'] ) ? sanitize_email( $raw['info_email_recipient'] ) : '',
+            'max_participants_per_organization' => isset( $raw['max_participants_per_organization'] ) ? max( 1, (int) $raw['max_participants_per_organization'] ) : 3,
             'log_retention_days'   => $log_retention_days,
             'template_profiles'    => array(),
         );

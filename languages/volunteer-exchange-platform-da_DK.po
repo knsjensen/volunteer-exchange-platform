@@ -65,7 +65,7 @@ msgstr "Beskriv hvad din organisation laver, og hvad der gør den unik."
 
 #: includes/Shortcodes/Registration.php
 msgid "Participants Expected"
-msgstr "Forventede antal deltagere (1-3)"
+msgstr "Forventede antal deltagere"
 
 #: includes/Shortcodes/Registration.php
 msgid "e.g., 2"
@@ -1031,3 +1031,35 @@ msgstr "Hvilken deltager er du?"
 #: src/Shortcodes/AgreementForm.php
 msgid "Choose one to preselect as Participant 1 next time."
 msgstr "Vælg en for at forudvælge som Deltager 1 næste gang."
+
+#: src/Admin/EmailSettingsPage.php:114
+msgid "Email address that receives system notifications, e.g. new participant registrations."
+msgstr "E-mailadresse der modtager systemnotifikationer, f.eks. nye deltagerregistreringer."
+
+#: src/Admin/EmailSettingsPage.php:119
+msgid "Max participants per organization"
+msgstr "Maksimalt antal deltagere pr. organisation"
+
+#: src/Admin/EmailSettingsPage.php:131
+msgid "Maximum allowed value for Participants Expected on the update form."
+msgstr "Maksimal tilladt værdi for Forventede deltagere i opdateringsformularen."
+
+#: src/Admin/EmailSettingsPage.php:335
+msgid "— Select a key —"
+msgstr "— Vælg en nøgle —"
+
+#: src/Admin/EmailSettingsPage.php:340
+msgid "The internal template key used in code to queue this email."
+msgstr "Den interne templatesnøgle, som bruges i koden til at sætte denne e-mail i kø."
+
+#: src/Frontend/UpdateParticipantPage.php:189
+msgid "Participants Expected (1-%d)"
+msgstr "Forventede deltagere (1-%d)"
+
+#: src/Ajax/ParticipantHandler.php:223
+msgid "Participants Expected must be empty or at least 1."
+msgstr "Forventede deltagere skal være tomt eller mindst 1."
+
+#: src/Ajax/ParticipantHandler.php:233
+msgid "Participants Expected must be empty or between 1 and %d."
+msgstr "Forventede deltagere skal være tomt eller mellem 1 og %d."

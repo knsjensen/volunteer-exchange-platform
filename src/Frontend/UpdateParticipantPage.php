@@ -9,6 +9,7 @@
 
 namespace VolunteerExchangePlatform\Frontend;
 
+use VolunteerExchangePlatform\Email\EmailSettings;
 use VolunteerExchangePlatform\Services\ParticipantService;
 use VolunteerExchangePlatform\Services\ParticipantTypeService;
 use VolunteerExchangePlatform\Services\TagService;
@@ -124,6 +125,7 @@ class UpdateParticipantPage {
     private function render_update_form( $participant, $randon_key ) {
         $types = $this->participant_type_service->get_all_for_select();
         $tags = $this->tag_service->get_paginated( 1000, 0, 'name', 'ASC' );
+        $max_participants = EmailSettings::max_participants_per_organization();
         $selected_tag_ids = array_map( 'absint', $this->participant_service->get_tag_ids( (int) $participant->id ) );
 
         ob_start();
@@ -184,8 +186,8 @@ class UpdateParticipantPage {
                 </div>
 
                 <div class="vep-form-group">
-                    <label for="update_expected_participants_count"><?php esc_html_e( 'Participants Expected', 'volunteer-exchange-platform' ); ?></label>
-                    <input type="number" id="update_expected_participants_count" name="expected_participants_count" min="0" step="1" placeholder="<?php esc_attr_e( 'e.g., 12', 'volunteer-exchange-platform' ); ?>" value="<?php echo esc_attr( isset( $participant->expected_participants_count ) ? (string) $participant->expected_participants_count : '' ); ?>">
+                    <label for="update_expected_participants_count"><?php printf( esc_html__( 'Participants Expected (1-%d)', 'volunteer-exchange-platform' ), (int) $max_participants ); ?></label>
+                    <input type="number" id="update_expected_participants_count" name="expected_participants_count" min="1" max="<?php echo esc_attr( (int) $max_participants ); ?>" step="1" placeholder="<?php esc_attr_e( 'e.g., 12', 'volunteer-exchange-platform' ); ?>" value="<?php echo esc_attr( isset( $participant->expected_participants_count ) ? (string) $participant->expected_participants_count : '' ); ?>">
                 </div>
 
                 <div class="vep-form-group">

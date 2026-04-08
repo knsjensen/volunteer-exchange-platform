@@ -9,6 +9,7 @@
 
 namespace VolunteerExchangePlatform\Ajax;
 
+use VolunteerExchangePlatform\Email\EmailSettings;
 use VolunteerExchangePlatform\Services\ParticipantService;
 
 // Exit if accessed directly
@@ -213,7 +214,30 @@ class ParticipantHandler {
         if ( '' === $expected_count_raw ) {
             $data['expected_participants_count'] = null;
         } else {
-            $data['expected_participants_count'] = absint( $expected_count_raw );
+            $expected_count = absint( $expected_count_raw );
+            $max_count = EmailSettings::max_participants_per_organization();
+            
+            if ( $expected_count < 1 ) {
+                wp_send_json_error(
+                    array(
+                        'message' => __( 'Participants Expected must be empty or at least 1.', 'volunteer-exchange-platform' ),
+                    )
+                );
+            }
+
+            if ($expected_count > $max_count ) {
+                wp_send_json_error(
+                    array(
+                        'message' => sprintf(
+                            /* translators: %d: max participants per organization */
+                            __( 'Participants Expected must be empty or between 1 and %d.', 'volunteer-exchange-platform' ),
+                            (int) $max_count
+                        ),
+                    )
+                );
+            }
+
+            $data['expected_participants_count'] = $expected_count;
         }
 
         if ( null !== $logo_url ) {

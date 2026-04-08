@@ -114,6 +114,23 @@ class EmailSettingsPage {
                             <p class="description"><?php esc_html_e( 'Email address that receives system notifications, e.g. new participant registrations.', 'volunteer-exchange-platform' ); ?></p>
                         </td>
                     </tr>
+                    <tr>
+                        <th scope="row">
+                            <label for="vep_max_participants_per_organization"><?php esc_html_e( 'Max participants per organization', 'volunteer-exchange-platform' ); ?></label>
+                        </th>
+                        <td>
+                            <input
+                                type="number"
+                                id="vep_max_participants_per_organization"
+                                name="max_participants_per_organization"
+                                class="small-text"
+                                min="1"
+                                step="1"
+                                value="<?php echo esc_attr( (int) $settings['max_participants_per_organization'] ); ?>"
+                            >
+                            <p class="description"><?php esc_html_e( 'Maximum allowed value for Participants Expected on the update form.', 'volunteer-exchange-platform' ); ?></p>
+                        </td>
+                    </tr>
                 </table>
 
                 <!-- ── SMTP2GO connection ───────────────────────────────── -->
