@@ -174,7 +174,7 @@ class ParticipantRepository extends AbstractRepository {
         $events_table = $this->wpdb->prefix . 'vep_events';
 
         return $this->get_row(
-            "SELECT p.*, pt.name as type_name, e.name as event_name
+            "SELECT p.*, pt.name as type_name, pt.color as type_color, e.name as event_name
              FROM {$this->table()} p
              LEFT JOIN {$types_table} pt ON p.participant_type_id = pt.id
              LEFT JOIN {$events_table} e ON p.event_id = e.id

@@ -1284,3 +1284,11 @@ msgstr ""
 #: src/Frontend/UpdateParticipantPage.php
 msgid "Remove current logo"
 msgstr ""
+
+#: src/Frontend/UpdateParticipantPage.php src/Admin/ParticipantsPage.php
+msgid "Link to homepage"
+msgstr ""
+
+#: src/Frontend/ParticipantPage.php
+msgid "Read more"
+msgstr ""

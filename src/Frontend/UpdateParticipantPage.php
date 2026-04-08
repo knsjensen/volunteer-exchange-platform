@@ -187,6 +187,11 @@ class UpdateParticipantPage {
                 </div>
 
                 <div class="vep-form-group">
+                    <label for="update_link"><?php esc_html_e( 'Link to homepage', 'volunteer-exchange-platform' ); ?></label>
+                    <input type="url" id="update_link" name="link" value="<?php echo esc_attr( (string) ( $participant->link ?? '' ) ); ?>" placeholder="https://">
+                </div>
+
+                <div class="vep-form-group">
                     <label for="update_description"><?php esc_html_e( 'Organization Description', 'volunteer-exchange-platform' ); ?></label>
                     <textarea id="update_description" name="description" rows="4" placeholder="<?php esc_attr_e( 'Tell us about your organization...', 'volunteer-exchange-platform' ); ?>"><?php echo esc_textarea( (string) $participant->description ); ?></textarea>
                 </div>

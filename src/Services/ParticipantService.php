@@ -365,6 +365,10 @@ class ParticipantService extends AbstractService {
             $normalized['logo_url'] = esc_url_raw( $data['logo_url'] ?? '' );
         }
 
+        if ( array_key_exists( 'link', $data ) || ! $is_update ) {
+            $normalized['link'] = esc_url_raw( $data['link'] ?? '' );
+        }
+
         if ( array_key_exists( 'is_approved', $data ) ) {
             $normalized['is_approved'] = ! empty( $data['is_approved'] ) ? 1 : 0;
         }

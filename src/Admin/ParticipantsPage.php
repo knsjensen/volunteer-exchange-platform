@@ -317,6 +317,15 @@ class ParticipantsPage {
                     </tr>
                     <tr>
                         <th scope="row">
+                            <label for="link"><?php esc_html_e('Link to homepage', 'volunteer-exchange-platform'); ?></label>
+                        </th>
+                        <td>
+                            <input type="url" id="link" name="link" class="regular-text"
+                                   value="<?php echo $participant ? esc_attr($participant->link ?? '') : ''; ?>" placeholder="https://">
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">
                             <label for="logo"><?php esc_html_e('Logo', 'volunteer-exchange-platform'); ?></label>
                         </th>
                         <td>
@@ -575,6 +584,7 @@ class ParticipantsPage {
             'contact_person_name' => isset( $_POST['contact_person_name'] ) ? sanitize_text_field( wp_unslash( $_POST['contact_person_name'] ) ) : '',
             'contact_email' => isset( $_POST['contact_email'] ) ? sanitize_email( wp_unslash( $_POST['contact_email'] ) ) : '',
             'contact_phone' => isset( $_POST['contact_phone'] ) ? sanitize_text_field( wp_unslash( $_POST['contact_phone'] ) ) : '',
+            'link' => isset( $_POST['link'] ) ? esc_url_raw( wp_unslash( $_POST['link'] ) ) : '',
             'is_approved' => isset( $_POST['is_approved'] ) ? 1 : 0
         );
         

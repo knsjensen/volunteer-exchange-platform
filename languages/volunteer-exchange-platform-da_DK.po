@@ -348,7 +348,7 @@ msgstr "Filtrer efter deltagertype"
 #: src/Shortcodes/ParticipantsGrid.php:181
 #: src/Shortcodes/ParticipantsGrid.php:187
 msgid "Search participants"
-msgstr "Find deltager"
+msgstr "Søg deltager"
 
 #: src/Shortcodes/ParticipantsGrid.php:186
 msgid "Search words"
@@ -1266,3 +1266,11 @@ msgstr "f.eks. 3"
 #: src/Frontend/UpdateParticipantPage.php
 msgid "Remove current logo"
 msgstr "Fjern nuværende logo"
+
+#: src/Frontend/UpdateParticipantPage.php src/Admin/ParticipantsPage.php
+msgid "Link to homepage"
+msgstr "Link til hjemmeside/socialkompas"
+
+#: src/Frontend/ParticipantPage.php
+msgid "Read more"
+msgstr "Læs mere"

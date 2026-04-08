@@ -86,6 +86,28 @@ class ParticipantPage
     }
 
     /**
+     * Build inline style for participant type based on configured type color.
+     *
+     * @param string $color Hex color value.
+     * @return string
+     */
+    private function get_participant_type_style($color)
+    {
+        $background_color = sanitize_hex_color((string) $color);
+        if (! $background_color) {
+            return '';
+        }
+
+        $text_color = $this->get_contrasting_text_color($background_color);
+
+        return sprintf(
+            'background-color: %1$s; color: %2$s;',
+            $background_color,
+            $text_color
+        );
+    }
+
+    /**
      * Constructor.
      *
      * @param ParticipantService|null $participant_service Participant service instance.
@@ -176,6 +198,7 @@ class ParticipantPage
         // Get tags for this participant
         $tags = $this->participant_service->get_tags_for_participant($participant_id);
         $button_style = $this->get_button_style();
+        $participant_type_style = $this->get_participant_type_style($participant->type_color ?? '');
 
         ob_start();
 ?>
@@ -193,7 +216,9 @@ class ParticipantPage
                     </div>
                 <?php endif; ?>
                 <?php if ($participant->type_name): ?>
-                    <h2><?php echo esc_html($participant->type_name); ?></h2>
+                    <div class="vep-participant-type"<?php echo '' !== $participant_type_style ? ' style="' . esc_attr($participant_type_style) . '"' : ''; ?>>
+                        <h2<?php echo '' !== $participant_type_style ? ' style="color: inherit;"' : ''; ?>><?php echo esc_html($participant->type_name); ?></h2>
+                    </div>
                 <?php endif; ?>
                 <?php if (!empty($tags)): ?>
                     <div class="vep-participant-tags">
@@ -206,7 +231,7 @@ class ParticipantPage
 
             <div class="vep-participant-detail-content">
                 <?php if ($participant->description): ?>
-                    <div class="vep-detail-section">
+                    <div class="vep-detail-section first">
                         <h2><?php esc_html_e('About', 'volunteer-exchange-platform'); ?></h2>
                         <div class="vep-detail-description">
                             <?php echo nl2br(esc_html($participant->description)); ?>
@@ -248,6 +273,16 @@ class ParticipantPage
                     </div>
                 <?php endif; ?>
 
+                <?php if (!empty($participant->link)): ?>
+                    <div class="vep-detail-section">
+                        <h2><?php esc_html_e('Read more', 'volunteer-exchange-platform'); ?></h2>
+                        <div class="vep-detail-item">
+                            <a href="<?php echo esc_url($participant->link); ?>" target="_blank" rel="noopener noreferrer">
+                                <?php echo esc_html($participant->link); ?>
+                            </a>
+                        </div>
+                    </div>
+                <?php endif; ?>
                 <div class="vep-detail-actions">
                     <a href="<?php echo esc_url($this->get_back_url()); ?>" class="vep-button vep-button-secondary"<?php echo '' !== $button_style ? ' style="' . esc_attr($button_style) . '"' : ''; ?>>
                         <?php esc_html_e('Back to Participants', 'volunteer-exchange-platform'); ?>

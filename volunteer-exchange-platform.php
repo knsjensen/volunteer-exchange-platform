@@ -65,7 +65,7 @@ require_once VEP_PLUGIN_DIR . 'src/Ajax/ParticipantHandler.php';
 require_once VEP_PLUGIN_DIR . 'src/Ajax/AgreementHandler.php';
 require_once VEP_PLUGIN_DIR . 'src/Ajax/EventDisplayHandler.php';
 
-require_once VEP_PLUGIN_DIR . 'src/Email/EmailSettings.php';
+require_once VEP_PLUGIN_DIR . 'src/Email/Settings.php';
 require_once VEP_PLUGIN_DIR . 'src/Email/EmailQueueRepository.php';
 require_once VEP_PLUGIN_DIR . 'src/Email/TransactionalEmailService.php';
 require_once VEP_PLUGIN_DIR . 'src/Email/TransactionalEmailWorker.php';
