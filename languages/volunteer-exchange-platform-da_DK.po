@@ -65,11 +65,11 @@ msgstr "Beskriv hvad din organisation laver, og hvad der gør den unik."
 
 #: includes/Shortcodes/Registration.php
 msgid "Participants Expected"
-msgstr "Forventede deltagere"
+msgstr "Forventede antal deltagere (1-3)"
 
 #: includes/Shortcodes/Registration.php
-msgid "e.g., 12"
-msgstr "f.eks. 12"
+msgid "e.g., 2"
+msgstr "f.eks. 2"
 
 #: includes/Shortcodes/Registration.php
 msgid "The number of participants expected to attend the event."
@@ -77,7 +77,7 @@ msgstr "Antallet af deltagere, der forventes at deltage i begivenheden."
 
 #: includes/Shortcodes/Registration.php
 msgid "Participant Names"
-msgstr "Deltagernavne"
+msgstr "Navne på deltager(e)"
 
 #: includes/Shortcodes/Registration.php
 msgid "e.g., Jane, John"

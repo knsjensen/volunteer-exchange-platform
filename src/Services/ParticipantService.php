@@ -596,10 +596,67 @@ class ParticipantService extends AbstractService {
     }
 
     /**
+     * Build translated missing-field entries for update reminders.
+     *
+     * @param object|null $participant Participant row.
+     * @param array|null  $tag_ids Optional preloaded tag IDs.
+     * @return array[] Array of objects with name key.
+     */
+    private function get_update_reminder_missing_fields( $participant, $tag_ids = null ) {
+        if ( ! $participant ) {
+            return array();
+        }
+
+        $missing_fields = array();
+
+        $has_logo = ! empty( $participant->logo_url );
+        if ( ! $has_logo ) {
+            $missing_fields[] = array(
+                'name' => __( 'Organization Logo', 'volunteer-exchange-platform' ),
+            );
+        }
+
+        $has_description = ! empty( trim( (string) ( $participant->description ?? '' ) ) );
+        if ( ! $has_description ) {
+            $missing_fields[] = array(
+                'name' => __( 'Organization Description', 'volunteer-exchange-platform' ),
+            );
+        }
+
+        $expected_count = $participant->expected_participants_count ?? null;
+        $has_expected_count = null !== $expected_count && '' !== (string) $expected_count;
+        if ( ! $has_expected_count ) {
+            $missing_fields[] = array(
+                'name' => __( 'Participants Expected', 'volunteer-exchange-platform' ),
+            );
+        }
+
+        $has_expected_names = ! empty( trim( (string) ( $participant->expected_participants_names ?? '' ) ) );
+        if ( ! $has_expected_names ) {
+            $missing_fields[] = array(
+                'name' => __( 'Participant Names', 'volunteer-exchange-platform' ),
+            );
+        }
+
+        if ( null === $tag_ids ) {
+            $tag_ids = $this->get_tag_ids( (int) $participant->id );
+        }
+
+        if ( empty( $tag_ids ) ) {
+            $missing_fields[] = array(
+                'name' => __( 'What We Offer', 'volunteer-exchange-platform' ),
+            );
+        }
+
+        return $missing_fields;
+    }
+
+    /**
      * Determine whether a participant still needs update reminders.
      *
      * Reminder is needed when at least one of these is missing:
-     * logo, organization description, or we_offer tags.
+        * logo, organization description, participants expected,
+        * participant names, or what we offer tags.
      *
      * @param int $participant_id Participant ID.
      * @return bool
@@ -610,11 +667,9 @@ class ParticipantService extends AbstractService {
             return false;
         }
 
-        $has_logo = ! empty( $participant->logo_url );
-        $has_description = ! empty( trim( (string) $participant->description ) );
-        $has_tags = ! empty( $this->get_tag_ids( $participant_id ) );
+        $missing_fields = $this->get_update_reminder_missing_fields( $participant );
 
-        return ! ( $has_logo && $has_description && $has_tags );
+        return ! empty( $missing_fields );
     }
 
     /**
@@ -633,7 +688,13 @@ class ParticipantService extends AbstractService {
         }
 
         $participant = $this->get_by_id_with_details( $participant_id );
-        if ( ! $participant ) {
+        if ( ! $participant || empty( $participant->is_approved ) ) {
+            return false;
+        }
+
+        $tag_ids = $this->get_tag_ids( $participant_id );
+        $missing_fields = $this->get_update_reminder_missing_fields( $participant, $tag_ids );
+        if ( empty( $missing_fields ) ) {
             return false;
         }
 
@@ -663,6 +724,7 @@ class ParticipantService extends AbstractService {
                     'event_date'   => $event_date,
                     'contact_name' => (string) ( $participant->contact_person_name ?? '' ),
                     'confirm_url'  => $confirm_url,
+                    'missing_fields' => $missing_fields,
                 ),
             )
         );

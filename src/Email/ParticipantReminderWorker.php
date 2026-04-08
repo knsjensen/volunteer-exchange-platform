@@ -55,7 +55,7 @@ class ParticipantReminderWorker {
         $today = current_datetime();
 
         $targets = array(
-            '1m'  => $today->modify( '+1 month' )->format( 'Y-m-d' ),
+            '21d'  => $today->modify( '+1 month' )->format( 'Y-m-d' ),
             '14d' => $today->modify( '+14 days' )->format( 'Y-m-d' ),
             '7d'  => $today->modify( '+7 days' )->format( 'Y-m-d' ),
         );
