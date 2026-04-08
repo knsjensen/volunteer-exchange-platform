@@ -233,6 +233,14 @@
     color: #333;
 }
 
+.vep-grid-search {
+    max-width: 420px;
+}
+
+.vep-grid-search-input {
+    width: 100%;
+}
+
 .vep-grid-tag-filter-buttons {
     display: flex;
     flex-wrap: wrap;

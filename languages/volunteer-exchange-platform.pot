@@ -990,6 +990,15 @@ msgstr ""
 msgid "Filter by participant type"
 msgstr ""
 
+#: src/Shortcodes/ParticipantsGrid.php:181
+#: src/Shortcodes/ParticipantsGrid.php:187
+msgid "Search participants"
+msgstr ""
+
+#: src/Shortcodes/ParticipantsGrid.php:186
+msgid "Search words"
+msgstr ""
+
 #: src/Shortcodes/ParticipantsGrid.php:109
 msgid "All"
 msgstr ""

@@ -175,6 +175,17 @@ class ParticipantsGrid {
                 </div>
             <?php endif; ?>
 
+            <div class="vep-grid-filter vep-form-group vep-grid-search">
+                <label class="vep-grid-filter-label" for="vep-grid-search-<?php echo esc_attr( $active_event->id ); ?>"><?php esc_html_e( 'Search participants', 'volunteer-exchange-platform' ); ?></label>
+                <input
+                    type="search"
+                    id="vep-grid-search-<?php echo esc_attr( $active_event->id ); ?>"
+                    class="vep-grid-search-input"
+                    placeholder="<?php esc_attr_e( 'Search words', 'volunteer-exchange-platform' ); ?>"
+                    aria-label="<?php esc_attr_e( 'Search participants', 'volunteer-exchange-platform' ); ?>"
+                />
+            </div>
+
             <div class="vep-grid">
                 <?php foreach ($participants as $participant):
                     $participant_keys = isset( $participant_tag_keys[ (int) $participant->id ] ) ? $participant_tag_keys[ (int) $participant->id ] : array();

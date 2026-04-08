@@ -59,6 +59,7 @@
             const tagFilterButtons = Array.from(gridWrapper.querySelectorAll('.vep-grid-tag-filter-button[data-tag-filter]'));
             const typeFilterButtons = Array.from(gridWrapper.querySelectorAll('.vep-grid-type-filter-button[data-type-filter]'));
             const legacySelect = gridWrapper.querySelector('.vep-grid-tag-filter');
+            const searchInput = gridWrapper.querySelector('.vep-grid-search-input');
 
             function getActiveFilterValue(buttons, attributeName) {
                 const activeButton = buttons.find(function(button) {
@@ -67,18 +68,21 @@
                 return activeButton ? String(activeButton.getAttribute(attributeName) || '').trim() : '';
             }
 
-            function applyFilter(selectedTagId, selectedTypeId) {
+            function applyFilter(selectedTagId, selectedTypeId, searchTerm) {
                 const selectedTag = String(selectedTagId || '').trim();
                 const selectedType = String(selectedTypeId || '').trim();
+                const selectedSearch = String(searchTerm || '').toLowerCase().trim();
 
                 gridItems.forEach(function(item) {
                     const tagIdsRaw = String(item.getAttribute('data-tag-ids') || '').trim();
                     const itemTagIds = tagIdsRaw ? tagIdsRaw.split(',').map(function(id) { return id.trim(); }).filter(Boolean) : [];
                     const itemType = String(item.getAttribute('data-participant-type') || '').trim();
+                    const itemText = String(item.textContent || '').toLowerCase();
 
                     const matchesTag = selectedTag === '' || itemTagIds.includes(selectedTag);
                     const matchesType = selectedType === '' || itemType === selectedType;
-                    item.style.display = (matchesTag && matchesType) ? '' : 'none';
+                    const matchesSearch = selectedSearch === '' || itemText.includes(selectedSearch);
+                    item.style.display = (matchesTag && matchesType && matchesSearch) ? '' : 'none';
                 });
             }
 
@@ -95,7 +99,8 @@
 
                         applyFilter(
                             getActiveFilterValue(tagFilterButtons, 'data-tag-filter'),
-                            getActiveFilterValue(typeFilterButtons, 'data-type-filter')
+                            getActiveFilterValue(typeFilterButtons, 'data-type-filter'),
+                            searchInput ? searchInput.value : ''
                         );
                     });
                 });
@@ -111,23 +116,33 @@
                 }
             }
 
+            if (searchInput) {
+                searchInput.addEventListener('input', function() {
+                    applyFilter(
+                        getActiveFilterValue(tagFilterButtons, 'data-tag-filter'),
+                        getActiveFilterValue(typeFilterButtons, 'data-type-filter'),
+                        searchInput.value
+                    );
+                });
+            }
+
             setupButtonGroup(tagFilterButtons);
             setupButtonGroup(typeFilterButtons);
 
-            if (tagFilterButtons.length > 0 || typeFilterButtons.length > 0) {
+            if (tagFilterButtons.length > 0 || typeFilterButtons.length > 0 || searchInput) {
                 applyFilter(
                     getActiveFilterValue(tagFilterButtons, 'data-tag-filter'),
-                    getActiveFilterValue(typeFilterButtons, 'data-type-filter')
+                    getActiveFilterValue(typeFilterButtons, 'data-type-filter'),
+                    searchInput ? searchInput.value : ''
                 );
-                return;
             }
 
             if (!legacySelect) return;
 
             legacySelect.addEventListener('change', function() {
-                applyFilter(legacySelect.value || '', '');
+                applyFilter(legacySelect.value || '', '', searchInput ? searchInput.value : '');
             });
-            applyFilter(legacySelect.value || '', '');
+            applyFilter(legacySelect.value || '', '', searchInput ? searchInput.value : '');
         });
     }
 

@@ -189,7 +189,7 @@ msgstr "Ingen deltagere endnu."
 
 #: includes/Shortcodes/ParticipantsGrid.php
 msgid "View Details"
-msgstr "Se detaljer"
+msgstr "Se mere"
 
 #: includes/Shortcodes/ParticipantsGrid.php
 msgid "Participant #"
@@ -345,6 +345,15 @@ msgstr "Filtrer efter tag"
 msgid "Filter by participant type"
 msgstr "Filtrer efter deltagertype"
 
+#: src/Shortcodes/ParticipantsGrid.php:181
+#: src/Shortcodes/ParticipantsGrid.php:187
+msgid "Search participants"
+msgstr "Find deltager"
+
+#: src/Shortcodes/ParticipantsGrid.php:186
+msgid "Search words"
+msgstr "Søge ord"
+
 #: src/Shortcodes/ParticipantsGrid.php:109
 msgid "All"
 msgstr "Alle"
@@ -412,7 +421,7 @@ msgstr "Tilbage til begivenheder"
 
 #: includes/Admin/ParticipantsPage.php
 msgid "Back to Participants"
-msgstr "Tilbage til deltagere"
+msgstr "Tilbage til oversigten"
 
 #: includes/Admin/EventsPage.php
 #: includes/Admin/ParticipantsPage.php
