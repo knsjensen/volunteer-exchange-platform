@@ -36,6 +36,7 @@ use VolunteerExchangePlatform\Services\ParticipantTypeService;
 use VolunteerExchangePlatform\Services\TagService;
 use VolunteerExchangePlatform\Shortcodes\AgreementForm;
 use VolunteerExchangePlatform\Shortcodes\AgreementsList;
+use VolunteerExchangePlatform\Shortcodes\EventCountdown;
 use VolunteerExchangePlatform\Shortcodes\ParticipantsGrid;
 use VolunteerExchangePlatform\Shortcodes\ParticipantsTable;
 use VolunteerExchangePlatform\Shortcodes\Registration;
@@ -145,6 +146,7 @@ class Plugin {
 
     private function init_public( array $services ) {
         new Registration( $services['event'], $services['participant_type'] );
+        new EventCountdown( $services['event'] );
         new ParticipantsGrid( $services['event'], $services['participant'] );
         new ParticipantsTable( $services['event'], $services['participant'] );
         new AgreementForm( $services['event'], $services['participant'] );

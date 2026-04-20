@@ -108,5 +108,39 @@ class WPBakeryIntegration {
                 'params' => array(),
             )
         );
+
+        call_user_func( 'vc_map',
+            array(
+                'name' => __( 'Event nedtælling', 'volunteer-exchange-platform' ),
+                'base' => 'vep_event_countdown',
+                'icon' => 'dashicons dashicons-clock',
+                'category' => $category,
+                'description' => __( 'Countdown to the active event start date.', 'volunteer-exchange-platform' ),
+                'params' => array(
+                    array(
+                        'type' => 'dropdown',
+                        'heading' => __( 'Countdown units', 'volunteer-exchange-platform' ),
+                        'param_name' => 'unit_mode',
+                        'value' => array(
+                            __( 'Months + days + hours + minutes + seconds', 'volunteer-exchange-platform' ) => 'months',
+                            __( 'Days + hours + minutes + seconds', 'volunteer-exchange-platform' ) => 'days',
+                        ),
+                        'std' => 'months',
+                    ),
+                    array(
+                        'type' => 'textfield',
+                        'heading' => __( 'In Progress Text', 'volunteer-exchange-platform' ),
+                        'param_name' => 'in_progress_text',
+                        'description' => __( 'Text shown while the event is in progress. Leave blank to use default.', 'volunteer-exchange-platform' ),
+                    ),
+                    array(
+                        'type' => 'textfield',
+                        'heading' => __( 'Event Over Text', 'volunteer-exchange-platform' ),
+                        'param_name' => 'event_over_text',
+                        'description' => __( 'Text shown after the event has ended. Leave blank to use default.', 'volunteer-exchange-platform' ),
+                    ),
+                ),
+            )
+        );
     }
 }

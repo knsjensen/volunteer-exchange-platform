@@ -536,6 +536,70 @@ msgstr "Bruges når der ikke sendes noget emne i koden."
 msgid "Allowed template_data Keys"
 msgstr "Tilladte template_data-nøgler"
 
+#: src/Shortcodes/EventCountdown.php
+msgid "The event is in progress."
+msgstr "Arrangementet er i gang."
+
+#: src/Shortcodes/EventCountdown.php
+msgid "The event is over."
+msgstr "Arrangementet er slut."
+
+#: src/Shortcodes/EventCountdown.php
+msgid "Months"
+msgstr "Måneder"
+
+#: src/Shortcodes/EventCountdown.php
+msgid "Days"
+msgstr "Dage"
+
+#: src/Shortcodes/EventCountdown.php
+msgid "Hours"
+msgstr "Timer"
+
+#: src/Shortcodes/EventCountdown.php
+msgid "Minutes"
+msgstr "Minutter"
+
+#: src/Shortcodes/EventCountdown.php
+msgid "Seconds"
+msgstr "Sekunder"
+
+#: src/Plugin/WPBakeryIntegration.php
+msgid "Event nedtælling"
+msgstr "Event nedtælling"
+
+#: src/Plugin/WPBakeryIntegration.php
+msgid "Countdown to the active event start date."
+msgstr "Nedtælling til startdatoen for det aktive arrangement."
+
+#: src/Plugin/WPBakeryIntegration.php
+msgid "Countdown units"
+msgstr "Nedtællingsenheder"
+
+#: src/Plugin/WPBakeryIntegration.php
+msgid "Months + days + hours + minutes + seconds"
+msgstr "Måneder + dage + timer + minutter + sekunder"
+
+#: src/Plugin/WPBakeryIntegration.php
+msgid "Days + hours + minutes + seconds"
+msgstr "Dage + timer + minutter + sekunder"
+
+#: src/Plugin/WPBakeryIntegration.php
+msgid "In Progress Text"
+msgstr "Tekst under arrangement"
+
+#: src/Plugin/WPBakeryIntegration.php
+msgid "Text shown while the event is in progress. Leave blank to use default."
+msgstr "Tekst vist mens arrangementet er i gang. Lad feltet være tomt for at bruge standardteksten."
+
+#: src/Plugin/WPBakeryIntegration.php
+msgid "Event Over Text"
+msgstr "Tekst efter arrangement"
+
+#: src/Plugin/WPBakeryIntegration.php
+msgid "Text shown after the event has ended. Leave blank to use default."
+msgstr "Tekst vist efter arrangementet er slut. Lad feltet være tomt for at bruge standardteksten."
+
 #: src/Admin/SettingsPage.php:404
 msgid "One key per line. Only keys listed here are forwarded to SMTP2GO."
 msgstr "En nøgle pr. linje. Kun nøgler på listen videresendes til SMTP2GO."

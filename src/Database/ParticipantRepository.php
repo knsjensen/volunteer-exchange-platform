@@ -35,10 +35,33 @@ class ParticipantRepository extends AbstractRepository {
      * @return int
      */
     public function get_next_participant_number( $event_id ) {
-        return (int) $this->get_var(
-            "SELECT COALESCE(MAX(participant_number), 0) + 1 FROM {$this->table()} WHERE event_id = %d",
+        $numbers = $this->get_results(
+            "SELECT participant_number
+             FROM {$this->table()}
+             WHERE event_id = %d
+               AND participant_number IS NOT NULL
+               AND participant_number > 0
+             ORDER BY participant_number ASC",
             array( $event_id )
         );
+
+        $next_number = 1;
+
+        foreach ( $numbers as $row ) {
+            $participant_number = isset( $row->participant_number ) ? (int) $row->participant_number : 0;
+
+            if ( $participant_number < $next_number ) {
+                continue;
+            }
+
+            if ( $participant_number > $next_number ) {
+                return $next_number;
+            }
+
+            ++$next_number;
+        }
+
+        return $next_number;
     }
 
     /**
@@ -296,7 +319,11 @@ class ParticipantRepository extends AbstractRepository {
         $events_table = $this->wpdb->prefix . 'vep_events';
 
         $allowed_orderby = array(
+            'participant_number' => 'p.participant_number',
             'organization_name' => 'p.organization_name',
+            'contact_person_name' => 'p.contact_person_name',
+            'participant_type'  => 'pt.name',
+            'is_approved'      => 'p.is_approved',
             'created_at'        => 'p.created_at',
             'p.created_at'      => 'p.created_at',
         );

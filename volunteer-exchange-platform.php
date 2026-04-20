@@ -74,6 +74,7 @@ require_once VEP_PLUGIN_DIR . 'src/Email/EmailCleanupWorker.php';
 require_once VEP_PLUGIN_DIR . 'src/Admin/SettingsPage.php';
 
 require_once VEP_PLUGIN_DIR . 'src/Shortcodes/Registration.php';
+require_once VEP_PLUGIN_DIR . 'src/Shortcodes/EventCountdown.php';
 require_once VEP_PLUGIN_DIR . 'src/Shortcodes/ParticipantsGrid.php';
 require_once VEP_PLUGIN_DIR . 'src/Shortcodes/ParticipantsTable.php';
 require_once VEP_PLUGIN_DIR . 'src/Shortcodes/AgreementForm.php';

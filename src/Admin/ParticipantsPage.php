@@ -622,7 +622,7 @@ class ParticipantsPage {
      * Handle quick actions for participants (approve, unapprove, delete)
      * 
      * Validates permissions and performs the requested action.
-     * Approval assigns a sequential participant number if not already assigned.
+        * Approval assigns the first available participant number if not already assigned.
      * 
      * @return void
      */
@@ -678,7 +678,7 @@ class ParticipantsPage {
      * Handle bulk actions on multiple participants
      * 
      * Supports bulk approve and bulk delete operations.
-     * Bulk approval assigns sequential participant numbers as needed.
+        * Bulk approval assigns the first available participant numbers as needed.
      * 
      * @return void
      */

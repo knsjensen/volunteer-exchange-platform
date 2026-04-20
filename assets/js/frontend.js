@@ -13,6 +13,7 @@
     
     // Wait for DOM to be ready
     document.addEventListener('DOMContentLoaded', function() {
+        initEventCountdowns();
         initRegistrationForms();
         initUpdateParticipantForms();
         initAgreementForm();
@@ -20,6 +21,182 @@
         initParticipantsGridFilter();
         initChoices();
     });
+
+    function initEventCountdowns() {
+        const countdowns = Array.from(document.querySelectorAll('.vep-event-countdown[data-start-timestamp]'));
+        if (countdowns.length === 0) return;
+
+        countdowns.forEach(function(countdown) {
+            const startTimestamp = Number(countdown.getAttribute('data-start-timestamp') || 0);
+            const endTimestamp = Number(countdown.getAttribute('data-end-timestamp') || 0);
+            const inProgressText = String(countdown.getAttribute('data-in-progress-text') || '');
+            const eventOverText = String(countdown.getAttribute('data-event-over-text') || '');
+            const unitMode = String(countdown.getAttribute('data-unit-mode') || 'months').toLowerCase();
+            const includeMonths = unitMode !== 'days';
+            const timer = countdown.querySelector('.vep-event-countdown-timer');
+            const status = countdown.querySelector('.vep-event-countdown-status');
+            const units = {
+                months: countdown.querySelector('[data-unit="months"]'),
+                days: countdown.querySelector('[data-unit="days"]'),
+                hours: countdown.querySelector('[data-unit="hours"]'),
+                minutes: countdown.querySelector('[data-unit="minutes"]'),
+                seconds: countdown.querySelector('[data-unit="seconds"]')
+            };
+
+            if (!startTimestamp || !timer || !status) return;
+
+            function addUtcMonths(date, monthsToAdd) {
+                const result = new Date(date.getTime());
+                const dayOfMonth = result.getUTCDate();
+
+                result.setUTCDate(1);
+                result.setUTCMonth(result.getUTCMonth() + monthsToAdd);
+
+                const lastDayOfTargetMonth = new Date(Date.UTC(
+                    result.getUTCFullYear(),
+                    result.getUTCMonth() + 1,
+                    0
+                )).getUTCDate();
+
+                result.setUTCDate(Math.min(dayOfMonth, lastDayOfTargetMonth));
+                return result;
+            }
+
+            function getCountdownParts(nowDate, targetDate, withMonths) {
+                if (targetDate.getTime() <= nowDate.getTime()) {
+                    return {
+                        months: 0,
+                        days: 0,
+                        hours: 0,
+                        minutes: 0,
+                        seconds: 0
+                    };
+                }
+
+                let months = 0;
+                let remainingMs = Math.max(0, targetDate.getTime() - nowDate.getTime());
+                const dayMs = 24 * 60 * 60 * 1000;
+                const hourMs = 60 * 60 * 1000;
+                const minuteMs = 60 * 1000;
+                const secondMs = 1000;
+
+                if (withMonths) {
+                    months = ((targetDate.getUTCFullYear() - nowDate.getUTCFullYear()) * 12)
+                        + (targetDate.getUTCMonth() - nowDate.getUTCMonth());
+
+                    let anchorDate = addUtcMonths(nowDate, months);
+                    if (anchorDate.getTime() > targetDate.getTime()) {
+                        months -= 1;
+                        anchorDate = addUtcMonths(nowDate, months);
+                    }
+
+                    remainingMs = Math.max(0, targetDate.getTime() - anchorDate.getTime());
+                }
+
+                const days = Math.floor(remainingMs / dayMs);
+                remainingMs -= days * dayMs;
+
+                const hours = Math.floor(remainingMs / hourMs);
+                remainingMs -= hours * hourMs;
+
+                const minutes = Math.floor(remainingMs / minuteMs);
+                remainingMs -= minutes * minuteMs;
+
+                const seconds = Math.floor(remainingMs / secondMs);
+
+                return {
+                    months: Math.max(0, months),
+                    days: Math.max(0, days),
+                    hours: Math.max(0, hours),
+                    minutes: Math.max(0, minutes),
+                    seconds: Math.max(0, seconds)
+                };
+            }
+
+            function getVisibleUnits(parts, withMonths) {
+                if (!withMonths) {
+                    if (parts.days > 0) {
+                        return ['days', 'hours', 'minutes', 'seconds'];
+                    }
+
+                    if (parts.hours > 0) {
+                        return ['hours', 'minutes', 'seconds'];
+                    }
+
+                    if (parts.minutes > 0) {
+                        return ['minutes', 'seconds'];
+                    }
+
+                    return ['seconds'];
+                }
+
+                if (parts.months > 0) {
+                    return ['months', 'days', 'hours', 'minutes', 'seconds'];
+                }
+
+                if (parts.days > 0) {
+                    return ['days', 'hours', 'minutes', 'seconds'];
+                }
+
+                if (parts.hours > 0) {
+                    return ['hours', 'minutes', 'seconds'];
+                }
+
+                if (parts.minutes > 0) {
+                    return ['minutes', 'seconds'];
+                }
+
+                return ['seconds'];
+            }
+
+            function renderTimer(parts) {
+                const visibleUnits = getVisibleUnits(parts, includeMonths);
+
+                Object.keys(units).forEach(function(unitName) {
+                    const unitElement = units[unitName];
+                    if (!unitElement) return;
+
+                    const valueElement = unitElement.querySelector('.vep-event-countdown-value');
+                    if (valueElement) {
+                        valueElement.textContent = String(parts[unitName]);
+                    }
+
+                    unitElement.style.display = visibleUnits.indexOf(unitName) !== -1 ? '' : 'none';
+                });
+
+                timer.style.display = '';
+                status.style.display = 'none';
+                status.textContent = '';
+            }
+
+            function renderStatus(message) {
+                timer.style.display = 'none';
+                status.textContent = message;
+                status.style.display = 'block';
+            }
+
+            function tick() {
+                const now = new Date();
+                const startDate = new Date(startTimestamp * 1000);
+                const endDate = endTimestamp ? new Date(endTimestamp * 1000) : null;
+
+                if (endDate && now.getTime() >= endDate.getTime()) {
+                    renderStatus(eventOverText);
+                    return;
+                }
+
+                if (now.getTime() >= startDate.getTime()) {
+                    renderStatus(inProgressText);
+                    return;
+                }
+
+                renderTimer(getCountdownParts(now, startDate, includeMonths));
+            }
+
+            tick();
+            window.setInterval(tick, 1000);
+        });
+    }
 
     function initAgreementsTableFilter() {
         const lists = Array.from(document.querySelectorAll('.vep-agreements-list'));

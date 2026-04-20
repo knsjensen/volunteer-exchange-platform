@@ -540,6 +540,70 @@ msgstr ""
 msgid "Participant unapproved. Note: Participant number is retained."
 msgstr ""
 
+#: src/Shortcodes/EventCountdown.php
+msgid "The event is in progress."
+msgstr ""
+
+#: src/Shortcodes/EventCountdown.php
+msgid "The event is over."
+msgstr ""
+
+#: src/Shortcodes/EventCountdown.php
+msgid "Months"
+msgstr ""
+
+#: src/Shortcodes/EventCountdown.php
+msgid "Days"
+msgstr ""
+
+#: src/Shortcodes/EventCountdown.php
+msgid "Hours"
+msgstr ""
+
+#: src/Shortcodes/EventCountdown.php
+msgid "Minutes"
+msgstr ""
+
+#: src/Shortcodes/EventCountdown.php
+msgid "Seconds"
+msgstr ""
+
+#: src/Plugin/WPBakeryIntegration.php
+msgid "Event nedtælling"
+msgstr ""
+
+#: src/Plugin/WPBakeryIntegration.php
+msgid "Countdown to the active event start date."
+msgstr ""
+
+#: src/Plugin/WPBakeryIntegration.php
+msgid "Countdown units"
+msgstr ""
+
+#: src/Plugin/WPBakeryIntegration.php
+msgid "Months + days + hours + minutes + seconds"
+msgstr ""
+
+#: src/Plugin/WPBakeryIntegration.php
+msgid "Days + hours + minutes + seconds"
+msgstr ""
+
+#: src/Plugin/WPBakeryIntegration.php
+msgid "In Progress Text"
+msgstr ""
+
+#: src/Plugin/WPBakeryIntegration.php
+msgid "Text shown while the event is in progress. Leave blank to use default."
+msgstr ""
+
+#: src/Plugin/WPBakeryIntegration.php
+msgid "Event Over Text"
+msgstr ""
+
+#: src/Plugin/WPBakeryIntegration.php
+msgid "Text shown after the event has ended. Leave blank to use default."
+msgstr ""
+
 #: includes/Admin/Menu.php
 #: includes/Admin/ParticipantsListTable.php
 #: includes/Admin/ParticipantsPage.php

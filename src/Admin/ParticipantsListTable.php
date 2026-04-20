@@ -100,8 +100,12 @@ class ParticipantsListTable extends \WP_List_Table {
      */
     protected function get_sortable_columns() {
         return array(
+            'participant_number' => array('participant_number', false),
             'organization_name' => array('organization_name', false),
-            'created_at' => array('p.created_at', true)
+            'contact_person_name' => array('contact_person_name', false),
+            'participant_type' => array('participant_type', false),
+            'is_approved' => array('is_approved', false),
+            'created_at' => array('created_at', true)
         );
     }
     
@@ -309,7 +313,7 @@ class ParticipantsListTable extends \WP_List_Table {
         $orderby_raw = filter_input( INPUT_GET, 'orderby', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
         $order_raw = filter_input( INPUT_GET, 'order', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
         $approval_status_raw = filter_input( INPUT_GET, 'approval_status', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
-        $orderby = $orderby_raw ? sanitize_key( $orderby_raw ) : 'p.created_at';
+        $orderby = $orderby_raw ? sanitize_key( $orderby_raw ) : 'created_at';
         $order_param = $order_raw ? sanitize_key( $order_raw ) : '';
         $order = 'asc' === $order_param ? 'ASC' : 'DESC';
 

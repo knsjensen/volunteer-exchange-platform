@@ -41,7 +41,7 @@ class EventRepository extends AbstractRepository {
      * @return object|null
      */
     public function get_active_event() {
-        return $this->get_row( "SELECT id, name FROM {$this->table()} WHERE is_active = 1 ORDER BY id DESC LIMIT 1" );
+        return $this->get_row( "SELECT id, name, start_date, end_date FROM {$this->table()} WHERE is_active = 1 ORDER BY id DESC LIMIT 1" );
     }
 
     /**
