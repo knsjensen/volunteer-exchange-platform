@@ -1356,3 +1356,19 @@ msgstr ""
 #: src/Frontend/ParticipantPage.php
 msgid "Read more"
 msgstr ""
+
+#: src/Admin/ParticipantsListTable.php
+msgid "Updated"
+msgstr ""
+
+#: src/Admin/ParticipantsListTable.php
+msgid "Complete"
+msgstr ""
+
+#: src/Admin/ParticipantsListTable.php
+msgid "Not started"
+msgstr ""
+
+#: src/Admin/ParticipantsListTable.php
+msgid "Partially complete"
+msgstr ""

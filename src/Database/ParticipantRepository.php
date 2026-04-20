@@ -317,9 +317,11 @@ class ParticipantRepository extends AbstractRepository {
     public function get_paginated_with_filters( $per_page, $offset, $orderby, $order, $approval_status = 'all', $event_id = 0 ) {
         $types_table = $this->wpdb->prefix . 'vep_participant_types';
         $events_table = $this->wpdb->prefix . 'vep_events';
+        $participant_tags_table = $this->wpdb->prefix . 'vep_participant_tags';
 
         $allowed_orderby = array(
             'participant_number' => 'p.participant_number',
+            'update_progress'   => 'update_progress_filled_count',
             'organization_name' => 'p.organization_name',
             'contact_person_name' => 'p.contact_person_name',
             'participant_type'  => 'pt.name',
@@ -349,10 +351,22 @@ class ParticipantRepository extends AbstractRepository {
         return $this->get_results(
             "SELECT p.*,
                     pt.name as participant_type,
-                    e.name as event_name
+                    e.name as event_name,
+                    (
+                        CASE WHEN p.logo_url IS NOT NULL AND p.logo_url <> '' THEN 1 ELSE 0 END +
+                        CASE WHEN TRIM(COALESCE(p.description, '')) <> '' THEN 1 ELSE 0 END +
+                        CASE WHEN p.expected_participants_count IS NOT NULL AND CAST(p.expected_participants_count AS CHAR) <> '' THEN 1 ELSE 0 END +
+                        CASE WHEN TRIM(COALESCE(p.expected_participants_names, '')) <> '' THEN 1 ELSE 0 END +
+                        CASE WHEN COALESCE(ptags.tag_count, 0) > 0 THEN 1 ELSE 0 END
+                    ) as update_progress_filled_count
              FROM {$this->table()} p
              LEFT JOIN {$types_table} pt ON p.participant_type_id = pt.id
              LEFT JOIN {$events_table} e ON p.event_id = e.id
+             LEFT JOIN (
+                SELECT participant_id, COUNT(*) as tag_count
+                FROM {$participant_tags_table}
+                GROUP BY participant_id
+             ) ptags ON p.id = ptags.participant_id
              {$where_clause}
              ORDER BY {$orderby_sql} {$order_sql}
              LIMIT %d OFFSET %d",

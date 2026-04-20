@@ -1338,3 +1338,19 @@ msgstr "Link til hjemmeside/socialkompas"
 #: src/Frontend/ParticipantPage.php
 msgid "Read more"
 msgstr "Læs mere"
+
+#: src/Admin/ParticipantsListTable.php
+msgid "Updated"
+msgstr "Opdateret"
+
+#: src/Admin/ParticipantsListTable.php
+msgid "Complete"
+msgstr "Fuldført"
+
+#: src/Admin/ParticipantsListTable.php
+msgid "Not started"
+msgstr "Ikke påbegyndt"
+
+#: src/Admin/ParticipantsListTable.php
+msgid "Partially complete"
+msgstr "Delvist fuldført"

@@ -606,7 +606,7 @@ class ParticipantService extends AbstractService {
      * @param array|null  $tag_ids Optional preloaded tag IDs.
      * @return array[] Array of objects with name key.
      */
-    private function get_update_reminder_missing_fields( $participant, $tag_ids = null ) {
+    public function get_update_reminder_missing_fields( $participant, $tag_ids = null ) {
         if ( ! $participant ) {
             return array();
         }
@@ -758,14 +758,16 @@ class ParticipantService extends AbstractService {
         }
 
         $event_name = isset( $participant->event_name ) ? (string) $participant->event_name : '';
+        $organization_name = isset( $participant->organization_name ) ? (string) $participant->organization_name : '';
 
         $queued = vep_queue_transactional_email(
             array(
                 'to'            => array( $recipient ),
                 'template_key'  => 'new_participant_registration',
                 'template_data' => array(
-                    'event_name' => $event_name,
-                    'admin_url'  => admin_url(),
+                    'event_name'        => $event_name,
+                    'organization_name' => $organization_name,
+                    'admin_url'         => admin_url(),
                 ),
             )
         );

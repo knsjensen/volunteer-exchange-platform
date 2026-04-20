@@ -36,6 +36,11 @@ class ParticipantsListTable extends \WP_List_Table {
     private $participant_service;
 
     /**
+     * @var array<int, array{state:string,label:string,color:string}>
+     */
+    private $update_progress_cache = array();
+
+    /**
      * @var EventService
      */
     private $event_service;
@@ -83,6 +88,7 @@ class ParticipantsListTable extends \WP_List_Table {
         return array(
             'cb' => '<input type="checkbox" />',
             'participant_number' => __('#', 'volunteer-exchange-platform'),
+            'update_progress' => __('Updated', 'volunteer-exchange-platform'),
             'organization_name' => __('Organization', 'volunteer-exchange-platform'),
             'expected_participants_count' => __('Participants', 'volunteer-exchange-platform'),
             'contact_person_name' => __('Contact Person', 'volunteer-exchange-platform'),
@@ -91,6 +97,51 @@ class ParticipantsListTable extends \WP_List_Table {
             'is_approved' => __('Approved', 'volunteer-exchange-platform'),
             'created_at' => __('Created', 'volunteer-exchange-platform')
         );
+    }
+
+    /**
+     * Get update progress status for participant.
+     *
+     * Uses the same missing-fields logic as reminder emails.
+     *
+     * @param object $item Participant row.
+     * @return array{state:string,label:string,color:string}
+     */
+    private function get_update_progress_status( $item ) {
+        $participant_id = isset( $item->id ) ? (int) $item->id : 0;
+        if ( $participant_id > 0 && isset( $this->update_progress_cache[ $participant_id ] ) ) {
+            return $this->update_progress_cache[ $participant_id ];
+        }
+
+        $missing_fields = $this->participant_service->get_update_reminder_missing_fields( $item );
+        $missing_count = count( $missing_fields );
+        $total_part_two_fields = 5;
+
+        if ( $missing_count <= 0 ) {
+            $status = array(
+                'state' => 'complete',
+                'label' => __( 'Complete', 'volunteer-exchange-platform' ),
+                'color' => '#00a32a',
+            );
+        } elseif ( $missing_count >= $total_part_two_fields ) {
+            $status = array(
+                'state' => 'not_started',
+                'label' => __( 'Not started', 'volunteer-exchange-platform' ),
+                'color' => '#d63638',
+            );
+        } else {
+            $status = array(
+                'state' => 'in_progress',
+                'label' => __( 'Partially complete', 'volunteer-exchange-platform' ),
+                'color' => '#dba617',
+            );
+        }
+
+        if ( $participant_id > 0 ) {
+            $this->update_progress_cache[ $participant_id ] = $status;
+        }
+
+        return $status;
     }
     
     /**
@@ -101,6 +152,7 @@ class ParticipantsListTable extends \WP_List_Table {
     protected function get_sortable_columns() {
         return array(
             'participant_number' => array('participant_number', false),
+            'update_progress' => array('update_progress', false),
             'organization_name' => array('organization_name', false),
             'contact_person_name' => array('contact_person_name', false),
             'participant_type' => array('participant_type', false),
@@ -217,6 +269,9 @@ class ParticipantsListTable extends \WP_List_Table {
 
                 $url = $this->get_row_action_url('approve', $item->id);
                 return '<span style="color: orange;">⏳</span> <a href="' . esc_url($url) . '" style="color: #00a32a; font-weight: 600; margin-left: 8px;">' . esc_html__('Approve', 'volunteer-exchange-platform') . '</a>';
+            case 'update_progress':
+                $status = $this->get_update_progress_status( $item );
+                return '<span title="' . esc_attr( $status['label'] ) . '" aria-label="' . esc_attr( $status['label'] ) . '" style="display:inline-block;width:10px;height:10px;border-radius:50%;background-color:' . esc_attr( $status['color'] ) . ';"></span>';
             default:
                 return isset($item->$column_name) ? $item->$column_name : '';
         }
