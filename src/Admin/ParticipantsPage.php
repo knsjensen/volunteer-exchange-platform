@@ -602,6 +602,9 @@ class ParticipantsPage {
                                     <a class="button button-small" href="<?php echo esc_url(admin_url('admin.php?page=volunteer-exchange-participants&action=edit-agreement&id=' . $agreement->id . '&return_id=' . $participant_id)); ?>">
                                         <?php esc_html_e('Edit', 'volunteer-exchange-platform'); ?>
                                     </a>
+                                    <a class="button button-small" style="margin-left: 6px;" href="<?php echo esc_url( wp_nonce_url( admin_url('admin.php?page=volunteer-exchange-participants&action=delete-agreement&id=' . $agreement->id . '&return_id=' . $participant_id), 'vep_agreement_delete_' . $agreement->id ) ); ?>" onclick="return confirm('<?php echo esc_js( __('Are you sure you want to delete this agreement?', 'volunteer-exchange-platform') ); ?>');">
+                                        <?php esc_html_e('Delete', 'volunteer-exchange-platform'); ?>
+                                    </a>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -851,7 +854,7 @@ class ParticipantsPage {
             return;
         }
         
-        if (!in_array($action, array('approve', 'unapprove', 'delete', 'send_reminder'))) {
+        if (!in_array($action, array('approve', 'unapprove', 'delete', 'send_reminder', 'delete-agreement'))) {
             return;
         }
         
@@ -859,7 +862,11 @@ class ParticipantsPage {
             wp_die(esc_html__('You do not have permission to perform this action.', 'volunteer-exchange-platform'));
         }
 
-        if ( ! wp_verify_nonce( $nonce, 'vep_participant_' . $action . '_' . $participant_id ) ) {
+        $nonce_action = 'delete-agreement' === $action
+            ? 'vep_agreement_delete_' . $participant_id
+            : 'vep_participant_' . $action . '_' . $participant_id;
+
+        if ( ! wp_verify_nonce( $nonce, $nonce_action ) ) {
             wp_die(esc_html__('Security check failed.', 'volunteer-exchange-platform'));
         }
 
@@ -874,6 +881,9 @@ class ParticipantsPage {
         } elseif ($action === 'send_reminder') {
             $result = $this->participant_service->queue_update_participant_reminder($participant_id);
             $message = $result ? __('Reminder queued for sending.', 'volunteer-exchange-platform') : __('Reminder was not sent (participant may already be fully updated or missing required data).', 'volunteer-exchange-platform');
+        } elseif ($action === 'delete-agreement') {
+            $result = $this->event_service->delete_agreement($participant_id);
+            $message = $result ? __('Agreement deleted.', 'volunteer-exchange-platform') : __('Could not delete agreement.', 'volunteer-exchange-platform');
         } elseif ($action === 'delete') {
             $result = $this->participant_service->delete_participant($participant_id);
             $message = $result ? __('Participant deleted.', 'volunteer-exchange-platform') : __('Could not delete participant.', 'volunteer-exchange-platform');
@@ -883,9 +893,11 @@ class ParticipantsPage {
 
         // If action came from POST (detail page form) or has return_to=view, redirect back to the participant view
         $return_to = isset( $_GET['return_to'] ) ? sanitize_key( wp_unslash( $_GET['return_to'] ) ) : '';
-        $came_from_detail = isset( $_POST['action'] ) || $return_to === 'view';
+        $return_id = isset( $_GET['return_id'] ) ? absint( wp_unslash( $_GET['return_id'] ) ) : 0;
+        $came_from_detail = isset( $_POST['action'] ) || $return_to === 'view' || ( 'delete-agreement' === $action && $return_id > 0 );
+        $detail_id = ( 'delete-agreement' === $action && $return_id > 0 ) ? $return_id : $participant_id;
         if ( $came_from_detail && $action !== 'delete' ) {
-            wp_safe_redirect(admin_url('admin.php?page=volunteer-exchange-participants&action=view&id=' . $participant_id . '&notice=' . $notice . '&message=' . urlencode($message)));
+            wp_safe_redirect(admin_url('admin.php?page=volunteer-exchange-participants&action=view&id=' . $detail_id . '&notice=' . $notice . '&message=' . urlencode($message)));
         } else {
             wp_safe_redirect(admin_url('admin.php?page=volunteer-exchange-participants&notice=' . $notice . '&message=' . urlencode($message)));
         }

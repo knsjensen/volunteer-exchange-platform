@@ -165,7 +165,12 @@ class ParticipantRepository extends AbstractRepository {
                 p.contact_person_name,
                 p.contact_email,
                 p.logo_url,
+                p.no_logo,
                 p.description,
+                p.expected_participants_count,
+                p.no_expected_count,
+                p.expected_participants_names,
+                p.no_expected_names,
                 p.randon_key,
                 e.name as event_name,
                 e.start_date as event_date,
@@ -178,8 +183,10 @@ class ParticipantRepository extends AbstractRepository {
                AND DATE(e.start_date) = %s
              GROUP BY p.id
              HAVING (
-                (p.logo_url IS NULL OR p.logo_url = '')
+                (COALESCE(p.no_logo, 0) = 0 AND (p.logo_url IS NULL OR p.logo_url = ''))
                 OR (p.description IS NULL OR p.description = '')
+                OR (COALESCE(p.no_expected_count, 0) = 0 AND (p.expected_participants_count IS NULL OR CAST(p.expected_participants_count AS CHAR) = ''))
+                OR (COALESCE(p.no_expected_names, 0) = 0 AND (p.expected_participants_names IS NULL OR TRIM(p.expected_participants_names) = ''))
                 OR COUNT(pt.tag_id) = 0
              )",
             array( $target_date )
@@ -353,10 +360,10 @@ class ParticipantRepository extends AbstractRepository {
                     pt.name as participant_type,
                     e.name as event_name,
                     (
-                        CASE WHEN p.logo_url IS NOT NULL AND p.logo_url <> '' THEN 1 ELSE 0 END +
+                        CASE WHEN (p.logo_url IS NOT NULL AND p.logo_url <> '') OR COALESCE(p.no_logo, 0) = 1 THEN 1 ELSE 0 END +
                         CASE WHEN TRIM(COALESCE(p.description, '')) <> '' THEN 1 ELSE 0 END +
-                        CASE WHEN p.expected_participants_count IS NOT NULL AND CAST(p.expected_participants_count AS CHAR) <> '' THEN 1 ELSE 0 END +
-                        CASE WHEN TRIM(COALESCE(p.expected_participants_names, '')) <> '' THEN 1 ELSE 0 END +
+                        CASE WHEN (p.expected_participants_count IS NOT NULL AND CAST(p.expected_participants_count AS CHAR) <> '') OR COALESCE(p.no_expected_count, 0) = 1 THEN 1 ELSE 0 END +
+                        CASE WHEN TRIM(COALESCE(p.expected_participants_names, '')) <> '' OR COALESCE(p.no_expected_names, 0) = 1 THEN 1 ELSE 0 END +
                         CASE WHEN COALESCE(ptags.tag_count, 0) > 0 THEN 1 ELSE 0 END
                     ) as update_progress_filled_count
              FROM {$this->table()} p

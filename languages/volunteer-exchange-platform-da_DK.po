@@ -755,6 +755,39 @@ msgstr "Deaktiver"
 msgid "Delete"
 msgstr "Slet"
 
+msgid "Are you sure you want to delete this agreement?"
+msgstr "Er du sikker på, at du vil slette denne aftale?"
+
+msgid "Has no logo"
+msgstr "Har ikke logo"
+
+msgid "Has no homepage / Socialkompas link"
+msgstr "Har ikke hjemmeside / Socialkompas link"
+
+msgid "Has no expected number of participants"
+msgstr "Kender ikke antal"
+
+msgid "Does not know number of participants"
+msgstr "Kender ikke antal"
+
+msgid "Has no participant names"
+msgstr "Kender ikke navne"
+
+msgid "Does not know participant names"
+msgstr "Kender ikke navne"
+
+msgid "More information"
+msgstr "Mere information"
+
+msgid "If you do not know this information and do not want reminder emails to fill in the field later, check this box."
+msgstr "Hvis du ikke kender denne information og ikke vil modtage påmindelsesemails om at udfylde feltet senere, så sæt flueben her."
+
+msgid "Agreement deleted."
+msgstr "Aftale slettet."
+
+msgid "Could not delete agreement."
+msgstr "Kunne ikke slette aftalen."
+
 #: includes/Admin/ParticipantsPage.php
 msgid "Describe what this organization does."
 msgstr "Beskriv hvad denne organisation laver."

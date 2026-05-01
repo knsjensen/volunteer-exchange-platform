@@ -348,6 +348,9 @@ class EventsPage {
                                     <a class="button button-small" href="<?php echo esc_url(admin_url('admin.php?page=volunteer-exchange-events&action=edit-agreement&id=' . $agreement->id . '&return_id=' . $event_id)); ?>">
                                         <?php esc_html_e('Edit', 'volunteer-exchange-platform'); ?>
                                     </a>
+                                    <a class="button button-small" style="margin-left: 6px;" href="<?php echo esc_url( wp_nonce_url( admin_url('admin.php?page=volunteer-exchange-events&action=delete-agreement&id=' . $agreement->id . '&return_id=' . $event_id), 'vep_agreement_delete_' . $agreement->id ) ); ?>" onclick="return confirm('<?php echo esc_js( __('Are you sure you want to delete this agreement?', 'volunteer-exchange-platform') ); ?>');">
+                                        <?php esc_html_e('Delete', 'volunteer-exchange-platform'); ?>
+                                    </a>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -560,7 +563,7 @@ class EventsPage {
         $action = sanitize_key( wp_unslash( $_GET['action'] ) );
         $event_id = absint( wp_unslash( $_GET['id'] ) );
         
-        if (!in_array($action, array('delete', 'deactivate'))) {
+        if (!in_array($action, array('delete', 'deactivate', 'delete-agreement'))) {
             return;
         }
         
@@ -568,7 +571,10 @@ class EventsPage {
             wp_die(esc_html__('You do not have permission to perform this action.', 'volunteer-exchange-platform'));
         }
 
-        $nonce_action = 'vep_event_' . $action . '_' . $event_id;
+        $nonce_action = 'delete-agreement' === $action
+            ? 'vep_agreement_delete_' . $event_id
+            : 'vep_event_' . $action . '_' . $event_id;
+
         if ( ! isset( $_GET['_wpnonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ), $nonce_action ) ) {
             $message = __('Security check failed.', 'volunteer-exchange-platform');
             wp_safe_redirect(esc_url_raw(admin_url('admin.php?page=volunteer-exchange-events&notice=error&message=' . urlencode($message))));
@@ -582,6 +588,17 @@ class EventsPage {
         } elseif ($action === 'deactivate') {
             $this->event_service->deactivate($event_id);
             $message = __('Event deactivated.', 'volunteer-exchange-platform');
+        } elseif ($action === 'delete-agreement') {
+            $result = $this->event_service->delete_agreement($event_id);
+            $notice = $result ? 'success' : 'error';
+            $message = $result ? __('Agreement deleted.', 'volunteer-exchange-platform') : __('Could not delete agreement.', 'volunteer-exchange-platform');
+            $return_id = isset( $_GET['return_id'] ) ? absint( wp_unslash( $_GET['return_id'] ) ) : 0;
+            if ( $return_id > 0 ) {
+                wp_safe_redirect(esc_url_raw(admin_url('admin.php?page=volunteer-exchange-events&action=view&id=' . $return_id . '&notice=' . $notice . '&message=' . urlencode($message))));
+            } else {
+                wp_safe_redirect(esc_url_raw(admin_url('admin.php?page=volunteer-exchange-events&notice=' . $notice . '&message=' . urlencode($message))));
+            }
+            exit;
         }
         
         wp_safe_redirect(esc_url_raw(admin_url('admin.php?page=volunteer-exchange-events&notice=success&message=' . urlencode($message))));

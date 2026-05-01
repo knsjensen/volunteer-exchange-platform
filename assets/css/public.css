@@ -723,13 +723,7 @@
     margin-bottom: 0;
 }
 
-.vep-update-participant-page .vep-form-group:nth-of-type(5),
-.vep-update-participant-page .vep-form-group:nth-of-type(6),
-.vep-update-participant-page .vep-form-group:nth-of-type(7),
-.vep-update-participant-page .vep-form-group:nth-of-type(8),
-.vep-update-participant-page .vep-form-group:nth-of-type(9),
-.vep-update-participant-page .vep-form-group:nth-of-type(10),
-.vep-update-participant-page .vep-form-group:nth-of-type(11) {
+.vep-update-participant-page .vep-form-group--full {
     grid-column: 1 / -1;
 }
 
@@ -767,6 +761,96 @@
 
 .vep-update-participant-page .vep-current-logo-wrapper.is-hidden {
     display: none;
+}
+
+.vep-update-participant-page .vep-form-group.is-hidden {
+    display: none;
+}
+
+.vep-update-participant-page .vep-toggle-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.95em;
+    cursor: pointer;
+    margin-bottom: 0;
+}
+
+.vep-update-participant-page .vep-toggle-checkbox-label input[type="checkbox"] {
+    width: auto;
+    margin: 0;
+    cursor: pointer;
+}
+
+.vep-update-participant-page .vep-toggle-checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: nowrap;
+    position: relative;
+}
+
+.vep-update-participant-page .vep-help-popover {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 1px solid #2e6fbe;
+    color: #2e6fbe;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 18px;
+    text-align: center;
+    cursor: pointer;
+    user-select: none;
+    background: #ffffff;
+    flex: 0 0 auto;
+}
+
+.vep-update-participant-page .vep-help-popover:focus {
+    outline: 2px solid #2e6fbe;
+    outline-offset: 2px;
+}
+
+.vep-update-participant-page .vep-help-popover-content {
+    display: none;
+    position: absolute;
+    z-index: 20;
+    bottom: calc(100% + 8px);
+    left: 0;
+    transform: none;
+    width: min(360px, calc(100vw - 24px));
+    padding: 10px 12px;
+    border: 1px solid #c9d8ec;
+    border-radius: 10px;
+    background: #ffffff;
+    color: #1f2a37;
+    font-size: 13px;
+    line-height: 1.45;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+}
+
+.vep-update-participant-page .vep-help-popover-content.is-below {
+    top: 28px;
+    bottom: auto;
+}
+
+.vep-update-participant-page .vep-help-popover:hover + .vep-help-popover-content,
+.vep-update-participant-page .vep-help-popover:focus + .vep-help-popover-content,
+.vep-update-participant-page .vep-help-popover-content:hover {
+    display: block;
+}
+
+@media (max-width: 768px) {
+    .vep-update-participant-page .vep-toggle-checkbox-row {
+        align-items: flex-start;
+    }
+
+    .vep-update-participant-page .vep-help-popover-content {
+        width: calc(100vw - 24px);
+    }
 }
 
 .vep-update-participant-page .vep-current-logo-preview {

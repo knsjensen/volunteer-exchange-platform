@@ -266,6 +266,25 @@ class EventService extends AbstractService {
     }
 
     /**
+     * Delete agreement.
+     *
+     * @param int $agreement_id Agreement ID.
+     * @return bool
+     */
+    public function delete_agreement( $agreement_id ) {
+        if ( ! $this->is_valid_id( $agreement_id ) ) {
+            return false;
+        }
+
+        return $this->run_guarded(
+            function () use ( $agreement_id ) {
+                return $this->repository->delete_agreement( (int) $agreement_id ) !== false;
+            },
+            false
+        );
+    }
+
+    /**
      * Get aggregate statistics for an event.
      *
      * @param int $event_id Event ID.

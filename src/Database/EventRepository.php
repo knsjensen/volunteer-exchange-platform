@@ -284,6 +284,18 @@ class EventRepository extends AbstractRepository {
     }
 
     /**
+     * Delete agreement by ID.
+     *
+     * @param int $agreement_id Agreement ID.
+     * @return int|false
+     */
+    public function delete_agreement( $agreement_id ) {
+        $agreements_table = $this->wpdb->prefix . 'vep_agreements';
+        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Uses wpdb::delete with controlled table name and where format.
+        return $this->wpdb->delete( $agreements_table, array( 'id' => $agreement_id ), array( '%d' ) );
+    }
+
+    /**
      * Create agreement.
      *
      * @param array $data Agreement data.

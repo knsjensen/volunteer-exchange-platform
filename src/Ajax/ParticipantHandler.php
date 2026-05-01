@@ -243,11 +243,31 @@ class ParticipantHandler {
             $data['expected_participants_count'] = $expected_count;
         }
 
-        if ( null !== $logo_url ) {
+        $data['no_logo']           = isset( $_POST['no_logo'] ) && '1' === sanitize_text_field( wp_unslash( $_POST['no_logo'] ) ) ? 1 : 0;
+        $data['no_link']           = isset( $_POST['no_link'] ) && '1' === sanitize_text_field( wp_unslash( $_POST['no_link'] ) ) ? 1 : 0;
+        $data['no_expected_count'] = isset( $_POST['no_expected_count'] ) && '1' === sanitize_text_field( wp_unslash( $_POST['no_expected_count'] ) ) ? 1 : 0;
+        $data['no_expected_names'] = isset( $_POST['no_expected_names'] ) && '1' === sanitize_text_field( wp_unslash( $_POST['no_expected_names'] ) ) ? 1 : 0;
+
+        if ( $data['no_logo'] ) {
+            // "Has no logo" — clear any existing logo regardless of file upload or remove flag.
+            $data['logo_url'] = '';
+        } elseif ( null !== $logo_url ) {
             // A new file was uploaded — always takes priority over the remove flag.
             $data['logo_url'] = $logo_url;
         } elseif ( $remove_logo ) {
             $data['logo_url'] = '';
+        }
+
+        if ( $data['no_link'] ) {
+            $data['link'] = '';
+        }
+
+        if ( $data['no_expected_count'] ) {
+            $data['expected_participants_count'] = null;
+        }
+
+        if ( $data['no_expected_names'] ) {
+            $data['expected_participants_names'] = '';
         }
 
         $updated = $this->participant_service->update_participant( $participant_id, $data );

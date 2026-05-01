@@ -355,6 +355,59 @@
     function initUpdateParticipantForm(form) {
         if (!form) return;
 
+        // Initialize field-toggle checkboxes (data-toggle-target)
+        Array.from(form.querySelectorAll('input[type="checkbox"][data-toggle-target]')).forEach(function(cb) {
+            const targetEl = document.getElementById(cb.getAttribute('data-toggle-target'));
+            if (!targetEl) return;
+            function applyToggle() {
+                targetEl.classList.toggle('is-hidden', cb.checked);
+            }
+            applyToggle();
+            cb.addEventListener('change', applyToggle);
+        });
+
+        // Position help popovers: prefer above the icon, fallback below if near top viewport edge.
+        Array.from(form.querySelectorAll('.vep-help-popover')).forEach(function(iconEl) {
+            const contentEl = iconEl.nextElementSibling;
+            const rowEl = iconEl.closest('.vep-toggle-checkbox-row');
+            if (!contentEl || !rowEl || !contentEl.classList.contains('vep-help-popover-content')) {
+                return;
+            }
+
+            function positionHelpPopover() {
+                const prevDisplay = contentEl.style.display;
+                const prevVisibility = contentEl.style.visibility;
+
+                contentEl.style.display = 'block';
+                contentEl.style.visibility = 'hidden';
+
+                const rowRect = rowEl.getBoundingClientRect();
+                const iconRect = iconEl.getBoundingClientRect();
+                const maxWidth = Math.min(360, window.innerWidth - 24, rowRect.width);
+                contentEl.style.width = String(maxWidth) + 'px';
+
+                const contentRect = contentEl.getBoundingClientRect();
+                const contentWidth = contentRect.width;
+                const contentHeight = contentRect.height;
+
+                let left = (iconRect.left - rowRect.left) + (iconRect.width / 2) - (contentWidth / 2);
+                left = Math.max(0, Math.min(left, rowRect.width - contentWidth));
+                contentEl.style.left = String(left) + 'px';
+                contentEl.style.transform = 'none';
+
+                const requiredSpaceAbove = contentHeight + 16;
+                const hasSpaceAbove = iconRect.top >= requiredSpaceAbove;
+                contentEl.classList.toggle('is-below', !hasSpaceAbove);
+
+                contentEl.style.display = prevDisplay;
+                contentEl.style.visibility = prevVisibility;
+            }
+
+            iconEl.addEventListener('mouseenter', positionHelpPopover);
+            iconEl.addEventListener('focus', positionHelpPopover);
+            window.addEventListener('resize', positionHelpPopover);
+        });
+
         const participantSelect = form.querySelector('#update_participant_id');
         const fieldsContainer = form.querySelector('.vep-update-participant-fields');
         const eventIdInput = form.querySelector('input[name="event_id"]');

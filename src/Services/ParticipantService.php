@@ -369,6 +369,22 @@ class ParticipantService extends AbstractService {
             $normalized['link'] = esc_url_raw( $data['link'] ?? '' );
         }
 
+        if ( array_key_exists( 'no_logo', $data ) || ! $is_update ) {
+            $normalized['no_logo'] = ! empty( $data['no_logo'] ) ? 1 : 0;
+        }
+
+        if ( array_key_exists( 'no_link', $data ) || ! $is_update ) {
+            $normalized['no_link'] = ! empty( $data['no_link'] ) ? 1 : 0;
+        }
+
+        if ( array_key_exists( 'no_expected_count', $data ) || ! $is_update ) {
+            $normalized['no_expected_count'] = ! empty( $data['no_expected_count'] ) ? 1 : 0;
+        }
+
+        if ( array_key_exists( 'no_expected_names', $data ) || ! $is_update ) {
+            $normalized['no_expected_names'] = ! empty( $data['no_expected_names'] ) ? 1 : 0;
+        }
+
         if ( array_key_exists( 'is_approved', $data ) ) {
             $normalized['is_approved'] = ! empty( $data['is_approved'] ) ? 1 : 0;
         }
@@ -613,7 +629,7 @@ class ParticipantService extends AbstractService {
 
         $missing_fields = array();
 
-        $has_logo = ! empty( $participant->logo_url );
+        $has_logo = ! empty( $participant->logo_url ) || ! empty( $participant->no_logo );
         if ( ! $has_logo ) {
             $missing_fields[] = array(
                 'name' => __( 'Organization Logo', 'volunteer-exchange-platform' ),
@@ -628,14 +644,14 @@ class ParticipantService extends AbstractService {
         }
 
         $expected_count = $participant->expected_participants_count ?? null;
-        $has_expected_count = null !== $expected_count && '' !== (string) $expected_count;
+        $has_expected_count = ( null !== $expected_count && '' !== (string) $expected_count ) || ! empty( $participant->no_expected_count );
         if ( ! $has_expected_count ) {
             $missing_fields[] = array(
                 'name' => __( 'Participants Expected', 'volunteer-exchange-platform' ),
             );
         }
 
-        $has_expected_names = ! empty( trim( (string) ( $participant->expected_participants_names ?? '' ) ) );
+        $has_expected_names = ! empty( trim( (string) ( $participant->expected_participants_names ?? '' ) ) ) || ! empty( $participant->no_expected_names );
         if ( ! $has_expected_names ) {
             $missing_fields[] = array(
                 'name' => __( 'Participant Names', 'volunteer-exchange-platform' ),

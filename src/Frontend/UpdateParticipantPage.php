@@ -131,6 +131,7 @@ class UpdateParticipantPage {
         if ( '' !== $logo_url ) {
             $logo_url = set_url_scheme( $logo_url, is_ssl() ? 'https' : 'http' );
         }
+        $no_field_help_text = __( 'If you do not know this information and do not want reminder emails to fill in the field later, check this box.', 'volunteer-exchange-platform' );
 
         ob_start();
         ?>
@@ -173,7 +174,12 @@ class UpdateParticipantPage {
                     <input type="tel" id="update_contact_phone" name="contact_phone" value="<?php echo esc_attr( (string) $participant->contact_phone ); ?>">
                 </div>
 
-                <div class="vep-form-group">
+                <div class="vep-form-group vep-form-group--full">
+                    <label for="update_description"><?php esc_html_e( 'Organization Description', 'volunteer-exchange-platform' ); ?></label>
+                    <textarea id="update_description" name="description" rows="4" placeholder="<?php esc_attr_e( 'Tell us about your organization...', 'volunteer-exchange-platform' ); ?>"><?php echo esc_textarea( (string) $participant->description ); ?></textarea>
+                </div>
+
+                <div id="vep-logo-field" class="vep-form-group vep-form-group--full<?php echo (int) ( $participant->no_logo ?? 0 ) ? ' is-hidden' : ''; ?>">
                     <label for="update_logo"><?php esc_html_e( 'Organization Logo', 'volunteer-exchange-platform' ); ?></label>
                     <input type="file" id="update_logo" name="logo" accept="image/*">
                     <small><?php esc_html_e( 'Supported formats: JPG, PNG, GIF. Max size: 2MB', 'volunteer-exchange-platform' ); ?></small>
@@ -185,28 +191,63 @@ class UpdateParticipantPage {
                         <input type="hidden" id="update_remove_logo" name="remove_logo" value="0">
                     </div>
                 </div>
+                <div class="vep-form-group vep-form-group--full">
+                    <div class="vep-toggle-checkbox-row">
+                        <label class="vep-toggle-checkbox-label">
+                            <input type="checkbox" id="no_logo" name="no_logo" value="1" data-toggle-target="vep-logo-field" <?php checked( (int) ( $participant->no_logo ?? 0 ), 1 ); ?>>
+                            <span><?php esc_html_e( 'Has no logo', 'volunteer-exchange-platform' ); ?></span>
+                        </label>
+                        <span class="vep-help-popover" tabindex="0" role="button" aria-label="<?php esc_attr_e( 'More information', 'volunteer-exchange-platform' ); ?>">?</span>
+                        <span class="vep-help-popover-content"><?php echo esc_html( $no_field_help_text ); ?></span>
+                    </div>
+                </div>
 
-                <div class="vep-form-group">
+                <div id="vep-link-field" class="vep-form-group vep-form-group--full<?php echo (int) ( $participant->no_link ?? 0 ) ? ' is-hidden' : ''; ?>">
                     <label for="update_link"><?php esc_html_e( 'Link to homepage', 'volunteer-exchange-platform' ); ?></label>
                     <input type="url" id="update_link" name="link" value="<?php echo esc_attr( (string) ( $participant->link ?? '' ) ); ?>" placeholder="https://">
                 </div>
-
-                <div class="vep-form-group">
-                    <label for="update_description"><?php esc_html_e( 'Organization Description', 'volunteer-exchange-platform' ); ?></label>
-                    <textarea id="update_description" name="description" rows="4" placeholder="<?php esc_attr_e( 'Tell us about your organization...', 'volunteer-exchange-platform' ); ?>"><?php echo esc_textarea( (string) $participant->description ); ?></textarea>
+                <div class="vep-form-group vep-form-group--full">
+                    <div class="vep-toggle-checkbox-row">
+                        <label class="vep-toggle-checkbox-label">
+                            <input type="checkbox" id="no_link" name="no_link" value="1" data-toggle-target="vep-link-field" <?php checked( (int) ( $participant->no_link ?? 0 ), 1 ); ?>>
+                            <span><?php esc_html_e( 'Has no homepage / Socialkompas link', 'volunteer-exchange-platform' ); ?></span>
+                        </label>
+                        <span class="vep-help-popover" tabindex="0" role="button" aria-label="<?php esc_attr_e( 'More information', 'volunteer-exchange-platform' ); ?>">?</span>
+                        <span class="vep-help-popover-content"><?php echo esc_html( $no_field_help_text ); ?></span>
+                    </div>
                 </div>
 
-                <div class="vep-form-group">
+                <div id="vep-expected-count-field" class="vep-form-group vep-form-group--full<?php echo (int) ( $participant->no_expected_count ?? 0 ) ? ' is-hidden' : ''; ?>">
                     <label for="update_expected_participants_count"><?php printf( esc_html__( 'Participants Expected (1-%d)', 'volunteer-exchange-platform' ), (int) $max_participants ); ?></label>
                     <input type="number" id="update_expected_participants_count" name="expected_participants_count" min="1" max="<?php echo esc_attr( (int) $max_participants ); ?>" step="1" placeholder="<?php esc_attr_e( 'e.g., 3', 'volunteer-exchange-platform' ); ?>" value="<?php echo esc_attr( isset( $participant->expected_participants_count ) ? (string) $participant->expected_participants_count : '' ); ?>">
                 </div>
+                <div class="vep-form-group vep-form-group--full">
+                    <div class="vep-toggle-checkbox-row">
+                        <label class="vep-toggle-checkbox-label">
+                            <input type="checkbox" id="no_expected_count" name="no_expected_count" value="1" data-toggle-target="vep-expected-count-field" <?php checked( (int) ( $participant->no_expected_count ?? 0 ), 1 ); ?>>
+                            <span><?php esc_html_e( 'Does not know number of participants', 'volunteer-exchange-platform' ); ?></span>
+                        </label>
+                        <span class="vep-help-popover" tabindex="0" role="button" aria-label="<?php esc_attr_e( 'More information', 'volunteer-exchange-platform' ); ?>">?</span>
+                        <span class="vep-help-popover-content"><?php echo esc_html( $no_field_help_text ); ?></span>
+                    </div>
+                </div>
 
-                <div class="vep-form-group">
+                <div id="vep-expected-names-field" class="vep-form-group vep-form-group--full<?php echo (int) ( $participant->no_expected_names ?? 0 ) ? ' is-hidden' : ''; ?>">
                     <label for="update_expected_participants_names"><?php esc_html_e( 'Participant Names', 'volunteer-exchange-platform' ); ?></label>
                     <textarea id="update_expected_participants_names" name="expected_participants_names" rows="3" placeholder="<?php esc_attr_e( 'e.g., Jane Doe, John Smith', 'volunteer-exchange-platform' ); ?>"><?php echo esc_textarea( (string) $participant->expected_participants_names ); ?></textarea>
                 </div>
+                <div class="vep-form-group vep-form-group--full">
+                    <div class="vep-toggle-checkbox-row">
+                        <label class="vep-toggle-checkbox-label">
+                            <input type="checkbox" id="no_expected_names" name="no_expected_names" value="1" data-toggle-target="vep-expected-names-field" <?php checked( (int) ( $participant->no_expected_names ?? 0 ), 1 ); ?>>
+                            <span><?php esc_html_e( 'Does not know participant names', 'volunteer-exchange-platform' ); ?></span>
+                        </label>
+                        <span class="vep-help-popover" tabindex="0" role="button" aria-label="<?php esc_attr_e( 'More information', 'volunteer-exchange-platform' ); ?>">?</span>
+                        <span class="vep-help-popover-content"><?php echo esc_html( $no_field_help_text ); ?></span>
+                    </div>
+                </div>
 
-                <div class="vep-form-group">
+                <div class="vep-form-group vep-form-group--full">
                     <label><?php esc_html_e( 'What We Offer', 'volunteer-exchange-platform' ); ?></label>
                     <div class="vep-checkbox-group">
                         <?php foreach ( $tags as $tag ) : ?>
@@ -222,7 +263,7 @@ class UpdateParticipantPage {
                     </div>
                 </div>
 
-                <div class="vep-form-group">
+                <div class="vep-form-group vep-form-group--full">
                     <button type="submit" class="vep-button vep-button-primary">
                         <?php esc_html_e( 'Update Participant', 'volunteer-exchange-platform' ); ?>
                     </button>
