@@ -81,6 +81,9 @@ class EventsPage {
             case 'view':
                 $this->render_view($event_id);
                 break;
+            case 'edit-agreement':
+                $this->render_edit_agreement($event_id);
+                break;
             default:
                 $this->render_list();
                 break;
@@ -329,6 +332,7 @@ class EventsPage {
                             <th><?php esc_html_e('Initiator', 'volunteer-exchange-platform'); ?></th>
                             <th><?php esc_html_e('Description', 'volunteer-exchange-platform'); ?></th>
                             <th><?php esc_html_e('Created', 'volunteer-exchange-platform'); ?></th>
+                            <th><?php esc_html_e('Actions', 'volunteer-exchange-platform'); ?></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -340,11 +344,89 @@ class EventsPage {
                                 <td><?php echo esc_html($agreement->initiator_name); ?></td>
                                 <td><?php echo esc_html(wp_trim_words($agreement->description, 10)); ?></td>
                                 <td><?php echo esc_html(date_i18n(get_option('date_format'), strtotime($agreement->created_at))); ?></td>
+                                <td>
+                                    <a class="button button-small" href="<?php echo esc_url(admin_url('admin.php?page=volunteer-exchange-events&action=edit-agreement&id=' . $agreement->id . '&return_id=' . $event_id)); ?>">
+                                        <?php esc_html_e('Edit', 'volunteer-exchange-platform'); ?>
+                                    </a>
+                                </td>
                             </tr>
                         <?php endforeach; ?>
                     </tbody>
                 </table>
             <?php endif; ?>
+        </div>
+        <?php
+    }
+
+    /**
+     * Render agreement edit form
+     *
+     * @param int $agreement_id The agreement ID to edit
+     * @return void
+     */
+    private function render_edit_agreement($agreement_id) {
+        $return_id = absint( filter_input( INPUT_GET, 'return_id', FILTER_VALIDATE_INT ) );
+
+        $agreement = $this->event_service->get_agreement_by_id($agreement_id);
+        
+        if (!$agreement) {
+            echo '<div class="wrap"><p>' . esc_html__('Agreement not found.', 'volunteer-exchange-platform') . '</p></div>';
+            return;
+        }
+        ?>
+        <div class="wrap">
+            <h1><?php esc_html_e('Edit Agreement', 'volunteer-exchange-platform'); ?></h1>
+            <p><a href="<?php echo esc_url(admin_url('admin.php?page=volunteer-exchange-events')); ?>">&larr; <?php esc_html_e('Back to Events', 'volunteer-exchange-platform'); ?></a></p>
+            
+            <table class="form-table">
+                <tr>
+                    <th><?php esc_html_e('ID', 'volunteer-exchange-platform'); ?></th>
+                    <td><?php echo esc_html($agreement->id); ?></td>
+                </tr>
+                <tr>
+                    <th><?php esc_html_e('Participant 1', 'volunteer-exchange-platform'); ?></th>
+                    <td><?php echo esc_html($agreement->participant1_name ?? ''); ?></td>
+                </tr>
+                <tr>
+                    <th><?php esc_html_e('Participant 2', 'volunteer-exchange-platform'); ?></th>
+                    <td><?php echo esc_html($agreement->participant2_name ?? ''); ?></td>
+                </tr>
+                <tr>
+                    <th><?php esc_html_e('Initiator', 'volunteer-exchange-platform'); ?></th>
+                    <td>
+                        <select name="initiator_id" id="initiator_id" form="vep-agreement-edit-form">
+                            <option value="<?php echo esc_attr( (int) ( $agreement->participant1_id ?? 0 ) ); ?>" <?php selected( (int) ( $agreement->initiator_id ?? 0 ), (int) ( $agreement->participant1_id ?? 0 ) ); ?>>
+                                <?php echo esc_html($agreement->participant1_name ?? ''); ?>
+                            </option>
+                            <option value="<?php echo esc_attr( (int) ( $agreement->participant2_id ?? 0 ) ); ?>" <?php selected( (int) ( $agreement->initiator_id ?? 0 ), (int) ( $agreement->participant2_id ?? 0 ) ); ?>>
+                                <?php echo esc_html($agreement->participant2_name ?? ''); ?>
+                            </option>
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <th><?php esc_html_e('Created', 'volunteer-exchange-platform'); ?></th>
+                    <td><?php echo esc_html(date_i18n(get_option('date_format') . ' ' . get_option('time_format'), strtotime($agreement->created_at))); ?></td>
+                </tr>
+                <tr>
+                    <th><label for="description"><?php esc_html_e('Description', 'volunteer-exchange-platform'); ?></label></th>
+                    <td>
+                        <form id="vep-agreement-edit-form" method="post" action="">
+                            <?php wp_nonce_field('vep_agreement_edit', 'vep_agreement_nonce'); ?>
+                            <input type="hidden" name="agreement_id" value="<?php echo esc_attr($agreement->id); ?>">
+                            <input type="hidden" name="return_id" value="<?php echo esc_attr($return_id); ?>">
+                            <textarea id="description" name="description" rows="5" class="large-text"><?php echo esc_textarea($agreement->description ?? ''); ?></textarea>
+                            <p class="description"><?php esc_html_e('Update the description of this agreement.', 'volunteer-exchange-platform'); ?></p>
+                            <p class="submit">
+                                <input type="submit" name="submit" class="button button-primary" value="<?php esc_attr_e('Update Agreement', 'volunteer-exchange-platform'); ?>">
+                                <a href="<?php echo esc_url(admin_url('admin.php?page=volunteer-exchange-events')); ?>" class="button">
+                                    <?php esc_html_e('Cancel', 'volunteer-exchange-platform'); ?>
+                                </a>
+                            </p>
+                        </form>
+                    </td>
+                </tr>
+            </table>
         </div>
         <?php
     }
@@ -366,6 +448,42 @@ class EventsPage {
 
         $request_method = isset( $_SERVER['REQUEST_METHOD'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_METHOD'] ) ) : '';
         if ( 'POST' !== strtoupper( $request_method ) ) {
+            return;
+        }
+
+        // Check for agreement form submission
+        $agreement_nonce = isset( $_POST['vep_agreement_nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['vep_agreement_nonce'] ) ) : '';
+        if ( ! empty( $agreement_nonce ) ) {
+            if ( ! wp_verify_nonce( $agreement_nonce, 'vep_agreement_edit' ) ) {
+                wp_die(esc_html__('Security check failed.', 'volunteer-exchange-platform'));
+            }
+            
+            if (!current_user_can('manage_options')) {
+                wp_die(esc_html__('You do not have permission to perform this action.', 'volunteer-exchange-platform'));
+            }
+            
+            $agreement_id = isset( $_POST['agreement_id'] ) ? absint( wp_unslash( $_POST['agreement_id'] ) ) : 0;
+            if ( $agreement_id > 0 ) {
+                $description = isset( $_POST['description'] ) ? sanitize_textarea_field( wp_unslash( $_POST['description'] ) ) : '';
+                $update_data = array( 'description' => $description );
+                if ( isset( $_POST['initiator_id'] ) ) {
+                    $initiator_id = absint( wp_unslash( $_POST['initiator_id'] ) );
+                    if ( $initiator_id > 0 ) {
+                        $update_data['initiator_id'] = $initiator_id;
+                    }
+                }
+                $this->event_service->update_agreement(
+                    $agreement_id,
+                    $update_data
+                );
+                $return_id = isset( $_POST['return_id'] ) ? absint( wp_unslash( $_POST['return_id'] ) ) : 0;
+                if ( $return_id > 0 ) {
+                    wp_safe_redirect(admin_url('admin.php?page=volunteer-exchange-events&action=view&id=' . $return_id . '&message=' . urlencode(__('Agreement updated successfully.', 'volunteer-exchange-platform'))));
+                } else {
+                    wp_safe_redirect(admin_url('admin.php?page=volunteer-exchange-events&message=' . urlencode(__('Agreement updated successfully.', 'volunteer-exchange-platform'))));
+                }
+                exit;
+            }
             return;
         }
 

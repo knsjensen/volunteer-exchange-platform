@@ -262,6 +262,24 @@ msgstr "Fejl ved gemning af tilmelding. Prøv igen."
 #: src/Admin/ParticipantsPage.php
 msgid "Missing to fill in"
 msgstr "Mangler at udfylde"
+
+#: src/Admin/ParticipantsPage.php
+msgid "Edit Link"
+msgstr "Redigerings link"
+
+#: src/Admin/ParticipantsPage.php
+msgid "Copy"
+msgstr "Kopier"
+
+#: src/Admin/ParticipantsPage.php
+msgid "Copied!"
+msgstr "Kopieret!"
+
+#: src/Admin/ParticipantsPage.php
+msgid "Reminder"
+msgstr "Påmindelse"
+
+#: src/Admin/Menu.php
 msgid "Competitions"
 msgstr "Konkurrencer"
 
@@ -336,10 +354,6 @@ msgstr "Alle begivenheder"
 #: includes/Admin/ParticipantsListTable.php
 msgid "✗ Unapprove"
 msgstr "✗ Fjern godkendelse"
-
-#: includes/Admin/ParticipantsPage.php
-msgid "✗ Unapprove Participant"
-msgstr "✗ Fjern godkendelse af deltager"
 
 #: src/Shortcodes/ParticipantsGrid.php:106
 msgid "Filter by tag"
@@ -1031,6 +1045,59 @@ msgstr "Vis"
 #: includes/Admin/Menu.php
 msgid "Volunteer Exchange"
 msgstr "Frivilligbørs"
+
+#: src/Admin/ParticipantsPage.php
+#: src/Admin/EventsPage.php
+msgid "Edit"
+msgstr "Rediger"
+
+#: src/Admin/ParticipantsPage.php
+#: src/Admin/EventsPage.php
+msgid "Actions"
+msgstr "Handlinger"
+
+#: src/Admin/ParticipantsPage.php
+#: src/Admin/EventsPage.php
+msgid "Agreement not found."
+msgstr "Aftale blev ikke fundet."
+
+#: src/Admin/ParticipantsPage.php
+#: src/Admin/EventsPage.php
+msgid "Edit Agreement"
+msgstr "Rediger aftale"
+
+#: src/Admin/ParticipantsPage.php
+msgid "Back to Participants"
+msgstr "Tilbage til deltagere"
+
+#: src/Admin/EventsPage.php
+msgid "Back to Events"
+msgstr "Tilbage til begivenheder"
+
+#: src/Admin/ParticipantsPage.php
+#: src/Admin/EventsPage.php
+msgid "Participant 1"
+msgstr "Deltager 1"
+
+#: src/Admin/ParticipantsPage.php
+#: src/Admin/EventsPage.php
+msgid "Participant 2"
+msgstr "Deltager 2"
+
+#: src/Admin/ParticipantsPage.php
+#: src/Admin/EventsPage.php
+msgid "Update the description of this agreement."
+msgstr "Opdater beskrivelsen af denne aftale."
+
+#: src/Admin/ParticipantsPage.php
+#: src/Admin/EventsPage.php
+msgid "Update Agreement"
+msgstr "Opdater aftale"
+
+#: src/Admin/ParticipantsPage.php
+#: src/Admin/EventsPage.php
+msgid "Agreement updated successfully."
+msgstr "Aftale blev opdateret."
 
 #: includes/Admin/EventsPage.php
 msgid "We Offer"

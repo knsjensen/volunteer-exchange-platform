@@ -264,11 +264,11 @@ class ParticipantsListTable extends \WP_List_Table {
             case 'is_approved':
                 if ($item->is_approved) {
                     $url = $this->get_row_action_url('unapprove', $item->id);
-                    return '<span style="color: green;">✓</span> <a href="' . esc_url($url) . '" style="color: #d63638; font-weight: 600; margin-left: 8px;">' . esc_html__('Remove approval', 'volunteer-exchange-platform') . '</a>';
+                    return '<span style="color: green;">✓ <a href="' . esc_url($url) . '" style="color: #d63638; font-weight: 600; margin-left: 8px;">' . esc_html__('Remove approval', 'volunteer-exchange-platform') . '</a></span>';
                 }
 
                 $url = $this->get_row_action_url('approve', $item->id);
-                return '<span style="color: orange;">⏳</span> <a href="' . esc_url($url) . '" style="color: #00a32a; font-weight: 600; margin-left: 8px;">' . esc_html__('Approve', 'volunteer-exchange-platform') . '</a>';
+                return '<span style="color: orange;">⏳ <a href="' . esc_url($url) . '" style="color: #00a32a; font-weight: 600; margin-left: 8px;">' . esc_html__('Approve', 'volunteer-exchange-platform') . '</a></span>';
             case 'update_progress':
                 $status = $this->get_update_progress_status( $item );
                 return '<span title="' . esc_attr( $status['label'] ) . '" aria-label="' . esc_attr( $status['label'] ) . '" style="display:inline-block;width:10px;height:10px;border-radius:50%;background-color:' . esc_attr( $status['color'] ) . ';"></span>';

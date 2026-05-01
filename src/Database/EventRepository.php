@@ -220,6 +220,97 @@ class EventRepository extends AbstractRepository {
     }
 
     /**
+     * Get agreement by ID.
+     *
+     * @param int $agreement_id Agreement ID.
+     * @return object|null
+     */
+    public function get_agreement_by_id( $agreement_id ) {
+        $agreements_table = $this->wpdb->prefix . 'vep_agreements';
+        $participants_table = $this->wpdb->prefix . 'vep_participants';
+
+        return $this->get_row(
+            "SELECT a.*,
+                    p1.organization_name as participant1_name,
+                    p2.organization_name as participant2_name,
+                    pi.organization_name as initiator_name
+             FROM {$agreements_table} a
+             LEFT JOIN {$participants_table} p1 ON a.participant1_id = p1.id
+             LEFT JOIN {$participants_table} p2 ON a.participant2_id = p2.id
+             LEFT JOIN {$participants_table} pi ON a.initiator_id = pi.id
+             WHERE a.id = %d",
+            array( $agreement_id )
+        );
+    }
+
+    /**
+     * Update agreement.
+     *
+     * @param int   $agreement_id Agreement ID.
+     * @param array $data Agreement data to update.
+     * @return int|false
+     */
+    public function update_agreement( $agreement_id, array $data ) {
+        $agreements_table = $this->wpdb->prefix . 'vep_agreements';
+        
+        // Only allow updating description, status, and initiator
+        $allowed_fields = array('description', 'status', 'initiator_id');
+        $update_data = array();
+        $format = array();
+        
+        foreach ($allowed_fields as $field) {
+            if (isset($data[$field])) {
+                if ( 'initiator_id' === $field ) {
+                    $update_data[$field] = (int) $data[$field];
+                    $format[] = '%d';
+                } else {
+                    $update_data[$field] = $data[$field];
+                    $format[] = '%s';
+                }
+            }
+        }
+        
+        if (empty($update_data)) {
+            return false;
+        }
+
+        return $this->wpdb->update(
+            $agreements_table,
+            $update_data,
+            array('id' => $agreement_id),
+            $format,
+            array('%d')
+        );
+    }
+
+    /**
+     * Create agreement.
+     *
+     * @param array $data Agreement data.
+     * @return int|false Agreement ID on success, false on failure.
+     */
+    public function create_agreement( array $data ) {
+        $agreements_table = $this->wpdb->prefix . 'vep_agreements';
+
+        $insert_data = array(
+            'event_id' => isset($data['event_id']) ? absint($data['event_id']) : 0,
+            'participant1_id' => isset($data['participant1_id']) ? absint($data['participant1_id']) : 0,
+            'participant2_id' => isset($data['participant2_id']) ? absint($data['participant2_id']) : 0,
+            'initiator_id' => isset($data['initiator_id']) ? absint($data['initiator_id']) : 0,
+            'description' => isset($data['description']) ? sanitize_textarea_field($data['description']) : '',
+            'status' => isset($data['status']) ? sanitize_text_field($data['status']) : 'active',
+        );
+
+        $result = $this->wpdb->insert(
+            $agreements_table,
+            $insert_data,
+            array('%d', '%d', '%d', '%d', '%s', '%s')
+        );
+
+        return $result ? $this->wpdb->insert_id : false;
+    }
+
+    /**
      * Get aggregate event statistics.
      *
      * @param int $event_id Event ID.
@@ -256,18 +347,6 @@ class EventRepository extends AbstractRepository {
             'approved_count' => $approved_count,
             'expected_count_rows' => $expected_count_rows,
         );
-    }
-
-    /**
-     * Create agreement record.
-     *
-     * @param array $data Agreement data.
-     * @return int|false
-     */
-    public function create_agreement( $data ) {
-        $agreements_table = $this->wpdb->prefix . 'vep_agreements';
-        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Uses wpdb::insert with controlled table name.
-        return $this->wpdb->insert( $agreements_table, $data );
     }
 
     /**

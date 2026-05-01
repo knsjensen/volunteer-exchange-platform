@@ -2,6 +2,15 @@
  * Admin Styles for Volunteer Exchange Platform
  */
 
+/* Participants list table column widths */
+table.wp-list-table th.column-is_approved,
+table.wp-list-table td.column-is_approved {
+    width: 160px;
+    max-width: 160px;
+    overflow: hidden;
+    text-align: left;
+}
+
 .vep-admin-page {
     margin: 20px 0;
 }

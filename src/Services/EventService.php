@@ -227,6 +227,45 @@ class EventService extends AbstractService {
     }
 
     /**
+     * Get agreement by ID.
+     *
+     * @param int $agreement_id Agreement ID.
+     * @return object|null
+     */
+    public function get_agreement_by_id( $agreement_id ) {
+        if ( ! $this->is_valid_id( $agreement_id ) ) {
+            return null;
+        }
+
+        return $this->run_guarded(
+            function () use ( $agreement_id ) {
+                return $this->repository->get_agreement_by_id( (int) $agreement_id );
+            },
+            null
+        );
+    }
+
+    /**
+     * Update agreement.
+     *
+     * @param int   $agreement_id Agreement ID.
+     * @param array $data Agreement data.
+     * @return bool
+     */
+    public function update_agreement( $agreement_id, array $data ) {
+        if ( ! $this->is_valid_id( $agreement_id ) ) {
+            return false;
+        }
+
+        return $this->run_guarded(
+            function () use ( $agreement_id, $data ) {
+                return $this->repository->update_agreement( (int) $agreement_id, $data ) !== false;
+            },
+            false
+        );
+    }
+
+    /**
      * Get aggregate statistics for an event.
      *
      * @param int $event_id Event ID.
