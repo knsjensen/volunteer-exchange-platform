@@ -280,14 +280,16 @@ class ParticipantsGrid {
                     $participant_type_key = isset( $participant_type_keys[ (int) $participant->id ] ) ? $participant_type_keys[ (int) $participant->id ] : '';
                     $participant_type_style = $this->get_participant_type_style( $participant->type_color ?? '' );
                     $participant_card_style = $this->get_participant_card_style( $participant->type_color ?? '' );
+                    $participant_logo_url = isset( $participant->logo_url ) ? trim( (string) $participant->logo_url ) : '';
+                    if ( '' === $participant_logo_url ) {
+                        $participant_logo_url = VEP_PLUGIN_URL . 'assets/images/placeholder.jpg';
+                    }
                 ?>
                     <div class="vep-grid-item" data-participant-id="<?php echo esc_attr($participant->id); ?>" data-tag-ids="<?php echo esc_attr( implode( ',', $participant_keys ) ); ?>" data-participant-type="<?php echo esc_attr( $participant_type_key ); ?>">
                         <div class="vep-participant-card"<?php echo '' !== $participant_card_style ? ' style="' . esc_attr( $participant_card_style ) . '"' : ''; ?>>
-                            <?php if ($participant->logo_url): ?>
-                                <div class="vep-participant-logo">
-                                    <img src="<?php echo esc_url($participant->logo_url); ?>" alt="<?php echo esc_attr($participant->organization_name); ?>">
-                                </div>
-                            <?php endif; ?>
+                            <div class="vep-participant-logo">
+                                <img src="<?php echo esc_url( $participant_logo_url ); ?>" alt="<?php echo esc_attr($participant->organization_name); ?>">
+                            </div>
                             
                             <div class="vep-participant-info">
                                 <h3><?php echo esc_html($participant->participant_number); ?>: <?php echo esc_html($participant->organization_name); ?></h3>
