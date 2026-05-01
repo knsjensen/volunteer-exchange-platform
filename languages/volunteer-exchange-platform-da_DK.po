@@ -258,6 +258,10 @@ msgid "Error saving registration. Please try again."
 msgstr "Fejl ved gemning af tilmelding. Prøv igen."
 
 #: src/Admin/Menu.php
+
+#: src/Admin/ParticipantsPage.php
+msgid "Missing to fill in"
+msgstr "Mangler at udfylde"
 msgid "Competitions"
 msgstr "Konkurrencer"
 

@@ -400,6 +400,8 @@ class ParticipantsPage {
         // Get agreements
         $agreements = $this->participant_service->get_agreements_for_participant($participant_id);
         $show_reminder_button = $this->participant_service->should_send_update_reminder($participant_id);
+        $tag_ids = $this->participant_service->get_tag_ids($participant_id);
+        $missing_update_fields = $this->participant_service->get_update_reminder_missing_fields($participant, $tag_ids);
         ?>
         <div class="wrap">
             <h1>
@@ -486,6 +488,18 @@ class ParticipantsPage {
                         <?php endif; ?>
                     </td>
                 </tr>
+                <?php if ( ! empty( $missing_update_fields ) ) : ?>
+                <tr>
+                    <th><?php esc_html_e('Missing to fill in', 'volunteer-exchange-platform'); ?></th>
+                    <td>
+                        <ul style="margin: 6px 0 0 18px; list-style: disc;">
+                            <?php foreach ( $missing_update_fields as $missing_field ) : ?>
+                                <li><?php echo esc_html( (string) ( $missing_field['name'] ?? '' ) ); ?></li>
+                            <?php endforeach; ?>
+                        </ul>
+                    </td>
+                </tr>
+                <?php endif; ?>
                 <?php if ( $show_reminder_button ) : ?>
                 <tr>
                     <th><?php esc_html_e('Reminder', 'volunteer-exchange-platform'); ?></th>
