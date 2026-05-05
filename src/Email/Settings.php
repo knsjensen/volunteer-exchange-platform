@@ -147,7 +147,7 @@ class Settings {
      * All template profiles as an array.
      *
      * Each profile:
-     *   key, label, template_id, default_subject, allowed_data_keys[]
+        *   key, template_id, default_subject, default_html_body, default_text_body
      *
      * @return array
      */
@@ -254,10 +254,8 @@ class Settings {
             $settings['template_profiles'] = array();
 
             $keys        = $raw['profile_key'];
-            $labels      = isset( $raw['profile_label'] ) && is_array( $raw['profile_label'] ) ? $raw['profile_label'] : array();
             $tpl_ids     = isset( $raw['profile_template_id'] ) && is_array( $raw['profile_template_id'] ) ? $raw['profile_template_id'] : array();
             $subjects    = isset( $raw['profile_subject'] ) && is_array( $raw['profile_subject'] ) ? $raw['profile_subject'] : array();
-            $data_keys   = isset( $raw['profile_data_keys'] ) && is_array( $raw['profile_data_keys'] ) ? $raw['profile_data_keys'] : array();
             $html_bodies = isset( $raw['profile_html_body'] ) && is_array( $raw['profile_html_body'] ) ? $raw['profile_html_body'] : array();
             $text_bodies = isset( $raw['profile_text_body'] ) && is_array( $raw['profile_text_body'] ) ? $raw['profile_text_body'] : array();
 
@@ -269,21 +267,10 @@ class Settings {
                 }
                 $seen_keys[] = $profile_key;
 
-                $allowed = array();
-                $data_keys_raw = isset( $data_keys[ $i ] ) ? $data_keys[ $i ] : '';
-                foreach ( preg_split( '/[\r\n,]+/', $data_keys_raw ) as $dk ) {
-                    $dk = sanitize_key( trim( $dk ) );
-                    if ( '' !== $dk ) {
-                        $allowed[] = $dk;
-                    }
-                }
-
                 $settings['template_profiles'][] = array(
-                    'key'             => $profile_key,
-                    'label'           => isset( $labels[ $i ] ) ? sanitize_text_field( $labels[ $i ] ) : $profile_key,
-                    'template_id'     => isset( $tpl_ids[ $i ] ) ? sanitize_text_field( $tpl_ids[ $i ] ) : '',
-                    'default_subject' => isset( $subjects[ $i ] ) ? sanitize_text_field( $subjects[ $i ] ) : '',
-                    'allowed_data_keys' => $allowed,
+                    'key'               => $profile_key,
+                    'template_id'       => isset( $tpl_ids[ $i ] ) ? sanitize_text_field( $tpl_ids[ $i ] ) : '',
+                    'default_subject'   => isset( $subjects[ $i ] ) ? sanitize_text_field( $subjects[ $i ] ) : '',
                     'default_html_body' => isset( $html_bodies[ $i ] ) ? wp_kses_post( $html_bodies[ $i ] ) : '',
                     'default_text_body' => isset( $text_bodies[ $i ] ) ? sanitize_textarea_field( $text_bodies[ $i ] ) : '',
                 );

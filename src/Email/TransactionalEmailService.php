@@ -57,7 +57,6 @@ class TransactionalEmailService {
         // ── Template profile (optional) ────────────────────────────────
         $template_key      = isset( $message['template_key'] ) ? sanitize_key( $message['template_key'] ) : '';
         $template_id       = '';
-        $allowed_data_keys = array();
         $profile_subject   = '';
         $profile_html_body = '';
         $profile_text_body = '';
@@ -68,7 +67,6 @@ class TransactionalEmailService {
                 return false;
             }
             $template_id       = isset( $profile['template_id'] )       ? (string) $profile['template_id']       : '';
-            $allowed_data_keys = isset( $profile['allowed_data_keys'] ) ? (array)  $profile['allowed_data_keys'] : array();
             $profile_subject   = isset( $profile['default_subject'] )   ? (string) $profile['default_subject']   : '';
             $profile_html_body = isset( $profile['default_html_body'] ) ? (string) $profile['default_html_body'] : '';
             $profile_text_body = isset( $profile['default_text_body'] ) ? (string) $profile['default_text_body'] : '';
@@ -80,21 +78,11 @@ class TransactionalEmailService {
             return false;
         }
 
-        // ── template_data — filter to allowed keys only ────────────────
+        // ── template_data ───────────────────────────────────────────────
         $raw_template_data = ( isset( $message['template_data'] ) && is_array( $message['template_data'] ) )
             ? $message['template_data']
             : array();
-
-        $template_data = array();
-        if ( ! empty( $allowed_data_keys ) ) {
-            foreach ( $allowed_data_keys as $dk ) {
-                if ( array_key_exists( $dk, $raw_template_data ) ) {
-                    $template_data[ $dk ] = $raw_template_data[ $dk ];
-                }
-            }
-        } elseif ( ! empty( $raw_template_data ) && '' === $template_key ) {
-            $template_data = $raw_template_data;
-        }
+        $template_data = $raw_template_data;
 
         // ── Sender ─────────────────────────────────────────────────────
         $sender = ( isset( $message['sender'] ) && '' !== $message['sender'] )

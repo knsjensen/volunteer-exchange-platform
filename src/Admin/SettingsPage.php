@@ -371,14 +371,10 @@ class SettingsPage {
      */
     private function render_profile_row( $index, array $profile ) {
         $key       = isset( $profile['key'] )               ? $profile['key']               : '';
-        $label     = isset( $profile['label'] )             ? $profile['label']             : '';
         $tpl_id    = isset( $profile['template_id'] )       ? $profile['template_id']       : '';
         $subject   = isset( $profile['default_subject'] )   ? $profile['default_subject']   : '';
         $html_body = isset( $profile['default_html_body'] ) ? $profile['default_html_body'] : '';
         $text_body = isset( $profile['default_text_body'] ) ? $profile['default_text_body'] : '';
-        $data_keys = isset( $profile['allowed_data_keys'] ) && is_array( $profile['allowed_data_keys'] )
-            ? implode( "\n", $profile['allowed_data_keys'] )
-            : '';
 
         ?>
         <div class="vep-profile-row">
@@ -407,12 +403,6 @@ class SettingsPage {
                     </td>
                 </tr>
                 <tr>
-                    <th><label><?php esc_html_e( 'Label', 'volunteer-exchange-platform' ); ?></label></th>
-                    <td>
-                        <input type="text" name="profile_label[<?php echo esc_attr( $index ); ?>]" value="<?php echo esc_attr( $label ); ?>" class="regular-text" placeholder="e.g. Participant Confirmation">
-                    </td>
-                </tr>
-                <tr>
                     <th><label><?php esc_html_e( 'Template ID (SMTP2GO)', 'volunteer-exchange-platform' ); ?></label></th>
                     <td>
                         <input type="text" name="profile_template_id[<?php echo esc_attr( $index ); ?>]" value="<?php echo esc_attr( $tpl_id ); ?>" class="regular-text" placeholder="e.g. 3898074">
@@ -423,13 +413,6 @@ class SettingsPage {
                     <td>
                         <input type="text" name="profile_subject[<?php echo esc_attr( $index ); ?>]" value="<?php echo esc_attr( $subject ); ?>" class="large-text">
                         <p class="description"><?php esc_html_e( 'Used when no subject is passed in code.', 'volunteer-exchange-platform' ); ?></p>
-                    </td>
-                </tr>
-                <tr>
-                    <th><label><?php esc_html_e( 'Allowed template_data Keys', 'volunteer-exchange-platform' ); ?></label></th>
-                    <td>
-                        <textarea name="profile_data_keys[<?php echo esc_attr( $index ); ?>]" rows="4" class="large-text" placeholder="event_name&#10;contact_name&#10;confirm_url"><?php echo esc_textarea( $data_keys ); ?></textarea>
-                        <p class="description"><?php esc_html_e( 'One key per line. Only keys listed here are forwarded to SMTP2GO.', 'volunteer-exchange-platform' ); ?></p>
                     </td>
                 </tr>
                 <tr>
