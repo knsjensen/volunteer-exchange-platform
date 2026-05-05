@@ -238,6 +238,42 @@
             const legacySelect = gridWrapper.querySelector('.vep-grid-tag-filter');
             const searchInput = gridWrapper.querySelector('.vep-grid-search-input');
 
+            function syncParticipantTypeHeight() {
+                const typeElements = Array.from(gridWrapper.querySelectorAll('.vep-grid-item .vep-participant-type'));
+                if (typeElements.length === 0) {
+                    return;
+                }
+
+                typeElements.forEach(function(el) {
+                    el.style.minHeight = '';
+                });
+
+                let maxHeight = 0;
+                typeElements.forEach(function(el) {
+                    const gridItem = el.closest('.vep-grid-item');
+                    if (!gridItem || gridItem.style.display === 'none') {
+                        return;
+                    }
+
+                    const elementHeight = el.getBoundingClientRect().height;
+                    if (elementHeight > maxHeight) {
+                        maxHeight = elementHeight;
+                    }
+                });
+
+                if (maxHeight <= 0) {
+                    return;
+                }
+
+                typeElements.forEach(function(el) {
+                    const gridItem = el.closest('.vep-grid-item');
+                    if (!gridItem || gridItem.style.display === 'none') {
+                        return;
+                    }
+                    el.style.minHeight = Math.ceil(maxHeight) + 'px';
+                });
+            }
+
             function getActiveFilterValue(buttons, attributeName) {
                 const activeButton = buttons.find(function(button) {
                     return button.classList.contains('is-active');
@@ -261,6 +297,8 @@
                     const matchesSearch = selectedSearch === '' || itemText.includes(selectedSearch);
                     item.style.display = (matchesTag && matchesType && matchesSearch) ? '' : 'none';
                 });
+
+                syncParticipantTypeHeight();
             }
 
             function setupButtonGroup(buttons) {
@@ -313,6 +351,9 @@
                     searchInput ? searchInput.value : ''
                 );
             }
+
+            syncParticipantTypeHeight();
+            window.addEventListener('resize', syncParticipantTypeHeight);
 
             if (!legacySelect) return;
 
