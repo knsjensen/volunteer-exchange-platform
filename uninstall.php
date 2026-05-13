@@ -9,7 +9,7 @@
  */
 
 // If uninstall.php is not called by WordPress, exit
-if (!defined('WP_UNINSTALL_PLUGIN')) {
+if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
     exit;
 }
 
@@ -19,14 +19,28 @@ if (!defined('WP_UNINSTALL_PLUGIN')) {
 function volunteer_exchange_platform_delete_options() {
     $options = array(
         'vep_db_version',
+        'vep_display_title',
+        'vep_display_mode',
+        'vep_display_background_type',
+        'vep_display_background_solid_color',
+        'vep_display_background_gradient_color_1',
+        'vep_display_background_gradient_color_2',
+        'vep_display_background_gradient_color_3',
+        'vep_display_background_gradient_stop_1',
+        'vep_display_background_gradient_stop_2',
+        'vep_display_background_gradient_stop_3',
+        'vep_display_background_gradient_angle',
+        'vep_display_text_color',
+        // Legacy key retained for safe uninstall cleanup.
+        'vep_display_countdown_datetime',
     );
 
-    foreach ($options as $option) {
-        delete_option($option);
+    foreach ( $options as $option ) {
+        delete_option( $option );
     }
     
     // Clear all transients
-    delete_transient('vep_admin_notices');
+    delete_transient( 'vep_admin_notices' );
 }
 
 /**
@@ -48,23 +62,23 @@ function volunteer_exchange_platform_drop_tables() {
     );
 
     // Drop each table
-    foreach ($tables as $table) {
+    foreach ( $tables as $table ) {
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Direct DROP TABLE is required during uninstall; table names are controlled.
-        $wpdb->query("DROP TABLE IF EXISTS {$table}");
+        $wpdb->query( "DROP TABLE IF EXISTS {$table}" );
     }
 }
 
 /**
  * Execute uninstall actions
  */
-if (is_multisite()) {
+if ( is_multisite() ) {
     // For multisite installations, delete options for all sites
     global $wpdb;
     // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Direct multisite blog lookup is required during uninstall.
-    $volunteer_exchange_platform_blog_ids = $wpdb->get_col("SELECT blog_id FROM {$wpdb->blogs}");
+    $volunteer_exchange_platform_blog_ids = $wpdb->get_col( "SELECT blog_id FROM {$wpdb->blogs}" );
 
-    foreach ($volunteer_exchange_platform_blog_ids as $blog_id) {
-        switch_to_blog($blog_id);
+    foreach ( $volunteer_exchange_platform_blog_ids as $blog_id ) {
+        switch_to_blog( $blog_id );
         volunteer_exchange_platform_delete_options();
         volunteer_exchange_platform_drop_tables();
         restore_current_blog();

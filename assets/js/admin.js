@@ -112,7 +112,7 @@
         
         // Start display
         startButton.addEventListener('click', function() {
-            const countdownTime = this.dataset.countdown;
+            const countdownTime = this.dataset.eventEnd || this.dataset.countdown;
             const eventId = this.dataset.eventId;
             const displayTitle = this.dataset.displayTitle;
             const displayMode = this.dataset.displayMode || 'leaderboard';

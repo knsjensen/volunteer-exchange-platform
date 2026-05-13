@@ -149,12 +149,44 @@ class EventService extends AbstractService {
             }
         }
 
-        $timestamp = strtotime( $value );
-        if ( false === $timestamp ) {
+        try {
+            $date = new \DateTimeImmutable( $value, $timezone );
+            return $date->format( 'Y-m-d H:i:s' );
+        } catch ( \Exception $e ) {
             return false;
         }
+    }
 
-        return wp_date( 'Y-m-d H:i:s', $timestamp, $timezone );
+    /**
+     * Normalize a datetime value into MySQL datetime format.
+     *
+     * Shared helper for admin and service layers.
+     *
+     * @param string $value Datetime input value.
+     * @return string|false
+     */
+    public function normalize_datetime_value( $value ) {
+        return $this->normalize_event_datetime( $value );
+    }
+
+    /**
+     * Convert a stored datetime value to datetime-local input format.
+     *
+     * @param string $value Stored datetime value.
+     * @return string
+     */
+    public function to_datetime_local_value( $value ) {
+        $normalized = $this->normalize_event_datetime( $value );
+        if ( false === $normalized ) {
+            return '';
+        }
+
+        $date = \DateTimeImmutable::createFromFormat( 'Y-m-d H:i:s', $normalized, wp_timezone() );
+        if ( ! ( $date instanceof \DateTimeImmutable ) ) {
+            return '';
+        }
+
+        return $date->format( 'Y-m-d\\TH:i' );
     }
 
     private function normalize_event_data( $data ) {

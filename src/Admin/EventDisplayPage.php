@@ -20,7 +20,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Event display admin page
  * 
  * Handles the admin interface for event display settings including
- * countdown timer configuration and fullscreen event display launch.
+ * event end time configuration and fullscreen event display launch.
  * 
  * @package VolunteerExchangePlatform\Admin
  */
@@ -105,37 +105,7 @@ class EventDisplayPage {
      * @return string|false
      */
     private function normalize_datetime_value( $value ) {
-        $value = trim( (string) $value );
-        if ( '' === $value ) {
-            return false;
-        }
-
-        $timezone = wp_timezone();
-        $formats = array(
-            'Y-m-d\\TH:i',
-            'Y-m-d\\TH:i:s',
-            'Y-m-d H:i:s',
-            'Y-m-d H:i',
-        );
-
-        foreach ( $formats as $format ) {
-            $date = \DateTimeImmutable::createFromFormat( $format, $value, $timezone );
-            if ( ! ( $date instanceof \DateTimeImmutable ) ) {
-                continue;
-            }
-
-            $errors = \DateTimeImmutable::getLastErrors();
-            if ( false === $errors || ( 0 === (int) $errors['warning_count'] && 0 === (int) $errors['error_count'] ) ) {
-                return $date->format( 'Y-m-d H:i:s' );
-            }
-        }
-
-        $timestamp = strtotime( $value );
-        if ( false === $timestamp ) {
-            return false;
-        }
-
-        return wp_date( 'Y-m-d H:i:s', $timestamp, $timezone );
+        return $this->event_service->normalize_datetime_value( $value );
     }
 
     /**
@@ -145,17 +115,7 @@ class EventDisplayPage {
      * @return string
      */
     private function to_datetime_local_value( $value ) {
-        $normalized = $this->normalize_datetime_value( $value );
-        if ( false === $normalized ) {
-            return '';
-        }
-
-        $date = \DateTimeImmutable::createFromFormat( 'Y-m-d H:i:s', $normalized, wp_timezone() );
-        if ( ! ( $date instanceof \DateTimeImmutable ) ) {
-            return '';
-        }
-
-        return $date->format( 'Y-m-d\\TH:i' );
+        return $this->event_service->to_datetime_local_value( $value );
     }
     
     /**
@@ -170,18 +130,25 @@ class EventDisplayPage {
         }
         
         // Handle settings save
-        if (isset($_POST['vep_save_display_settings']) && check_admin_referer('vep_display_settings', 'vep_display_nonce')) {
-            $countdown_datetime_raw = isset( $_POST['countdown_datetime'] ) ? sanitize_text_field( wp_unslash( $_POST['countdown_datetime'] ) ) : '';
-            $countdown_datetime = '';
-            if ( '' !== $countdown_datetime_raw ) {
-                $normalized_countdown = $this->normalize_datetime_value( $countdown_datetime_raw );
-                if ( false !== $normalized_countdown ) {
-                    $countdown_datetime = $normalized_countdown;
+        if ( isset( $_POST['vep_save_display_settings'] ) && check_admin_referer( 'vep_display_settings', 'vep_display_nonce' ) ) {
+            $event_end_datetime_raw = '';
+            if ( isset( $_POST['event_end_datetime'] ) ) {
+                $event_end_datetime_raw = sanitize_text_field( wp_unslash( $_POST['event_end_datetime'] ) );
+            } elseif ( isset( $_POST['countdown_datetime'] ) ) {
+                // Backward compatibility with previous field name.
+                $event_end_datetime_raw = sanitize_text_field( wp_unslash( $_POST['countdown_datetime'] ) );
+            }
+
+            $event_end_datetime = '';
+            if ( '' !== $event_end_datetime_raw ) {
+                $normalized_event_end = $this->normalize_datetime_value( $event_end_datetime_raw );
+                if ( false !== $normalized_event_end ) {
+                    $event_end_datetime = $normalized_event_end;
                 }
             }
 
-            // Keep a single source of truth: countdown target equals active event end_date.
-            if ( '' !== $countdown_datetime ) {
+            // Keep a single source of truth: display end time equals active event end_date.
+            if ( '' !== $event_end_datetime ) {
                 $active_event = $this->event_service->get_active_event();
                 if ( $active_event && isset( $active_event->id ) ) {
                     $this->event_service->update_event(
@@ -190,7 +157,7 @@ class EventDisplayPage {
                             'name'        => isset( $active_event->name ) ? (string) $active_event->name : '',
                             'description' => isset( $active_event->description ) ? (string) $active_event->description : '',
                             'start_date'  => isset( $active_event->start_date ) ? (string) $active_event->start_date : '',
-                            'end_date'    => $countdown_datetime,
+                            'end_date'    => $event_end_datetime,
                         )
                     );
                 }
@@ -238,24 +205,24 @@ class EventDisplayPage {
             }
 
             // Legacy option no longer used; countdown is always active event end_date.
-            delete_option('vep_display_countdown_datetime');
-            update_option('vep_display_title', $display_title);
-            update_option('vep_display_mode', $display_mode);
-            update_option('vep_display_background_type', $background_type);
-            update_option('vep_display_background_solid_color', $solid_color);
-            update_option('vep_display_background_gradient_color_1', $gradient_color_1);
-            update_option('vep_display_background_gradient_color_2', $gradient_color_2);
-            update_option('vep_display_background_gradient_color_3', $gradient_color_3);
-            update_option('vep_display_background_gradient_stop_1', $gradient_stop_1);
-            update_option('vep_display_background_gradient_stop_2', $gradient_stop_2);
-            update_option('vep_display_background_gradient_stop_3', $gradient_stop_3);
-            update_option('vep_display_background_gradient_angle', $gradient_angle);
-            update_option('vep_display_text_color', $display_text_color);
+            delete_option( 'vep_display_countdown_datetime' );
+            update_option( 'vep_display_title', $display_title );
+            update_option( 'vep_display_mode', $display_mode );
+            update_option( 'vep_display_background_type', $background_type );
+            update_option( 'vep_display_background_solid_color', $solid_color );
+            update_option( 'vep_display_background_gradient_color_1', $gradient_color_1 );
+            update_option( 'vep_display_background_gradient_color_2', $gradient_color_2 );
+            update_option( 'vep_display_background_gradient_color_3', $gradient_color_3 );
+            update_option( 'vep_display_background_gradient_stop_1', $gradient_stop_1 );
+            update_option( 'vep_display_background_gradient_stop_2', $gradient_stop_2 );
+            update_option( 'vep_display_background_gradient_stop_3', $gradient_stop_3 );
+            update_option( 'vep_display_background_gradient_angle', $gradient_angle );
+            update_option( 'vep_display_text_color', $display_text_color );
             
-            wp_safe_redirect(add_query_arg(array(
+            wp_safe_redirect( add_query_arg( array(
                 'page' => 'vep-event-display',
                 'message' => 'settings_saved'
-            ), admin_url('admin.php')));
+            ), admin_url( 'admin.php' ) ) );
             exit;
         }
     }
@@ -268,9 +235,9 @@ class EventDisplayPage {
      * @return void
      */
     public function render() {
-        // Countdown uses active event end_date as the single source of truth.
-        $countdown_datetime = '';
-        $countdown_datetime_input = '';
+        // Event end time uses active event end_date as the single source of truth.
+        $event_end_datetime = '';
+        $event_end_datetime_input = '';
         $display_title = get_option('vep_display_title', '');
         $display_mode = get_option('vep_display_mode', 'leaderboard');
         if ( ! in_array( $display_mode, array( 'leaderboard', 'recent_agreements', 'none' ), true ) ) {
@@ -299,13 +266,13 @@ class EventDisplayPage {
         }
         $message = filter_input( INPUT_GET, 'message', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
 
-        // Get active event and surface its end_date in the countdown field.
+        // Get active event and surface its end_date in the event end time field.
         $active_event = $this->event_service->get_active_event();
         if ( $active_event && isset( $active_event->end_date ) ) {
             $normalized_event_end = $this->normalize_datetime_value( (string) $active_event->end_date );
             if ( false !== $normalized_event_end ) {
-                $countdown_datetime = $normalized_event_end;
-                $countdown_datetime_input = $this->to_datetime_local_value( $normalized_event_end );
+                $event_end_datetime = $normalized_event_end;
+                $event_end_datetime_input = $this->to_datetime_local_value( $normalized_event_end );
             }
         }
         
@@ -319,7 +286,7 @@ class EventDisplayPage {
                 </div>
             <?php endif; ?>
             
-            <?php if (!$active_event): ?>
+            <?php if ( ! $active_event ): ?>
                 <div class="notice notice-error">
                     <p><?php esc_html_e('No active event found. Please create and activate an event first.', 'volunteer-exchange-platform'); ?></p>
                 </div>
@@ -366,13 +333,13 @@ class EventDisplayPage {
                             </tr>
                             <tr>
                                 <th scope="row">
-                                    <label for="countdown_datetime"><?php esc_html_e('Event End Time', 'volunteer-exchange-platform'); ?></label>
+                                    <label for="event_end_datetime"><?php esc_html_e('Event End Time', 'volunteer-exchange-platform'); ?></label>
                                 </th>
                                 <td>
                                     <input type="datetime-local"
-                                           id="countdown_datetime" 
-                                           name="countdown_datetime" 
-                                           value="<?php echo esc_attr($countdown_datetime_input); ?>"
+                                           id="event_end_datetime" 
+                                           name="event_end_datetime" 
+                                           value="<?php echo esc_attr($event_end_datetime_input); ?>"
                                            step="60"
                                            class="regular-text">
                                     <p class="description">
@@ -570,7 +537,7 @@ class EventDisplayPage {
                     </form>
                 </div>
                 
-                <?php if ($active_event && !empty($countdown_datetime)): ?>
+                <?php if ($active_event && !empty($event_end_datetime)): ?>
                     <div class="card" style="padding: 20px; margin-top: 20px;">
                         <h2><?php esc_html_e('Display Control', 'volunteer-exchange-platform'); ?></h2>
                         <p><?php esc_html_e('Click the button below to launch the fullscreen event display.', 'volunteer-exchange-platform'); ?></p>
@@ -578,7 +545,8 @@ class EventDisplayPage {
                         <button type="button" 
                                 id="vep-start-event-display" 
                                 class="button button-primary button-hero"
-                                data-countdown="<?php echo esc_attr($countdown_datetime); ?>"
+                                data-event-end="<?php echo esc_attr($event_end_datetime); ?>"
+                                data-countdown="<?php echo esc_attr($event_end_datetime); ?>"
                                 data-event-id="<?php echo esc_attr($active_event->id); ?>"
                                 data-display-mode="<?php echo esc_attr($display_mode); ?>"
                                 data-display-title="<?php echo esc_attr($display_title ? $display_title : $active_event->name); ?>"
