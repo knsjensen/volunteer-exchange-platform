@@ -177,6 +177,29 @@ class Installer {
             KEY sent_at (sent_at)
         ) $charset_collate;";
         dbDelta($sql_participant_reminders);
+
+        // Create vep_competitions table
+        $table_competitions = $wpdb->prefix . 'vep_competitions';
+        $sql_competitions = "CREATE TABLE $table_competitions (
+            id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+            event_id bigint(20) UNSIGNED NOT NULL,
+            type varchar(50) NOT NULL,
+            title varchar(255) NOT NULL,
+            description text,
+            is_active tinyint(1) DEFAULT 1,
+            winner_id bigint(20) UNSIGNED DEFAULT NULL,
+            sort_order int(11) DEFAULT 0,
+            custom_data longtext,
+            created_at datetime DEFAULT CURRENT_TIMESTAMP,
+            updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            KEY event_id (event_id),
+            KEY type (type),
+            KEY is_active (is_active),
+            KEY sort_order (sort_order),
+            KEY winner_id (winner_id)
+        ) $charset_collate;";
+        dbDelta($sql_competitions);
         
         // Update version
         update_option('vep_db_version', VEP_VERSION);
@@ -398,6 +421,51 @@ class Installer {
             ) $charset_collate;";
 
             dbDelta($sql_participant_reminders);
+        }
+
+        $table_competitions = $wpdb->prefix . 'vep_competitions';
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Direct schema inspection query is required during install/upgrade.
+        $competitions_exists = $wpdb->get_var($wpdb->prepare(
+            'SHOW TABLES LIKE %s',
+            $table_competitions
+        ));
+        if ($competitions_exists !== $table_competitions) {
+            $charset_collate = $wpdb->get_charset_collate();
+            require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+
+            $sql_competitions = "CREATE TABLE $table_competitions (
+                id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+                event_id bigint(20) UNSIGNED NOT NULL,
+                type varchar(50) NOT NULL,
+                title varchar(255) NOT NULL,
+                description text,
+                is_active tinyint(1) DEFAULT 1,
+                winner_id bigint(20) UNSIGNED DEFAULT NULL,
+                sort_order int(11) DEFAULT 0,
+                custom_data longtext,
+                created_at datetime DEFAULT CURRENT_TIMESTAMP,
+                updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                PRIMARY KEY (id),
+                KEY event_id (event_id),
+                KEY type (type),
+                KEY is_active (is_active),
+                KEY sort_order (sort_order),
+                KEY winner_id (winner_id)
+            ) $charset_collate;";
+
+            dbDelta($sql_competitions);
+        } else {
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Direct schema inspection query is required; interpolated table name is controlled from $wpdb->prefix.
+            $has_competition_description = $wpdb->get_var($wpdb->prepare(
+                // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Interpolated table name is controlled.
+                "SHOW COLUMNS FROM $table_competitions LIKE %s",
+                'description'
+            ));
+
+            if ( ! $has_competition_description ) {
+                // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Direct schema migration query is required; interpolated table name is controlled from $wpdb->prefix.
+                $wpdb->query("ALTER TABLE $table_competitions ADD COLUMN description text AFTER title");
+            }
         }
     }
 

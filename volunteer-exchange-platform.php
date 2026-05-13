@@ -37,12 +37,14 @@ define('VEP_PLUGIN_BASENAME', plugin_basename(__FILE__));
 // Hardcoded dependency loading
 require_once VEP_PLUGIN_DIR . 'src/Database/Installer.php';
 require_once VEP_PLUGIN_DIR . 'src/Database/AbstractRepository.php';
+require_once VEP_PLUGIN_DIR . 'src/Database/CompetitionRepository.php';
 require_once VEP_PLUGIN_DIR . 'src/Database/EventRepository.php';
 require_once VEP_PLUGIN_DIR . 'src/Database/ParticipantRepository.php';
 require_once VEP_PLUGIN_DIR . 'src/Database/ParticipantTypeRepository.php';
 require_once VEP_PLUGIN_DIR . 'src/Database/TagRepository.php';
 
 require_once VEP_PLUGIN_DIR . 'src/Services/AbstractService.php';
+require_once VEP_PLUGIN_DIR . 'src/Services/CompetitionService.php';
 require_once VEP_PLUGIN_DIR . 'src/Services/EventService.php';
 require_once VEP_PLUGIN_DIR . 'src/Services/ParticipantService.php';
 require_once VEP_PLUGIN_DIR . 'src/Services/ParticipantTypeService.php';
@@ -63,6 +65,7 @@ require_once VEP_PLUGIN_DIR . 'src/Admin/Menu.php';
 
 require_once VEP_PLUGIN_DIR . 'src/Ajax/ParticipantHandler.php';
 require_once VEP_PLUGIN_DIR . 'src/Ajax/AgreementHandler.php';
+require_once VEP_PLUGIN_DIR . 'src/Ajax/CompetitionHandler.php';
 require_once VEP_PLUGIN_DIR . 'src/Ajax/EventDisplayHandler.php';
 
 require_once VEP_PLUGIN_DIR . 'src/Email/Settings.php';

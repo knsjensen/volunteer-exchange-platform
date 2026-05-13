@@ -17,8 +17,10 @@ use VolunteerExchangePlatform\Admin\ParticipantTypesPage;
 use VolunteerExchangePlatform\Admin\SettingsPage;
 use VolunteerExchangePlatform\Admin\TagsPage;
 use VolunteerExchangePlatform\Ajax\AgreementHandler;
+use VolunteerExchangePlatform\Ajax\CompetitionHandler;
 use VolunteerExchangePlatform\Ajax\EventDisplayHandler;
 use VolunteerExchangePlatform\Ajax\ParticipantHandler;
+use VolunteerExchangePlatform\Database\CompetitionRepository;
 use VolunteerExchangePlatform\Database\EventRepository;
 use VolunteerExchangePlatform\Database\Installer;
 use VolunteerExchangePlatform\Database\ParticipantRepository;
@@ -31,6 +33,7 @@ use VolunteerExchangePlatform\Email\ParticipantReminderWorker;
 use VolunteerExchangePlatform\Frontend\ParticipantPage;
 use VolunteerExchangePlatform\Frontend\UpdateParticipantPage;
 use VolunteerExchangePlatform\Services\EventService;
+use VolunteerExchangePlatform\Services\CompetitionService;
 use VolunteerExchangePlatform\Services\ParticipantService;
 use VolunteerExchangePlatform\Services\ParticipantTypeService;
 use VolunteerExchangePlatform\Services\TagService;
@@ -93,6 +96,7 @@ class Plugin {
 
     private function build_repositories() {
         return array(
+            'competition' => new CompetitionRepository(),
             'event' => new EventRepository(),
             'participant' => new ParticipantRepository(),
             'participant_type' => new ParticipantTypeRepository(),
@@ -113,10 +117,17 @@ class Plugin {
             $repositories['tag']
         );
 
+        $competition_service = new CompetitionService(
+            $repositories['competition'],
+            $repositories['event'],
+            $repositories['participant']
+        );
+
         $participant_type_service = new ParticipantTypeService( $repositories['participant_type'] );
         $tag_service = new TagService( $repositories['tag'] );
 
         return array(
+            'competition' => $competition_service,
             'event' => $event_service,
             'participant' => $participant_service,
             'participant_type' => $participant_type_service,
@@ -125,12 +136,12 @@ class Plugin {
     }
 
     private function init_admin( array $services ) {
-        $events_page = new EventsPage( $services['event'], $services['participant_type'], $services['tag'] );
+        $events_page = new EventsPage( $services['event'], $services['participant'], $services['participant_type'], $services['tag'], $services['competition'] );
         $participants_page = new ParticipantsPage( $services['participant'], $services['event'], $services['participant_type'], $services['tag'] );
         $participant_types_page = new ParticipantTypesPage( $services['participant_type'] );
         $tags_page = new TagsPage( $services['tag'] );
         $event_display_page = new EventDisplayPage( $services['event'] );
-        $competitions_page   = new CompetitionsPage();
+        $competitions_page   = new CompetitionsPage( $services['competition'], $services['event'], $services['participant'] );
         $settings_page = new SettingsPage();
 
         new Menu(
@@ -157,8 +168,9 @@ class Plugin {
 
     private function init_ajax( array $services ) {
         new ParticipantHandler( $services['participant'] );
-        new AgreementHandler( $services['event'] );
-        new EventDisplayHandler( $services['event'] );
+        new AgreementHandler( $services['event'], $services['competition'] );
+        new EventDisplayHandler( $services['event'], $services['competition'] );
+        new CompetitionHandler( $services['competition'], $services['event'] );
     }
 
     private function init_email() {
@@ -203,8 +215,16 @@ class Plugin {
             }
         }
 
+        if ( file_exists( $plugin_root . 'assets/vendor/choices-11.2.0/public/assets/styles/choices.min.css' ) ) {
+            wp_enqueue_style( 'choices-css', VEP_PLUGIN_URL . 'assets/vendor/choices-11.2.0/public/assets/styles/choices.min.css', array(), VEP_VERSION );
+        }
+
+        if ( file_exists( $plugin_root . 'assets/vendor/choices-11.2.0/public/assets/scripts/choices.min.js' ) ) {
+            wp_enqueue_script( 'choices-js', VEP_PLUGIN_URL . 'assets/vendor/choices-11.2.0/public/assets/scripts/choices.min.js', array(), VEP_VERSION, true );
+        }
+
         wp_enqueue_style( 'vep-admin-style', VEP_PLUGIN_URL . 'assets/css/admin.css', array(), VEP_VERSION );
-        wp_enqueue_script( 'vep-admin-script', VEP_PLUGIN_URL . 'assets/js/admin.js', array( 'jquery' ), VEP_VERSION, true );
+        wp_enqueue_script( 'vep-admin-script', VEP_PLUGIN_URL . 'assets/js/admin.js', array( 'jquery', 'jquery-ui-sortable', 'choices-js' ), $this->asset_version( 'assets/js/admin.js' ), true );
 
         wp_localize_script(
             'vep-admin-script',
@@ -212,12 +232,30 @@ class Plugin {
             array(
                 'ajaxUrl' => admin_url( 'admin-ajax.php' ),
                 'nonce' => wp_create_nonce( 'vep_admin_nonce' ),
+                'competitionNonce' => wp_create_nonce( 'vep_competitions_nonce' ),
                 'placeholderText' => __( 'Please select icon', 'volunteer-exchange-platform' ),
                 'i18n' => array(
                     'agreementSingular'       => __( 'agreement', 'volunteer-exchange-platform' ),
                     'agreementPlural'         => __( 'agreements', 'volunteer-exchange-platform' ),
                     'noAgreementsYet'         => __( 'No agreements yet...', 'volunteer-exchange-platform' ),
+                    'noRecentAgreementsYet'   => __( 'No recent agreements yet...', 'volunteer-exchange-platform' ),
+                    'topParticipantsTitle'    => __( 'Top Participants', 'volunteer-exchange-platform' ),
+                    'latestAgreementsTitle'   => __( 'Latest Agreements', 'volunteer-exchange-platform' ),
+                    'agreementBetweenLabel'   => __( 'Agreement between', 'volunteer-exchange-platform' ),
                     'setCountdownTimeFirst'   => __( 'Please set a countdown time first.', 'volunteer-exchange-platform' ),
+                    'confirmCompetitionDelete' => __( 'Are you sure?', 'volunteer-exchange-platform' ),
+                    'reorderCompetitionFailed' => __( 'Failed to reorder competitions', 'volunteer-exchange-platform' ),
+                    'competitionActionFailed'  => __( 'An error occurred. Please try again.', 'volunteer-exchange-platform' ),
+                    'winnerSaved'             => __( 'Winner set successfully', 'volunteer-exchange-platform' ),
+                    'copyActiveEmailsSuccess'  => __( 'Copied %d active participant emails to clipboard.', 'volunteer-exchange-platform' ),
+                    'copyActiveEmailsFailed'   => __( 'Could not copy active participant emails. Please try again.', 'volunteer-exchange-platform' ),
+                    'noActiveEmailsFound'      => __( 'No active participant emails found.', 'volunteer-exchange-platform' ),
+                ),
+                'choicesI18n' => array(
+                    'searchPlaceholderValue' => __( 'Search...', 'volunteer-exchange-platform' ),
+                    'itemSelectText' => __( 'Press to select', 'volunteer-exchange-platform' ),
+                    'noResultsText' => __( 'No results found', 'volunteer-exchange-platform' ),
+                    'noChoicesText' => __( 'No options available', 'volunteer-exchange-platform' ),
                 ),
             )
         );

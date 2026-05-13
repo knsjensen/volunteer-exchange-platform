@@ -478,4 +478,51 @@ class ParticipantRepository extends AbstractRepository {
         }
     }
 
+    /**
+     * Get first registered participant for an event.
+     *
+     * @param int $event_id Event ID.
+     * @return object|null
+     */
+    public function get_first_registered( $event_id ) {
+        return $this->get_row(
+            "SELECT * FROM {$this->table()} WHERE event_id = %d AND is_approved = 1 ORDER BY created_at ASC LIMIT 1",
+            array( $event_id )
+        );
+    }
+
+    /**
+     * Get last minute registration (registered on event day, latest first).
+     *
+     * @param int $event_id Event ID.
+     * @return object|null
+     */
+    public function get_last_minute_registration( $event_id ) {
+        $events_table = $this->wpdb->prefix . 'vep_events';
+
+        return $this->get_row(
+            "SELECT p.* FROM {$this->table()} p
+             INNER JOIN {$events_table} e ON p.event_id = e.id
+             WHERE p.event_id = %d AND p.is_approved = 1
+             AND DATE(p.created_at) = DATE(e.start_date)
+             ORDER BY p.created_at DESC LIMIT 1",
+            array( $event_id )
+        );
+    }
+
+    /**
+     * Get participant with longest description for an event.
+     *
+     * @param int $event_id Event ID.
+     * @return object|null
+     */
+    public function get_longest_description( $event_id ) {
+        return $this->get_row(
+            "SELECT * FROM {$this->table()}
+             WHERE event_id = %d AND is_approved = 1
+             ORDER BY CHAR_LENGTH(COALESCE(description, '')) DESC LIMIT 1",
+            array( $event_id )
+        );
+    }
+
 }

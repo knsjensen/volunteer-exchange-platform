@@ -623,6 +623,9 @@ class ParticipantsPage {
      */
     private function render_edit_agreement($agreement_id) {
         $return_id = absint( filter_input( INPUT_GET, 'return_id', FILTER_VALIDATE_INT ) );
+        $cancel_url = $return_id > 0
+            ? admin_url( 'admin.php?page=volunteer-exchange-participants&action=view&id=' . $return_id )
+            : admin_url( 'admin.php?page=volunteer-exchange-participants' );
 
         // Always load agreement data from agreement storage.
         $agreement = $this->event_service->get_agreement_by_id($agreement_id);
@@ -634,7 +637,7 @@ class ParticipantsPage {
         ?>
         <div class="wrap">
             <h1><?php esc_html_e('Edit Agreement', 'volunteer-exchange-platform'); ?></h1>
-            <p><a href="<?php echo esc_url(admin_url('admin.php?page=volunteer-exchange-participants')); ?>">&larr; <?php esc_html_e('Back to Participants', 'volunteer-exchange-platform'); ?></a></p>
+            <p><a href="<?php echo esc_url($cancel_url); ?>">&larr; <?php esc_html_e('Back to Participants', 'volunteer-exchange-platform'); ?></a></p>
             
             <table class="form-table">
                 <tr>
@@ -677,7 +680,7 @@ class ParticipantsPage {
                             <p class="description"><?php esc_html_e('Update the description of this agreement.', 'volunteer-exchange-platform'); ?></p>
                             <p class="submit">
                                 <input type="submit" name="submit" class="button button-primary" value="<?php esc_attr_e('Update Agreement', 'volunteer-exchange-platform'); ?>">
-                                <a href="<?php echo esc_url(admin_url('admin.php?page=volunteer-exchange-participants')); ?>" class="button">
+                                <a href="<?php echo esc_url($cancel_url); ?>" class="button">
                                     <?php esc_html_e('Cancel', 'volunteer-exchange-platform'); ?>
                                 </a>
                             </p>

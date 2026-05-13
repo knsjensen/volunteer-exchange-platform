@@ -7,7 +7,92 @@
     
     document.addEventListener('DOMContentLoaded', function() {
         initEventDisplay();
+        initDisplayBackgroundSettings();
+        initCompetitionsPage();
+        initCopyActiveEmails();
+        initAdminChoices();
     });
+
+    function initCopyActiveEmails() {
+        const button = document.getElementById('vep-copy-active-emails');
+        if (!button || typeof vepAdmin === 'undefined') {
+            return;
+        }
+
+        const ajaxUrl = vepAdmin.ajaxUrl;
+        const i18n = vepAdmin.i18n || {};
+
+        const copyText = (text) => {
+            if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+                return navigator.clipboard.writeText(text);
+            }
+
+            return new Promise((resolve, reject) => {
+                const helper = document.createElement('textarea');
+                helper.value = text;
+                helper.setAttribute('readonly', 'readonly');
+                helper.style.position = 'absolute';
+                helper.style.left = '-9999px';
+                document.body.appendChild(helper);
+                helper.select();
+
+                try {
+                    const ok = document.execCommand('copy');
+                    document.body.removeChild(helper);
+                    if (ok) {
+                        resolve();
+                    } else {
+                        reject(new Error('Copy command failed'));
+                    }
+                } catch (error) {
+                    document.body.removeChild(helper);
+                    reject(error);
+                }
+            });
+        };
+
+        button.addEventListener('click', () => {
+            const eventId = button.dataset.eventId;
+            const nonce = button.dataset.nonce;
+
+            if (!eventId || !nonce) {
+                window.alert(i18n.copyActiveEmailsFailed || 'An error occurred. Please try again.');
+                return;
+            }
+
+            button.disabled = true;
+
+            const formData = new FormData();
+            formData.append('action', 'vep_get_active_participant_emails');
+            formData.append('event_id', eventId);
+            formData.append('nonce', nonce);
+
+            fetch(ajaxUrl, {
+                method: 'POST',
+                body: formData,
+                credentials: 'same-origin'
+            })
+                .then((response) => response.json())
+                .then((data) => {
+                    if (!data.success || !data.data || !data.data.emails_text) {
+                        throw new Error((data.data && data.data.message) || (i18n.noActiveEmailsFound || 'No active participant emails found.'));
+                    }
+
+                    return copyText(data.data.emails_text)
+                        .then(() => {
+                            const messageTemplate = i18n.copyActiveEmailsSuccess || 'Copied %d active participant emails to clipboard.';
+                            const count = (data.data && data.data.count) ? String(data.data.count) : '0';
+                            window.alert(messageTemplate.replace('%d', count));
+                        });
+                })
+                .catch((error) => {
+                    window.alert(error.message || i18n.copyActiveEmailsFailed || 'An error occurred. Please try again.');
+                })
+                .finally(() => {
+                    button.disabled = false;
+                });
+        });
+    }
     
     /**
      * Initialize Event Display functionality
@@ -16,6 +101,8 @@
         const startButton = document.getElementById('vep-start-event-display');
         const displayModal = document.getElementById('vep-fullscreen-display');
         const closeButton = document.getElementById('vep-close-display');
+        const displayMainContent = document.getElementById('vep-display-main-content');
+        const rightPanel = document.getElementById('vep-display-right');
         
         if (!startButton || !displayModal) return;
         
@@ -28,6 +115,17 @@
             const countdownTime = this.dataset.countdown;
             const eventId = this.dataset.eventId;
             const displayTitle = this.dataset.displayTitle;
+            const displayMode = this.dataset.displayMode || 'leaderboard';
+            const backgroundType = this.getAttribute('data-background-type') || 'gradient';
+            const solidColor = this.getAttribute('data-background-solid-color') || '#1e3c72';
+            const gradientColor1 = this.getAttribute('data-background-gradient-color-1') || '#1e3c72';
+            const gradientColor2 = this.getAttribute('data-background-gradient-color-2') || '#2a5298';
+            const gradientColor3 = this.getAttribute('data-background-gradient-color-3') || '#7e22ce';
+            const gradientStop1 = parseInt(this.getAttribute('data-background-gradient-stop-1'), 10);
+            const gradientStop2 = parseInt(this.getAttribute('data-background-gradient-stop-2'), 10);
+            const gradientStop3 = parseInt(this.getAttribute('data-background-gradient-stop-3'), 10);
+            const gradientAngle = parseInt(this.getAttribute('data-background-gradient-angle'), 10);
+            const textColor = this.getAttribute('data-text-color') || '#ffffff';
             
             if (!countdownTime) {
                 alert(vepAdmin.i18n.setCountdownTimeFirst);
@@ -39,6 +137,24 @@
             
             // Set display title
             document.getElementById('vep-display-event-name').textContent = displayTitle;
+
+            applyRightPanelMode(displayMode);
+
+            // Apply selected background style
+            applyDisplayBackground(
+                displayModal,
+                backgroundType,
+                solidColor,
+                gradientColor1,
+                gradientColor2,
+                gradientColor3,
+                Number.isFinite(gradientStop1) ? gradientStop1 : 0,
+                Number.isFinite(gradientStop2) ? gradientStop2 : 50,
+                Number.isFinite(gradientStop3) ? gradientStop3 : 100,
+                Number.isFinite(gradientAngle) ? gradientAngle : 135
+            );
+
+            applyDisplayTextColor(displayModal, textColor);
             
             // Request fullscreen
             requestFullscreen(displayModal);
@@ -47,7 +163,7 @@
             startCountdown(countdownTime);
             
             // Start polling for agreement count
-            startPolling(eventId);
+            startPolling(eventId, displayMode);
         });
         
         // Close display
@@ -101,6 +217,46 @@
             // Hide modal
             displayModal.style.display = 'none';
         }
+
+        function applyDisplayBackground(modal, backgroundType, solidColor, color1, color2, color3, stop1, stop2, stop3, angle) {
+            const clamp = (value) => Math.min(100, Math.max(0, value));
+            const clampAngle = (value) => Math.min(360, Math.max(0, value));
+            const safeStop1 = clamp(stop1);
+            const safeStop2 = clamp(stop2);
+            const safeStop3 = clamp(stop3);
+            const safeAngle = clampAngle(angle);
+
+            if (backgroundType === 'solid') {
+                modal.style.background = solidColor;
+                return;
+            }
+
+            modal.style.background = `linear-gradient(${safeAngle}deg, ${color1} ${safeStop1}%, ${color2} ${safeStop2}%, ${color3} ${safeStop3}%)`;
+        }
+
+        function applyDisplayTextColor(modal, textColor) {
+            const color = /^#([A-Fa-f0-9]{6})$/.test(textColor) ? textColor : '#ffffff';
+            const r = parseInt(color.slice(1, 3), 16);
+            const g = parseInt(color.slice(3, 5), 16);
+            const b = parseInt(color.slice(5, 7), 16);
+
+            modal.style.setProperty('--vep-display-text-color', color);
+            modal.style.setProperty('--vep-display-text-strong', `rgba(${r}, ${g}, ${b}, 0.95)`);
+            modal.style.setProperty('--vep-display-text-muted', `rgba(${r}, ${g}, ${b}, 0.8)`);
+            modal.style.setProperty('--vep-display-text-soft', `rgba(${r}, ${g}, ${b}, 0.7)`);
+        }
+
+        function applyRightPanelMode(displayMode) {
+            const showRightPanel = displayMode !== 'none';
+
+            if (rightPanel) {
+                rightPanel.style.display = showRightPanel ? '' : 'none';
+            }
+
+            if (displayMainContent) {
+                displayMainContent.classList.toggle('vep-display-main-content-no-right', !showRightPanel);
+            }
+        }
         
         function startCountdown(targetDatetime) {
             const targetTimestamp = Math.floor(new Date(targetDatetime).getTime() / 1000);
@@ -140,12 +296,13 @@
             countdownInterval = setInterval(updateCountdown, 1000);
         }
         
-        function startPolling(eventId) {
+        function startPolling(eventId, displayMode) {
             function fetchAgreementCount() {
                 const formData = new FormData();
                 formData.append('action', 'vep_get_agreement_count');
                 formData.append('nonce', vepAdmin.nonce);
                 formData.append('event_id', eventId);
+                formData.append('display_mode', displayMode);
                 
                 fetch(vepAdmin.ajaxUrl, {
                     method: 'POST',
@@ -155,7 +312,16 @@
                 .then(data => {
                     if (data.success) {
                         document.getElementById('vep-agreements-count').textContent = data.data.count;
-                        updateLeaderboard(data.data.leaderboard);
+
+                        if (data.data.display_mode === 'none') {
+                            return;
+                        }
+
+                        if (data.data.display_mode === 'recent_agreements') {
+                            updateRecentAgreements(data.data.recent_agreements);
+                        } else {
+                            updateLeaderboard(data.data.leaderboard);
+                        }
                     }
                 })
                 .catch(error => console.error('Error fetching agreement count:', error));
@@ -170,6 +336,16 @@
         
         function updateLeaderboard(leaderboard) {
             const listElement = document.getElementById('vep-leaderboard-list');
+            const titleElement = document.getElementById('vep-display-right-panel-title');
+            const iconElement = document.getElementById('vep-display-right-panel-icon');
+
+            if (titleElement) {
+                titleElement.textContent = vepAdmin.i18n.topParticipantsTitle;
+            }
+
+            if (iconElement) {
+                iconElement.style.display = '';
+            }
             
             if (!leaderboard || leaderboard.length === 0) {
                 listElement.innerHTML = '<p class="vep-leaderboard-empty">' + vepAdmin.i18n.noAgreementsYet + '</p>';
@@ -196,6 +372,53 @@
                 `;
             });
             
+            listElement.innerHTML = html;
+        }
+
+        function updateRecentAgreements(recentAgreements) {
+            const listElement = document.getElementById('vep-leaderboard-list');
+            const titleElement = document.getElementById('vep-display-right-panel-title');
+            const iconElement = document.getElementById('vep-display-right-panel-icon');
+
+            if (titleElement) {
+                titleElement.textContent = vepAdmin.i18n.latestAgreementsTitle;
+            }
+
+            if (iconElement) {
+                iconElement.style.display = 'none';
+            }
+
+            if (!recentAgreements || recentAgreements.length === 0) {
+                listElement.innerHTML = '<p class="vep-leaderboard-empty">' + vepAdmin.i18n.noRecentAgreementsYet + '</p>';
+                return;
+            }
+
+            let html = '';
+            recentAgreements.forEach((agreement) => {
+                const participant1 = agreement.participant1_name || '';
+                const participant2 = agreement.participant2_name || '';
+                const participant1Id = parseInt(agreement.participant1_id, 10) || 0;
+                const participant2Id = parseInt(agreement.participant2_id, 10) || 0;
+                const initiatorId = parseInt(agreement.initiator_id, 10) || 0;
+                const participant1IsInitiator = participant1Id > 0 && participant1Id === initiatorId;
+                const participant2IsInitiator = participant2Id > 0 && participant2Id === initiatorId;
+
+                html += `
+                    <div class="vep-recent-agreement-item">
+                        <div class="vep-recent-agreement-info">
+                            <div class="vep-recent-agreement-actor-row">
+                                <span class="vep-recent-agreement-check ${participant1IsInitiator ? 'is-visible' : ''}">${participant1IsInitiator ? '&#10003;' : ''}</span>
+                                <span class="vep-recent-agreement-actor-name">${participant1}</span>
+                            </div>
+                            <div class="vep-recent-agreement-actor-row">
+                                <span class="vep-recent-agreement-check ${participant2IsInitiator ? 'is-visible' : ''}">${participant2IsInitiator ? '&#10003;' : ''}</span>
+                                <span class="vep-recent-agreement-actor-name">${participant2}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
             listElement.innerHTML = html;
         }
         
@@ -298,6 +521,549 @@
             
             animate();
         }
+    }
+
+    function initDisplayBackgroundSettings() {
+        const backgroundTypeSelect = document.getElementById('vep_background_type');
+        if (!backgroundTypeSelect) {
+            return;
+        }
+
+        const solidRow = document.getElementById('vep-background-solid-row');
+        const gradientRow = document.getElementById('vep-background-gradient-row');
+        const previewElement = document.getElementById('vep-background-preview');
+        const gradientStopsContainer = document.getElementById('vep-gradient-stops');
+        const solidColorInput = document.getElementById('vep_background_solid_color');
+        const resetButton = document.getElementById('vep-background-reset');
+        const gradientAngleInput = document.getElementById('vep_background_gradient_angle');
+        const gradientAngleValue = document.getElementById('vep-gradient-angle-value');
+        const gradientAngleRow = document.getElementById('vep-background-gradient-angle-row');
+        const textColorInput = document.getElementById('vep_display_text_color');
+        const advancedToggleButton = document.getElementById('vep-toggle-advanced-settings');
+        const advancedRows = Array.from(document.querySelectorAll('.vep-display-advanced-row'));
+        let isAdvancedVisible = false;
+
+        const updateRangeLabels = () => {
+            if (!gradientStopsContainer) {
+                return;
+            }
+
+            gradientStopsContainer.querySelectorAll('.vep-gradient-stop').forEach((stopRow) => {
+                const range = stopRow.querySelector('.vep-gradient-stop-range');
+                const valueLabel = stopRow.querySelector('.vep-gradient-stop-value');
+                if (range && valueLabel) {
+                    valueLabel.textContent = `${range.value}%`;
+                }
+            });
+        };
+
+        const updateBackgroundRows = () => {
+            if (!isAdvancedVisible) {
+                if (solidRow) {
+                    solidRow.style.display = 'none';
+                }
+                if (gradientRow) {
+                    gradientRow.style.display = 'none';
+                }
+                if (gradientAngleRow) {
+                    gradientAngleRow.style.display = 'none';
+                }
+                return;
+            }
+
+            const isSolid = backgroundTypeSelect.value === 'solid';
+            if (solidRow) {
+                solidRow.style.display = isSolid ? '' : 'none';
+            }
+            if (gradientRow) {
+                gradientRow.style.display = isSolid ? 'none' : '';
+            }
+            if (gradientAngleRow) {
+                gradientAngleRow.style.display = isSolid ? 'none' : '';
+            }
+        };
+
+        const updateAdvancedToggleLabel = () => {
+            if (!advancedToggleButton) {
+                return;
+            }
+
+            const showLabel = advancedToggleButton.getAttribute('data-label-show') || 'Advanced';
+            const hideLabel = advancedToggleButton.getAttribute('data-label-hide') || 'Hide Advanced';
+            advancedToggleButton.textContent = isAdvancedVisible ? hideLabel : showLabel;
+            advancedToggleButton.setAttribute('aria-expanded', isAdvancedVisible ? 'true' : 'false');
+        };
+
+        const setAdvancedVisibility = (visible) => {
+            isAdvancedVisible = visible;
+
+            advancedRows.forEach((row) => {
+                row.style.display = isAdvancedVisible ? '' : 'none';
+            });
+
+            updateBackgroundRows();
+            updateAdvancedToggleLabel();
+        };
+
+        const updateAngleLabel = () => {
+            if (gradientAngleInput && gradientAngleValue) {
+                gradientAngleValue.textContent = `${gradientAngleInput.value}deg`;
+            }
+        };
+
+        const buildGradientPreview = () => {
+            if (!gradientStopsContainer) {
+                return '';
+            }
+
+            const rows = Array.from(gradientStopsContainer.querySelectorAll('.vep-gradient-stop'));
+            const parts = rows.map((row) => {
+                const colorInput = row.querySelector('.vep-gradient-color');
+                const rangeInput = row.querySelector('.vep-gradient-stop-range');
+                const color = colorInput ? colorInput.value : '#000000';
+                const stop = rangeInput ? Math.min(100, Math.max(0, parseInt(rangeInput.value, 10) || 0)) : 0;
+                return `${color} ${stop}%`;
+            });
+
+            const angle = gradientAngleInput ? Math.min(360, Math.max(0, parseInt(gradientAngleInput.value, 10) || 0)) : 135;
+
+            return `linear-gradient(${angle}deg, ${parts.join(', ')})`;
+        };
+
+        const updatePreview = () => {
+            if (!previewElement) {
+                return;
+            }
+
+            if (backgroundTypeSelect.value === 'solid') {
+                previewElement.style.background = solidColorInput ? solidColorInput.value : '#1e3c72';
+                return;
+            }
+
+            previewElement.style.background = buildGradientPreview();
+        };
+
+        const swapStopValues = (fromRow, toRow) => {
+            const fromColor = fromRow.querySelector('.vep-gradient-color');
+            const fromRange = fromRow.querySelector('.vep-gradient-stop-range');
+            const toColor = toRow.querySelector('.vep-gradient-color');
+            const toRange = toRow.querySelector('.vep-gradient-stop-range');
+
+            if (!fromColor || !fromRange || !toColor || !toRange) {
+                return;
+            }
+
+            const colorTmp = fromColor.value;
+            const rangeTmp = fromRange.value;
+
+            fromColor.value = toColor.value;
+            fromRange.value = toRange.value;
+            toColor.value = colorTmp;
+            toRange.value = rangeTmp;
+        };
+
+        backgroundTypeSelect.addEventListener('change', () => {
+            updateBackgroundRows();
+            updatePreview();
+        });
+
+        if (solidColorInput) {
+            solidColorInput.addEventListener('input', updatePreview);
+            solidColorInput.addEventListener('change', updatePreview);
+        }
+
+        if (textColorInput) {
+            textColorInput.addEventListener('input', updatePreview);
+            textColorInput.addEventListener('change', updatePreview);
+        }
+
+        if (gradientStopsContainer) {
+            gradientStopsContainer.querySelectorAll('.vep-gradient-stop-range').forEach((rangeInput) => {
+                rangeInput.addEventListener('input', () => {
+                    updateRangeLabels();
+                    updatePreview();
+                });
+                rangeInput.addEventListener('change', () => {
+                    updateRangeLabels();
+                    updatePreview();
+                });
+            });
+
+            gradientStopsContainer.querySelectorAll('.vep-gradient-color').forEach((colorInput) => {
+                colorInput.addEventListener('input', updatePreview);
+                colorInput.addEventListener('change', updatePreview);
+            });
+
+            gradientStopsContainer.addEventListener('click', (event) => {
+                const target = event.target;
+                if (!(target instanceof HTMLElement)) {
+                    return;
+                }
+
+                const currentStop = target.closest('.vep-gradient-stop');
+                if (!currentStop) {
+                    return;
+                }
+
+                const allStops = Array.from(gradientStopsContainer.querySelectorAll('.vep-gradient-stop'));
+                const index = allStops.indexOf(currentStop);
+                if (index === -1) {
+                    return;
+                }
+
+                if (target.classList.contains('vep-gradient-move-up') && index > 0) {
+                    swapStopValues(currentStop, allStops[index - 1]);
+                    updateRangeLabels();
+                    updatePreview();
+                }
+
+                if (target.classList.contains('vep-gradient-move-down') && index < allStops.length - 1) {
+                    swapStopValues(currentStop, allStops[index + 1]);
+                    updateRangeLabels();
+                    updatePreview();
+                }
+            });
+        }
+
+        if (gradientAngleInput) {
+            gradientAngleInput.addEventListener('input', () => {
+                updateAngleLabel();
+                updatePreview();
+            });
+            gradientAngleInput.addEventListener('change', () => {
+                updateAngleLabel();
+                updatePreview();
+            });
+        }
+
+        if (resetButton) {
+            resetButton.addEventListener('click', () => {
+                backgroundTypeSelect.value = resetButton.getAttribute('data-default-type') || 'gradient';
+
+                if (solidColorInput) {
+                    solidColorInput.value = resetButton.getAttribute('data-default-solid-color') || '#1e3c72';
+                }
+
+                if (textColorInput) {
+                    textColorInput.value = resetButton.getAttribute('data-default-text-color') || '#ffffff';
+                }
+
+                if (gradientStopsContainer) {
+                    const rows = Array.from(gradientStopsContainer.querySelectorAll('.vep-gradient-stop'));
+
+                    const defaultColors = [
+                        resetButton.getAttribute('data-default-gradient-color-1') || '#1e3c72',
+                        resetButton.getAttribute('data-default-gradient-color-2') || '#2a5298',
+                        resetButton.getAttribute('data-default-gradient-color-3') || '#7e22ce'
+                    ];
+
+                    const defaultStops = [
+                        resetButton.getAttribute('data-default-gradient-stop-1') || '0',
+                        resetButton.getAttribute('data-default-gradient-stop-2') || '50',
+                        resetButton.getAttribute('data-default-gradient-stop-3') || '100'
+                    ];
+
+                    if (gradientAngleInput) {
+                        gradientAngleInput.value = resetButton.getAttribute('data-default-gradient-angle') || '135';
+                    }
+
+                    rows.forEach((row, index) => {
+                        const colorInput = row.querySelector('.vep-gradient-color');
+                        const rangeInput = row.querySelector('.vep-gradient-stop-range');
+
+                        if (colorInput && defaultColors[index] !== undefined) {
+                            colorInput.value = defaultColors[index];
+                        }
+
+                        if (rangeInput && defaultStops[index] !== undefined) {
+                            rangeInput.value = defaultStops[index];
+                        }
+                    });
+                }
+
+                updateBackgroundRows();
+                updateRangeLabels();
+                updateAngleLabel();
+                updatePreview();
+            });
+        }
+
+        if (advancedToggleButton) {
+            advancedToggleButton.addEventListener('click', () => {
+                setAdvancedVisibility(!isAdvancedVisible);
+            });
+        }
+
+        setAdvancedVisibility(false);
+        updateRangeLabels();
+        updateAngleLabel();
+        updatePreview();
+    }
+
+    function initCompetitionsPage() {
+        const page = document.querySelector('.vep-competitions-page');
+        if (!page || typeof vepAdmin === 'undefined') {
+            return;
+        }
+
+        const ajaxUrl = vepAdmin.ajaxUrl;
+        const nonce = page.dataset.competitionNonce || vepAdmin.competitionNonce;
+        const i18n = vepAdmin.i18n || {};
+        const activeGrid = window.jQuery ? window.jQuery('#vep-active-competitions') : null;
+
+        const showError = (message) => {
+            window.alert(message || i18n.competitionActionFailed || 'An error occurred. Please try again.');
+        };
+
+        const showCardNotice = (sourceElement, message, type = 'success') => {
+            const card = sourceElement ? sourceElement.closest('.vep-competition-card') : null;
+            if (!card) {
+                return;
+            }
+
+            const oldNotice = card.querySelector('.vep-competition-toast');
+            if (oldNotice) {
+                oldNotice.remove();
+            }
+
+            const toast = document.createElement('div');
+            toast.className = `vep-competition-toast vep-competition-toast-${type}`;
+            toast.textContent = message;
+            card.appendChild(toast);
+
+            // Trigger transition after insertion.
+            window.requestAnimationFrame(() => {
+                toast.classList.add('is-visible');
+            });
+
+            window.setTimeout(() => {
+                toast.classList.remove('is-visible');
+                window.setTimeout(() => {
+                    if (toast.parentNode) {
+                        toast.parentNode.removeChild(toast);
+                    }
+                }, 220);
+            }, 1600);
+        };
+
+        const reloadPage = () => {
+            window.location.reload();
+        };
+
+        const renumberCards = () => {
+            const cards = document.querySelectorAll('#vep-active-competitions .vep-competition-card');
+            cards.forEach((card, index) => {
+                const number = card.querySelector('.vep-competition-number');
+                if (number) {
+                    number.textContent = String(index + 1);
+                }
+            });
+        };
+
+        const postAction = (action, payload = {}) => {
+            const formData = new FormData();
+            formData.append('action', action);
+            formData.append('nonce', nonce);
+
+            Object.entries(payload).forEach(([key, value]) => {
+                if (Array.isArray(value)) {
+                    value.forEach((item) => formData.append(`${key}[]`, item));
+                    return;
+                }
+
+                if (value !== undefined && value !== null) {
+                    formData.append(key, value);
+                }
+            });
+
+            return fetch(ajaxUrl, {
+                method: 'POST',
+                body: formData,
+                credentials: 'same-origin'
+            }).then((response) => response.json());
+        };
+
+        if (activeGrid && activeGrid.length && typeof activeGrid.sortable === 'function') {
+            activeGrid.sortable({
+                items: '> .vep-competition-card',
+                handle: '.vep-competition-drag-handle',
+                placeholder: 'vep-sortable-ghost',
+                tolerance: 'pointer',
+                helper: function(event, item) {
+                    const helper = item.clone();
+                    helper.addClass('vep-sortable-helper');
+                    helper.css('width', item.outerWidth());
+                    return helper;
+                },
+                forceHelperSize: true,
+                forcePlaceholderSize: true,
+                start: function(event, ui) {
+                    this.classList.add('vep-competitions-grid-sorting');
+                    ui.placeholder.height(ui.item.outerHeight());
+                    ui.placeholder.width(ui.item.outerWidth());
+                },
+                stop: function() {
+                    this.classList.remove('vep-competitions-grid-sorting');
+                },
+                update: function() {
+                    const order = Array.from(document.querySelectorAll('#vep-active-competitions .vep-competition-card'))
+                        .map((card) => card.dataset.competitionId)
+                        .filter(Boolean);
+
+                    renumberCards();
+
+                    if (order.length === 0) {
+                        return;
+                    }
+
+                    postAction('vep_reorder_competitions', { order })
+                        .then((data) => {
+                            if (!data.success) {
+                                showError((data.data && data.data.message) || i18n.reorderCompetitionFailed);
+                                reloadPage();
+                            }
+                        })
+                        .catch(() => {
+                            showError(i18n.reorderCompetitionFailed);
+                            reloadPage();
+                        });
+                }
+            });
+        }
+
+        document.querySelectorAll('.vep-toggle-active').forEach((button) => {
+            button.addEventListener('click', function() {
+                const competitionId = this.dataset.competitionId;
+                const actionType = this.dataset.action;
+
+                this.disabled = true;
+
+                postAction('vep_toggle_competition_active', {
+                    competition_id: competitionId,
+                    action_type: actionType
+                })
+                    .then((data) => {
+                        if (!data.success) {
+                            this.disabled = false;
+                            showError(data.data && data.data.message);
+                            return;
+                        }
+
+                        reloadPage();
+                    })
+                    .catch(() => {
+                        this.disabled = false;
+                        showError(i18n.competitionActionFailed);
+                    });
+            });
+        });
+
+        document.querySelectorAll('.vep-delete-competition').forEach((button) => {
+            button.addEventListener('click', function() {
+                if (!window.confirm(i18n.confirmCompetitionDelete || 'Are you sure?')) {
+                    return;
+                }
+
+                const competitionId = this.dataset.competitionId;
+                this.disabled = true;
+
+                postAction('vep_delete_competition', {
+                    competition_id: competitionId
+                })
+                    .then((data) => {
+                        if (!data.success) {
+                            this.disabled = false;
+                            showError(data.data && data.data.message);
+                            return;
+                        }
+
+                        reloadPage();
+                    })
+                    .catch(() => {
+                        this.disabled = false;
+                        showError(i18n.competitionActionFailed);
+                    });
+            });
+        });
+
+        // Handle competition winner selection for custom competitions
+        document.querySelectorAll('.vep-competition-winner-select').forEach((select) => {
+            select.addEventListener('change', function() {
+                const competitionId = this.dataset.competitionId;
+                const winnerId = this.value;
+                const nonce = this.dataset.nonce;
+
+                const formData = new FormData();
+                formData.append('action', 'vep_set_competition_winner');
+                formData.append('competition_id', competitionId);
+                formData.append('winner_id', winnerId);
+                formData.append('nonce', nonce);
+
+                fetch(ajaxUrl, {
+                    method: 'POST',
+                    body: formData,
+                    credentials: 'same-origin'
+                })
+                    .then((response) => response.json())
+                    .then((data) => {
+                        if (!data.success) {
+                            showError((data.data && data.data.message) || i18n.competitionActionFailed);
+                            reloadPage();
+                            return;
+                        }
+
+                        const successMessage = (data.data && data.data.message) || i18n.winnerSaved || 'Saved.';
+                        showCardNotice(this, successMessage, 'success');
+
+                        // Re-initialize Choices if available
+                        if (typeof Choices !== 'undefined' && this.choicesInstance) {
+                            this.choicesInstance.destroy();
+                            this.choicesInstance = new Choices(this, {
+                                searchEnabled: true,
+                                searchFields: ['label'],
+                                searchPlaceholderValue: (typeof vepAdmin !== 'undefined' && vepAdmin.choicesI18n) ? vepAdmin.choicesI18n.searchPlaceholderValue : 'Search...',
+                                itemSelectText: (typeof vepAdmin !== 'undefined' && vepAdmin.choicesI18n) ? vepAdmin.choicesI18n.itemSelectText : 'Press to select',
+                                noResultsText: (typeof vepAdmin !== 'undefined' && vepAdmin.choicesI18n) ? vepAdmin.choicesI18n.noResultsText : 'No results found',
+                                noChoicesText: (typeof vepAdmin !== 'undefined' && vepAdmin.choicesI18n) ? vepAdmin.choicesI18n.noChoicesText : 'No options available',
+                                removeItemButton: false,
+                                shouldSort: false
+                            });
+                        }
+                    })
+                    .catch(() => {
+                        showError(i18n.competitionActionFailed);
+                        reloadPage();
+                    });
+            });
+        });
+
+        renumberCards();
+    }
+
+    function initAdminChoices() {
+        if (typeof Choices === 'undefined') {
+            return;
+        }
+
+        const i18n = (typeof vepAdmin !== 'undefined' && vepAdmin.choicesI18n) ? vepAdmin.choicesI18n : {};
+        const selectElements = document.querySelectorAll('.vep-choices');
+
+        selectElements.forEach((element) => {
+            if (element.choicesInstance) {
+                return;
+            }
+
+            element.choicesInstance = new Choices(element, {
+                searchEnabled: true,
+                searchFields: ['label'],
+                searchPlaceholderValue: i18n.searchPlaceholderValue || 'Search...',
+                itemSelectText: i18n.itemSelectText || 'Press to select',
+                noResultsText: i18n.noResultsText || 'No results found',
+                noChoicesText: i18n.noChoicesText || 'No options available',
+                removeItemButton: false,
+                shouldSort: false
+            });
+        });
     }
 })();
 

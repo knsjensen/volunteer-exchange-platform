@@ -139,6 +139,10 @@ msgstr "Vælg mindst én mulighed."
 msgid "At least 2 approved participants are required to create agreements."
 msgstr "Der kræves mindst 2 godkendte deltagere for at oprette aftaler."
 
+#: src/Shortcodes/AgreementForm.php
+msgid "%s is over for this time."
+msgstr "%s er overstået for denne gang."
+
 #: includes/Shortcodes/AgreementForm.php
 msgid "Participant 1"
 msgstr "Deltager 1"
@@ -722,9 +726,9 @@ msgstr "Kontaktpersonens navn"
 msgid "Contact Phone"
 msgstr "Kontakttelefon"
 
-#: includes/Admin/EventDisplayPage.php
-msgid "Countdown Target Time"
-msgstr "Nedtællingens sluttidspunkt"
+#: src/Admin/EventDisplayPage.php
+msgid "Event End Time"
+msgstr "Begivenhedens sluttidspunkt"
 
 #: includes/Admin/ParticipantTypesListTable.php
 #: includes/Admin/TagsListTable.php
@@ -1008,6 +1012,10 @@ msgstr "Start begivenhedsvisning"
 msgid "Status"
 msgstr "Status"
 
+#: src/Admin/EventDisplayPage.php
+msgid "None"
+msgstr "Ingen"
+
 #: includes/Admin/TagsPage.php
 msgid "Tag created successfully."
 msgstr "Tagget blev oprettet."
@@ -1028,9 +1036,94 @@ msgstr "Dette åbner en fuldskærmsvisning med nedtælling og live optælling af
 msgid "Times up!"
 msgstr "Tiden er gået!"
 
+#: src/Admin/EventDisplayPage.php
+msgid "Uses the active event end date and time."
+msgstr "Bruger den aktive begivenheds slutdato og -tid."
+
 #: includes/Admin/EventDisplayPage.php
 msgid "Top Participants"
 msgstr "Top-deltagere"
+
+#: src/Admin/EventDisplayPage.php
+#: src/Plugin/Plugin.php
+msgid "Latest Agreements"
+msgstr "Senest indgåede aftaler"
+
+#: src/Admin/EventDisplayPage.php
+msgid "Right Panel View"
+msgstr "Visning i højre panel"
+
+#: src/Admin/EventDisplayPage.php
+msgid "Choose what to show in the right side panel during fullscreen display."
+msgstr "Vælg hvad der skal vises i panelet til højre under fuldskærmsvisning."
+
+#: src/Plugin/Plugin.php
+msgid "No recent agreements yet..."
+msgstr "Ingen seneste aftaler endnu..."
+
+#: src/Admin/EventDisplayPage.php
+msgid "Background Style"
+msgstr "Baggrundstype"
+
+#: src/Admin/EventDisplayPage.php
+msgid "Single Color"
+msgstr "Enkelt farve"
+
+#: src/Admin/EventDisplayPage.php
+msgid "Gradient"
+msgstr "Gradient"
+
+#: src/Admin/EventDisplayPage.php
+msgid "Background Color"
+msgstr "Baggrundsfarve"
+
+#: src/Admin/EventDisplayPage.php
+msgid "Text Color"
+msgstr "Tekstfarve"
+
+#: src/Admin/EventDisplayPage.php
+msgid "Gradient Colors"
+msgstr "Gradientfarver"
+
+#: src/Admin/EventDisplayPage.php
+msgid "Gradient Angle"
+msgstr "Gradientvinkel"
+
+#: src/Admin/EventDisplayPage.php
+msgid "Color Stop 1"
+msgstr "Farvestop 1"
+
+#: src/Admin/EventDisplayPage.php
+msgid "Color Stop 2"
+msgstr "Farvestop 2"
+
+#: src/Admin/EventDisplayPage.php
+msgid "Color Stop 3"
+msgstr "Farvestop 3"
+
+#: src/Admin/EventDisplayPage.php
+msgid "Move Up"
+msgstr "Flyt op"
+
+#: src/Admin/EventDisplayPage.php
+msgid "Move Down"
+msgstr "Flyt ned"
+
+#: src/Admin/EventDisplayPage.php
+msgid "Fill Percentage"
+msgstr "Udfyldningsprocent"
+
+#: src/Admin/EventDisplayPage.php
+msgid "Use the move buttons to rearrange gradient colors without reselecting them."
+msgstr "Brug flyt-knapperne til at omarrangere gradientfarver uden at vælge dem igen."
+
+#: src/Admin/EventDisplayPage.php
+msgid "Background Preview"
+msgstr "Forhåndsvisning af baggrund"
+
+#: src/Admin/EventDisplayPage.php
+msgid "Reset Background"
+msgstr "Nulstil baggrund"
 
 #: includes/Admin/ParticipantsListTable.php
 #: includes/Admin/ParticipantsPage.php
@@ -1106,6 +1199,14 @@ msgstr "Tilbage til deltagere"
 #: src/Admin/EventsPage.php
 msgid "Back to Events"
 msgstr "Tilbage til begivenheder"
+
+#: src/Admin/EventDisplayPage.php
+msgid "Advanced"
+msgstr "Vis avanceret"
+
+#: src/Admin/EventDisplayPage.php
+msgid "Hide Advanced"
+msgstr "Skjul avanceret"
 
 #: src/Admin/ParticipantsPage.php
 #: src/Admin/EventsPage.php
@@ -1458,3 +1559,240 @@ msgstr "Ikke påbegyndt"
 #: src/Admin/ParticipantsListTable.php
 msgid "Partially complete"
 msgstr "Delvist fuldført"
+
+#: src/Admin/EventsPage.php
+msgid "Could not create event."
+msgstr "Kunne ikke oprette begivenhed."
+
+#: src/Admin/CompetitionsPage.php
+#: src/Ajax/CompetitionHandler.php
+msgid "Unauthorized"
+msgstr "Uautoriseret"
+
+#: src/Admin/CompetitionsPage.php
+msgid "No active event"
+msgstr "Ingen aktiv begivenhed"
+
+#: src/Admin/CompetitionsPage.php
+msgid "Title is required"
+msgstr "Titel er påkrævet"
+
+#: src/Admin/CompetitionsPage.php
+msgid "Competition updated successfully."
+msgstr "Konkurrencen blev opdateret."
+
+#: src/Admin/CompetitionsPage.php
+msgid "Failed to update competition."
+msgstr "Kunne ikke opdatere konkurrencen."
+
+#: src/Admin/CompetitionsPage.php
+msgid "Competition created successfully."
+msgstr "Konkurrencen blev oprettet."
+
+#: src/Admin/CompetitionsPage.php
+msgid "Failed to create competition."
+msgstr "Kunne ikke oprette konkurrencen."
+
+#: src/Admin/CompetitionsPage.php
+msgid "Unknown participant"
+msgstr "Ukendt deltager"
+
+#: src/Ajax/CompetitionHandler.php
+msgid "No order data provided"
+msgstr "Ingen sorteringsdata modtaget"
+
+#: src/Ajax/CompetitionHandler.php
+msgid "Competitions reordered successfully"
+msgstr "Konkurrencerne blev omarrangeret"
+
+#: src/Ajax/CompetitionHandler.php
+msgid "Failed to reorder competitions"
+msgstr "Kunne ikke omarrangere konkurrencerne"
+
+#: src/Ajax/CompetitionHandler.php
+msgid "Competition ID is required"
+msgstr "Konkurrence-ID er påkrævet"
+
+#: src/Ajax/CompetitionHandler.php
+msgid "Winner set successfully"
+msgstr "Vinderen blev valgt"
+
+#: src/Ajax/CompetitionHandler.php
+msgid "Failed to set winner"
+msgstr "Kunne ikke vælge vinder"
+
+#: src/Ajax/CompetitionHandler.php
+msgid "Invalid parameters"
+msgstr "Ugyldige parametre"
+
+#: src/Ajax/CompetitionHandler.php
+msgid "Competition status updated"
+msgstr "Konkurrencens status blev opdateret"
+
+#: src/Ajax/CompetitionHandler.php
+msgid "Failed to update competition status"
+msgstr "Kunne ikke opdatere konkurrencens status"
+
+#: src/Ajax/CompetitionHandler.php
+msgid "This competition cannot be deleted"
+msgstr "Denne konkurrence kan ikke slettes"
+
+#: src/Ajax/CompetitionHandler.php
+msgid "Competition deleted successfully"
+msgstr "Konkurrencen blev slettet"
+
+#: src/Ajax/CompetitionHandler.php
+msgid "Failed to delete competition"
+msgstr "Kunne ikke slette konkurrencen"
+
+#: src/Admin/CompetitionsPage.php
+msgid "Competitions"
+msgstr "Konkurrencer"
+
+#: src/Admin/CompetitionsPage.php
+msgid "No active event. Please activate an event first."
+msgstr "Ingen aktiv begivenhed. Aktivér en begivenhed først."
+
+#: src/Admin/CompetitionsPage.php
+msgid "Active Competitions"
+msgstr "Aktive konkurrencer"
+
+#: src/Admin/CompetitionsPage.php
+msgid "Inactive Competitions"
+msgstr "Deaktiverede konkurrencer"
+
+#: src/Admin/CompetitionsPage.php
+msgid "No winner set"
+msgstr "Ingen vinder valgt"
+
+#: src/Admin/CompetitionsPage.php
+msgid "Winner:"
+msgstr "Vinder:"
+
+#: src/Admin/CompetitionsPage.php
+msgid "Edit"
+msgstr "Rediger"
+
+#: src/Admin/CompetitionsPage.php
+msgid "Deactivate"
+msgstr "Deaktivér"
+
+#: src/Admin/CompetitionsPage.php
+msgid "Delete"
+msgstr "Slet"
+
+#: src/Admin/CompetitionsPage.php
+msgid "Activate"
+msgstr "Aktivér"
+
+#: src/Admin/CompetitionsPage.php
+msgid "Create New Competition"
+msgstr "Opret ny konkurrence"
+
+#: src/Admin/CompetitionsPage.php
+msgid "Are you sure?"
+msgstr "Er du sikker?"
+
+#: src/Admin/CompetitionsPage.php
+msgid "Title"
+msgstr "Titel"
+
+#: src/Admin/CompetitionsPage.php
+msgid "Type"
+msgstr "Type"
+
+#: src/Admin/CompetitionsPage.php
+msgid "Winner"
+msgstr "Vinder"
+
+#: src/Admin/CompetitionsPage.php
+msgid "Automatic"
+msgstr "Automatisk"
+
+#: src/Admin/CompetitionsPage.php
+msgid "Status"
+msgstr "Status"
+
+#: src/Admin/CompetitionsPage.php
+msgid "Active"
+msgstr "Aktiv"
+
+#: src/Admin/CompetitionsPage.php
+msgid "Save Changes"
+msgstr "Gem ændringer"
+
+#: src/Admin/CompetitionsPage.php
+msgid "Cancel"
+msgstr "Annullér"
+
+#: src/Admin/CompetitionsPage.php
+msgid "Competition not found."
+msgstr "Konkurrence blev ikke fundet."
+
+#: src/Admin/CompetitionsPage.php
+msgid "Select Winner"
+msgstr "Vælg vinder"
+
+#: src/Services/CompetitionService.php
+msgid "First Registered Participant"
+msgstr "Første tilmeldt deltager"
+
+#: src/Services/CompetitionService.php
+msgid "Last Minute Registration"
+msgstr "Sidste minut tilmelding"
+
+#: src/Services/CompetitionService.php
+msgid "Longest Description"
+msgstr "Længste beskrivelse"
+
+#: src/Services/CompetitionService.php
+msgid "First Agreement"
+msgstr "Første aftale"
+
+#: src/Services/CompetitionService.php
+msgid "Last Agreement of the Day"
+msgstr "Dagens sidste aftale"
+
+#: src/Services/CompetitionService.php
+msgid "Last Minute Agreement"
+msgstr "Lige på falderebet"
+
+#: src/Services/CompetitionService.php
+msgid "Actor with Most Agreements"
+msgstr "Aktør med flest aftaler"
+
+#: src/Services/CompetitionService.php
+msgid "Shortest Time Between Agreements"
+msgstr "Kortest tid imellem aftaler"
+
+#: src/Services/CompetitionService.php
+msgid "Custom Competition"
+msgstr "Brugerdefineret konkurrence"
+
+#: src/Plugin/Plugin.php
+msgid "Copied %d active participant emails to clipboard."
+msgstr "Kopierede %d aktive deltageres e-mailadresser til udklipsholderen."
+
+#: src/Plugin/Plugin.php
+msgid "Could not copy active participant emails. Please try again."
+msgstr "Kunne ikke kopiere aktive deltageres e-mailadresser. Prøv igen."
+
+#: src/Plugin/Plugin.php
+msgid "No active participant emails found."
+msgstr "Ingen aktive deltageres e-mailadresser fundet."
+
+#: src/Admin/EventsPage.php
+msgid "Search agreements"
+msgstr "Søg i aftaler"
+
+#: src/Admin/EventsPage.php
+msgid "Search in agreements..."
+msgstr "Søg i aftaler..."
+
+#: src/Admin/EventsPage.php
+msgid "Search"
+msgstr "Søg"
+
+#: src/Admin/EventsPage.php
+msgid "No agreements match your search."
+msgstr "Ingen aftaler matcher din søgning."

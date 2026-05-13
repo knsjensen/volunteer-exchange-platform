@@ -115,6 +115,48 @@ class EventService extends AbstractService {
         );
     }
 
+    /**
+     * Normalize event datetime input into MySQL datetime format.
+     *
+     * Accepts values from datetime-local fields (with T) and SQL-like datetimes.
+     *
+     * @param string $value Datetime input value.
+     * @return string|false
+     */
+    private function normalize_event_datetime( $value ) {
+        $value = trim( (string) $value );
+        if ( '' === $value ) {
+            return false;
+        }
+
+        $timezone = wp_timezone();
+        $formats = array(
+            'Y-m-d\\TH:i',
+            'Y-m-d\\TH:i:s',
+            'Y-m-d H:i:s',
+            'Y-m-d H:i',
+        );
+
+        foreach ( $formats as $format ) {
+            $date = \DateTimeImmutable::createFromFormat( $format, $value, $timezone );
+            if ( ! ( $date instanceof \DateTimeImmutable ) ) {
+                continue;
+            }
+
+            $errors = \DateTimeImmutable::getLastErrors();
+            if ( false === $errors || ( 0 === (int) $errors['warning_count'] && 0 === (int) $errors['error_count'] ) ) {
+                return $date->format( 'Y-m-d H:i:s' );
+            }
+        }
+
+        $timestamp = strtotime( $value );
+        if ( false === $timestamp ) {
+            return false;
+        }
+
+        return wp_date( 'Y-m-d H:i:s', $timestamp, $timezone );
+    }
+
     private function normalize_event_data( $data ) {
         $name = sanitize_text_field( $data['name'] ?? '' );
         if ( '' === $name ) {
@@ -127,8 +169,14 @@ class EventService extends AbstractService {
             return false;
         }
 
-        $start_ts = strtotime( $start_date );
-        $end_ts = strtotime( $end_date );
+        $start_date_mysql = $this->normalize_event_datetime( $start_date );
+        $end_date_mysql = $this->normalize_event_datetime( $end_date );
+        if ( false === $start_date_mysql || false === $end_date_mysql ) {
+            return false;
+        }
+
+        $start_ts = strtotime( $start_date_mysql );
+        $end_ts = strtotime( $end_date_mysql );
         if ( false === $start_ts || false === $end_ts || $start_ts > $end_ts ) {
             return false;
         }
@@ -136,8 +184,8 @@ class EventService extends AbstractService {
         return array(
             'name' => $name,
             'description' => sanitize_textarea_field( $data['description'] ?? '' ),
-            'start_date' => wp_date( 'Y-m-d H:i:s', $start_ts ),
-            'end_date' => wp_date( 'Y-m-d H:i:s', $end_ts ),
+            'start_date' => $start_date_mysql,
+            'end_date' => $end_date_mysql,
         );
     }
 
@@ -427,6 +475,28 @@ class EventService extends AbstractService {
         return $this->run_guarded(
             function () use ( $event_id, $limit ) {
                 return $this->repository->get_event_leaderboard( (int) $event_id, $limit );
+            },
+            array()
+        );
+    }
+
+    /**
+     * Get latest agreements for an event.
+     *
+     * @param int $event_id Event ID.
+     * @param int $limit Maximum number of rows.
+     * @return array
+     */
+    public function get_recent_agreements( $event_id, $limit = 10 ) {
+        if ( ! $this->is_valid_id( $event_id ) ) {
+            return array();
+        }
+
+        $limit = max( 1, (int) $limit );
+
+        return $this->run_guarded(
+            function () use ( $event_id, $limit ) {
+                return $this->repository->get_recent_agreements( (int) $event_id, $limit );
             },
             array()
         );

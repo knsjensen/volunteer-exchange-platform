@@ -9,6 +9,7 @@
 
 namespace VolunteerExchangePlatform\Ajax;
 
+use VolunteerExchangePlatform\Services\CompetitionService;
 use VolunteerExchangePlatform\Services\EventService;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -29,13 +30,20 @@ class AgreementHandler {
     private $event_service;
 
     /**
+     * @var CompetitionService
+     */
+    private $competition_service;
+
+    /**
      * Constructor.
      *
-     * @param EventService|null $event_service Event service instance.
+     * @param EventService|null       $event_service Event service instance.
+     * @param CompetitionService|null $competition_service Competition service instance.
      * @return void
      */
-    public function __construct( ?EventService $event_service = null ) {
+    public function __construct( ?EventService $event_service = null, ?CompetitionService $competition_service = null ) {
         $this->event_service = $event_service ?: new EventService();
+        $this->competition_service = $competition_service ?: new CompetitionService();
         add_action('wp_ajax_vep_create_agreement', array($this, 'create'));
         add_action('wp_ajax_nopriv_vep_create_agreement', array($this, 'create'));
     }
@@ -89,6 +97,8 @@ class AgreementHandler {
         if ($inserted === false) {
             wp_send_json_error(array('message' => __('Error creating agreement. Please try again.', 'volunteer-exchange-platform')));
         }
+
+        $this->competition_service->auto_select_winners_for_event( $event_id );
 
         wp_send_json_success(array(
             'message' => __('Agreement created successfully!', 'volunteer-exchange-platform')

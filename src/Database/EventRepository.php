@@ -206,7 +206,9 @@ class EventRepository extends AbstractRepository {
 
         return $this->get_results(
             "SELECT a.*,
+                    p1.participant_number as participant1_number,
                     p1.organization_name as participant1_name,
+                    p2.participant_number as participant2_number,
                     p2.organization_name as participant2_name,
                     pi.organization_name as initiator_name
              FROM {$agreements_table} a
@@ -231,7 +233,9 @@ class EventRepository extends AbstractRepository {
 
         return $this->get_row(
             "SELECT a.*,
+                    p1.participant_number as participant1_number,
                     p1.organization_name as participant1_name,
+                    p2.participant_number as participant2_number,
                     p2.organization_name as participant2_name,
                     pi.organization_name as initiator_name
              FROM {$agreements_table} a
@@ -397,6 +401,160 @@ class EventRepository extends AbstractRepository {
              ORDER BY agreement_count DESC, p.organization_name ASC
              LIMIT %d",
             array( $event_id, $event_id, (int) $limit )
+        );
+    }
+
+    /**
+     * Get latest agreements for event display.
+     *
+     * @param int $event_id Event ID.
+     * @param int $limit Row limit.
+     * @return array
+     */
+    public function get_recent_agreements( $event_id, $limit = 10 ) {
+        $agreements_table = $this->wpdb->prefix . 'vep_agreements';
+        $participants_table = $this->wpdb->prefix . 'vep_participants';
+
+        return $this->get_results(
+            "SELECT
+                a.id,
+                a.created_at,
+                a.participant1_id,
+                a.participant2_id,
+                a.initiator_id,
+                p1.organization_name as participant1_name,
+                p2.organization_name as participant2_name
+             FROM {$agreements_table} a
+             LEFT JOIN {$participants_table} p1 ON a.participant1_id = p1.id
+             LEFT JOIN {$participants_table} p2 ON a.participant2_id = p2.id
+             WHERE a.event_id = %d
+             ORDER BY a.created_at DESC
+             LIMIT %d",
+            array( $event_id, (int) $limit )
+        );
+    }
+
+    /**
+     * Get first agreement for an event (after event start).
+     *
+     * @param int $event_id Event ID.
+     * @return object|null
+     */
+    public function get_first_agreement( $event_id ) {
+        $agreements_table = $this->wpdb->prefix . 'vep_agreements';
+        $participants_table = $this->wpdb->prefix . 'vep_participants';
+
+        return $this->get_row(
+            "SELECT a.*, p1.organization_name as participant1_name, p2.organization_name as participant2_name
+             FROM {$agreements_table} a
+             LEFT JOIN {$participants_table} p1 ON a.participant1_id = p1.id
+             LEFT JOIN {$participants_table} p2 ON a.participant2_id = p2.id
+             WHERE a.event_id = %d
+             ORDER BY a.created_at ASC LIMIT 1",
+            array( $event_id )
+        );
+    }
+
+    /**
+     * Get last agreement for an event (created before event end).
+     *
+     * @param int $event_id Event ID.
+     * @return object|null
+     */
+    public function get_last_agreement( $event_id ) {
+        $agreements_table = $this->wpdb->prefix . 'vep_agreements';
+        $participants_table = $this->wpdb->prefix . 'vep_participants';
+
+        return $this->get_row(
+            "SELECT a.*, p1.organization_name as participant1_name, p2.organization_name as participant2_name
+             FROM {$agreements_table} a
+             LEFT JOIN {$participants_table} p1 ON a.participant1_id = p1.id
+             LEFT JOIN {$participants_table} p2 ON a.participant2_id = p2.id
+             WHERE a.event_id = %d
+             ORDER BY a.created_at DESC LIMIT 1",
+            array( $event_id )
+        );
+    }
+
+    /**
+     * Get agreement created within last minute before event end (deadline rush).
+     *
+     * @param int $event_id Event ID.
+     * @return object|null
+     */
+    public function get_deadline_rush_agreement( $event_id ) {
+        $agreements_table = $this->wpdb->prefix . 'vep_agreements';
+        $participants_table = $this->wpdb->prefix . 'vep_participants';
+        $events_table = $this->table();
+
+        return $this->get_row(
+            "SELECT a.*, p1.organization_name as participant1_name, p2.organization_name as participant2_name
+             FROM {$agreements_table} a
+             LEFT JOIN {$participants_table} p1 ON a.participant1_id = p1.id
+             LEFT JOIN {$participants_table} p2 ON a.participant2_id = p2.id
+             INNER JOIN {$events_table} e ON a.event_id = e.id
+             WHERE a.event_id = %d
+             AND a.created_at >= DATE_SUB(e.end_date, INTERVAL 1 MINUTE)
+             AND a.created_at <= e.end_date
+             ORDER BY a.created_at DESC LIMIT 1",
+            array( $event_id )
+        );
+    }
+
+    /**
+     * Get participant with most agreements for an event.
+     *
+     * @param int $event_id Event ID.
+     * @return object|null
+     */
+    public function get_participant_with_most_agreements( $event_id ) {
+        $agreements_table = $this->wpdb->prefix . 'vep_agreements';
+        $participants_table = $this->wpdb->prefix . 'vep_participants';
+
+        return $this->get_row(
+            "SELECT p.*, COUNT(DISTINCT a.id) as agreement_count
+             FROM {$participants_table} p
+             LEFT JOIN {$agreements_table} a ON (a.participant1_id = p.id OR a.participant2_id = p.id) AND a.event_id = %d
+             WHERE p.event_id = %d AND p.is_approved = 1
+             GROUP BY p.id
+             ORDER BY agreement_count DESC LIMIT 1",
+            array( $event_id, $event_id )
+        );
+    }
+
+    /**
+     * Get participant with shortest time between their agreements.
+     *
+     * @param int $event_id Event ID.
+     * @return object|null
+     */
+    public function get_participant_shortest_time_between_agreements( $event_id ) {
+        $agreements_table = $this->wpdb->prefix . 'vep_agreements';
+        $participants_table = $this->wpdb->prefix . 'vep_participants';
+
+        return $this->get_row(
+            "SELECT p.*
+             FROM {$participants_table} p
+             WHERE p.event_id = %d AND p.is_approved = 1
+             AND p.id IN (
+                SELECT a1.participant1_id
+                FROM {$agreements_table} a1
+                WHERE a1.event_id = %d
+                UNION
+                SELECT a2.participant2_id
+                FROM {$agreements_table} a2
+                WHERE a2.event_id = %d
+             )
+             ORDER BY (
+                SELECT MIN(TIMESTAMPDIFF(SECOND, 
+                    (SELECT MAX(created_at) FROM {$agreements_table} WHERE event_id = %d AND (participant1_id = p.id OR participant2_id = p.id) AND created_at < a.created_at),
+                    a.created_at
+                ))
+                FROM {$agreements_table} a
+                WHERE a.event_id = %d AND (a.participant1_id = p.id OR a.participant2_id = p.id)
+             ) ASC
+             LIMIT 1",
+            array( $event_id, $event_id, $event_id, $event_id, $event_id )
         );
     }
 }

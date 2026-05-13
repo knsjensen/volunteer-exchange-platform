@@ -68,6 +68,16 @@ class Registration {
         if (!$active_event) {
             return '<div class="vep-message vep-error">' . __('No active event at the moment.', 'volunteer-exchange-platform') . '</div>';
         }
+
+        $event_end_ts = isset( $active_event->end_date ) ? strtotime( (string) $active_event->end_date ) : false;
+        if ( false !== $event_end_ts && $event_end_ts < current_time( 'timestamp' ) ) {
+            $event_name = isset( $active_event->name ) ? (string) $active_event->name : '';
+
+            return '<div class="vep-message vep-info">' . sprintf(
+                esc_html__( '%s is over for this time.', 'volunteer-exchange-platform' ),
+                esc_html( $event_name )
+            ) . '</div>';
+        }
         
         // Get participant types
         $types = $this->participant_type_service->get_all_for_select();

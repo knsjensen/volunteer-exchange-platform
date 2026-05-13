@@ -46,6 +46,71 @@ table.wp-list-table td.column-is_approved {
     padding: 15px 10px;
 }
 
+.vep-background-type-controls {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.vep-gradient-stops {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-width: 640px;
+}
+
+.vep-gradient-stop {
+    border: 1px solid #dcdcde;
+    border-radius: 8px;
+    background: #fff;
+    padding: 10px;
+}
+
+.vep-gradient-stop-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    gap: 8px;
+}
+
+.vep-gradient-stop-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.vep-gradient-stop-controls {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.vep-gradient-stop-controls label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.vep-gradient-stop-range {
+    width: 220px;
+}
+
+.vep-gradient-stop-value {
+    min-width: 44px;
+    font-weight: 600;
+}
+
+.vep-background-preview {
+    width: 100%;
+    max-width: 640px;
+    height: 90px;
+    border-radius: 10px;
+    border: 1px solid #dcdcde;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #7e22ce 100%);
+}
+
 /* List table enhancements */
 .widefat .column-is_active,
 .widefat .column-is_approved {
@@ -69,6 +134,10 @@ table.wp-list-table td.column-is_approved {
 
 /* Fullscreen Display Modal */
 .vep-fullscreen-display {
+    --vep-display-text-color: #ffffff;
+    --vep-display-text-strong: rgba(255, 255, 255, 0.95);
+    --vep-display-text-muted: rgba(255, 255, 255, 0.8);
+    --vep-display-text-soft: rgba(255, 255, 255, 0.7);
     display: none;
     position: fixed;
     top: 0;
@@ -108,7 +177,7 @@ table.wp-list-table td.column-is_approved {
     right: 30px;
     background: rgba(255, 255, 255, 0.2);
     border: 2px solid rgba(255, 255, 255, 0.4);
-    color: #fff;
+    color: var(--vep-display-text-color);
     width: 60px;
     height: 60px;
     border-radius: 50%;
@@ -134,10 +203,10 @@ table.wp-list-table td.column-is_approved {
 }
 
 .vep-display-header h1 {
-    color: #fff;
-    font-size: 48px;
+    color: var(--vep-display-text-color);
+    font-size: 144px;
     font-weight: 700;
-    margin: 0 0 40px 0;
+    margin: 0 0 180px 0;
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
 }
 
@@ -146,6 +215,15 @@ table.wp-list-table td.column-is_approved {
     gap: 40px;
     align-items: flex-start;
     width: 100%;
+}
+
+.vep-display-main-content.vep-display-main-content-no-right {
+    justify-content: center;
+}
+
+.vep-display-main-content.vep-display-main-content-no-right .vep-display-left {
+    flex: 0 1 980px;
+    max-width: 980px;
 }
 
 .vep-display-left {
@@ -193,7 +271,7 @@ table.wp-list-table td.column-is_approved {
     line-height: 1;
     letter-spacing: -0.04em;
     font-variant-numeric: tabular-nums;
-    color: #ffffff;
+    color: var(--vep-display-text-color);
     white-space: nowrap;
     text-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
 }
@@ -246,7 +324,7 @@ table.wp-list-table td.column-is_approved {
     display: block;
     font-size: 96px;
     font-weight: bold;
-    color: #fff;
+    color: var(--vep-display-text-color);
     line-height: 1;
     margin-bottom: 15px;
     font-family: 'Courier New', monospace;
@@ -257,7 +335,7 @@ table.wp-list-table td.column-is_approved {
     display: block;
     font-size: 20px;
     text-transform: uppercase;
-    color: rgba(255, 255, 255, 0.95);
+    color: var(--vep-display-text-strong);
     font-weight: 600;
     letter-spacing: 2px;
 }
@@ -273,7 +351,7 @@ table.wp-list-table td.column-is_approved {
 .vep-fullscreen-display .vep-countdown-expired p {
     font-size: 72px;
     font-weight: bold;
-    color: #fff;
+    color: var(--vep-display-text-color);
     margin: 0;
     text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3);
 }
@@ -310,7 +388,7 @@ table.wp-list-table td.column-is_approved {
 }
 
 .vep-leaderboard-title {
-    color: #fff;
+    color: var(--vep-display-text-color);
     font-size: 28px;
     font-weight: 700;
     margin: 0 0 25px 0;
@@ -336,7 +414,7 @@ table.wp-list-table td.column-is_approved {
 }
 
 .vep-leaderboard-empty {
-    color: rgba(255, 255, 255, 0.7);
+    color: var(--vep-display-text-soft);
     text-align: center;
     font-size: 18px;
     padding: 20px;
@@ -379,7 +457,7 @@ table.wp-list-table td.column-is_approved {
 .vep-leaderboard-position {
     font-size: 24px;
     font-weight: bold;
-    color: #fff;
+    color: var(--vep-display-text-color);
     min-width: 40px;
     text-align: center;
 }
@@ -407,7 +485,7 @@ table.wp-list-table td.column-is_approved {
 }
 
 .vep-leaderboard-name {
-    color: #fff;
+    color: var(--vep-display-text-color);
     font-size: 16px;
     font-weight: 600;
     margin-bottom: 4px;
@@ -417,8 +495,50 @@ table.wp-list-table td.column-is_approved {
 }
 
 .vep-leaderboard-count {
-    color: rgba(255, 255, 255, 0.8);
+    color: var(--vep-display-text-muted);
     font-size: 14px;
+}
+
+.vep-recent-agreement-item {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    padding: 15px;
+}
+
+.vep-recent-agreement-info {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.vep-recent-agreement-actor-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+
+.vep-recent-agreement-check {
+    width: 18px;
+    min-width: 18px;
+    text-align: center;
+    color: #4ade80;
+    font-size: 16px;
+    font-weight: 700;
+    opacity: 0;
+}
+
+.vep-recent-agreement-check.is-visible {
+    opacity: 1;
+}
+
+.vep-recent-agreement-actor-name {
+    color: var(--vep-display-text-color);
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1.4;
+    word-break: break-word;
 }
 
 .vep-agreements-icon {
@@ -436,7 +556,7 @@ table.wp-list-table td.column-is_approved {
 .vep-agreements-count {
     font-size: 120px;
     font-weight: bold;
-    color: #fff;
+    color: var(--vep-display-text-color);
     line-height: 1;
     /* margin: 20px 0; */
     font-family: 'VEP Timer', 'Courier New', monospace;
@@ -457,7 +577,7 @@ table.wp-list-table td.column-is_approved {
 .vep-agreements-label {
     font-size: 24px;
     text-transform: uppercase;
-    color: rgba(255, 255, 255, 0.95);
+    color: var(--vep-display-text-strong);
     font-weight: 600;
     letter-spacing: 3px;
 }
@@ -465,7 +585,8 @@ table.wp-list-table td.column-is_approved {
 /* Responsive adjustments */
 @media screen and (max-width: 1200px) {
     .vep-display-header h1 {
-        font-size: 36px;
+        font-size: 108px;
+        margin-bottom: 180px;
     }
     
     .vep-fullscreen-display .vep-countdown-value {
@@ -484,8 +605,8 @@ table.wp-list-table td.column-is_approved {
 
 @media screen and (max-width: 768px) {
     .vep-display-header h1 {
-        font-size: 28px;
-        margin-bottom: 40px;
+        font-size: 84px;
+        margin-bottom: 168px;
     }
     
     .vep-fullscreen-display .vep-countdown-value {
@@ -682,4 +803,290 @@ table.wp-list-table td.column-is_approved {
     text-transform: capitalize;
     word-break: break-word;
     line-height: 1.2;
+}
+
+/* Competitions Grid */
+.vep-competitions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+    margin: 20px 0;
+}
+
+.vep-competition-card {
+    border: 2px solid #2271b1;
+    border-radius: 8px;
+    background: white;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+    touch-action: none;
+    cursor: default;
+    position: relative;
+}
+
+.vep-competition-card:active {
+    opacity: 0.8;
+}
+
+.vep-competition-card:hover {
+    box-shadow: 0 4px 16px rgba(34, 113, 177, 0.15);
+    transform: translateY(-2px);
+}
+
+.vep-competition-card.vep-competition-inactive {
+    border-color: #999;
+    background: #f5f5f5;
+    cursor: default;
+}
+
+.vep-competition-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+    border-bottom: 1px solid #e0e0e0;
+    padding-bottom: 12px;
+}
+
+.vep-competition-drag-handle {
+    color: #2271b1;
+    cursor: grab;
+}
+
+.vep-competition-drag-handle:active {
+    cursor: grabbing;
+}
+
+.vep-competition-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: #2271b1;
+    color: white;
+    border-radius: 50%;
+    font-weight: bold;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.vep-competition-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1e1e1e;
+    flex: 1;
+    word-break: break-word;
+}
+
+.vep-competition-type {
+    font-size: 13px;
+    color: #666;
+    background: #f5f5f5;
+    padding: 4px 8px;
+    border-radius: 4px;
+    margin-bottom: 12px;
+    display: inline-block;
+}
+
+.vep-competition-winner {
+    font-size: 14px;
+    color: #333;
+    margin-bottom: 15px;
+    line-height: 1.5;
+    width: 100%;
+    min-width: 0;
+    overflow: visible;
+    position: relative;
+}
+
+.vep-competition-winner .choices {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    margin-bottom: 0;
+    box-sizing: border-box;
+}
+
+.vep-competition-winner .choices__inner {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    min-height: 32px;
+    height: auto;
+    padding: 4px 10px;
+    font-size: 13px;
+}
+
+.vep-competition-winner .choices__list--single {
+    padding: 0;
+}
+
+.vep-competition-winner .choices__list--single .choices__item {
+    line-height: 24px;
+}
+
+.vep-competition-winner .choices__list--dropdown,
+.vep-competition-winner .choices__list[aria-expanded] {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+}
+
+.vep-competition-winner .choices.is-open {
+    z-index: 30;
+}
+
+.vep-competition-winner .choices__list--dropdown .choices__item,
+.vep-competition-winner .choices__list[aria-expanded] .choices__item {
+    white-space: normal;
+    word-break: break-word;
+}
+
+.vep-competition-winner em {
+    color: #999;
+}
+
+.vep-competition-edit-page .choices {
+    display: inline-block;
+    width: 25em;
+    max-width: 25em;
+    min-width: 0;
+    box-sizing: border-box;
+}
+
+.vep-competition-winner-field {
+    display: inline-block;
+    width: 25em;
+    max-width: 100%;
+    min-width: 0;
+}
+
+.vep-competition-winner-field .choices {
+    display: block;
+    width: 100% !important;
+    max-width: 100%;
+}
+
+.vep-competition-edit-page .choices__inner {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    min-height: 32px;
+    height: auto;
+    padding: 4px 10px;
+    font-size: 13px;
+}
+
+.vep-competition-edit-page .choices__list--dropdown,
+.vep-competition-edit-page .choices__list[aria-expanded] {
+    left: 0;
+    right: 0;
+    width: 100% !important;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    z-index: 40;
+    overflow-x: hidden;
+}
+
+.vep-competition-edit-page .choices__list--dropdown .choices__item,
+.vep-competition-edit-page .choices__list[aria-expanded] .choices__item {
+    white-space: normal;
+    word-break: break-word;
+}
+
+@media screen and (max-width: 782px) {
+    .vep-competition-winner-field {
+        display: block;
+        width: 100%;
+        max-width: 100%;
+    }
+
+    .vep-competition-winner-field .choices {
+        width: 100% !important;
+        max-width: 100%;
+    }
+
+    .vep-competition-edit-page .choices__inner,
+    .vep-competition-edit-page .choices__list--dropdown,
+    .vep-competition-edit-page .choices__list[aria-expanded] {
+        width: 100% !important;
+        max-width: 100%;
+    }
+}
+
+.vep-competition-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.vep-competition-actions .button {
+    flex: 1;
+    min-width: 80px;
+    font-size: 12px;
+}
+
+.vep-competitions-inactive {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+}
+
+/* Drag handle styles */
+.vep-competition-card.ui-sortable-handle {
+    cursor: default;
+}
+
+.vep-competition-card.ui-sortable-handle:active {
+    cursor: default;
+}
+
+#vep-active-competitions.vep-competitions-grid-sorting .vep-competition-card,
+#vep-active-competitions.vep-competitions-grid-sorting .vep-competition-card:hover {
+    transform: none;
+    transition: none;
+}
+
+.vep-sortable-helper {
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    transform: none !important;
+}
+
+.vep-competition-toast {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 35;
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1;
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(-6px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+}
+
+.vep-competition-toast.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.vep-competition-toast-success {
+    background: #1f7a3e;
+    color: #ffffff;
+}
+
+.vep-sortable-ghost {
+    opacity: 1;
+    background: #f0f6fc;
+    border: 2px dashed #2271b1;
+    border-radius: 8px;
+    min-height: 160px;
+    box-sizing: border-box;
 }
