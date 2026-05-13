@@ -47,6 +47,7 @@ class EventDisplayHandler {
         $this->event_service = $event_service ?: new EventService();
         $this->competition_service = $competition_service ?: new CompetitionService();
         add_action('wp_ajax_vep_get_agreement_count', array($this, 'get_agreement_count'));
+        add_action('wp_ajax_vep_get_event_statistics', array($this, 'get_event_statistics'));
     }
     
     /**
@@ -84,5 +85,30 @@ class EventDisplayHandler {
             'leaderboard' => $leaderboard,
             'recent_agreements' => $recent_agreements
         ));
+    }
+
+    /**
+     * Get post-event statistics for the fullscreen display via AJAX.
+     *
+     * @return void
+     */
+    public function get_event_statistics() {
+        check_ajax_referer( 'vep_admin_nonce', 'nonce' );
+
+        $event_id = isset( $_POST['event_id'] ) ? absint( wp_unslash( $_POST['event_id'] ) ) : 0;
+
+        if ( ! $event_id ) {
+            wp_send_json_error( array( 'message' => 'No event ID provided' ) );
+            return;
+        }
+
+        $stats = $this->event_service->get_display_statistics( $event_id );
+
+        if ( null === $stats ) {
+            wp_send_json_error( array( 'message' => 'Could not load event statistics' ) );
+            return;
+        }
+
+        wp_send_json_success( $stats );
     }
 }

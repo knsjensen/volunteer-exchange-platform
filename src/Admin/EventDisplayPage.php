@@ -218,6 +218,8 @@ class EventDisplayPage {
             update_option( 'vep_display_background_gradient_stop_3', $gradient_stop_3 );
             update_option( 'vep_display_background_gradient_angle', $gradient_angle );
             update_option( 'vep_display_text_color', $display_text_color );
+            $auto_switch_stats = isset( $_POST['auto_switch_to_stats'] ) ? 1 : 0;
+            update_option( 'vep_display_auto_switch_stats', $auto_switch_stats );
             
             wp_safe_redirect( add_query_arg( array(
                 'page' => 'vep-event-display',
@@ -258,6 +260,7 @@ class EventDisplayPage {
         $gradient_stop_3 = $this->sanitize_percentage( get_option('vep_display_background_gradient_stop_3', 100), 100 );
         $gradient_angle = $this->sanitize_degrees( get_option('vep_display_background_gradient_angle', 135), 135 );
         $display_text_color = $this->sanitize_hex_color_with_fallback( get_option('vep_display_text_color', '#ffffff'), '#ffffff' );
+        $auto_switch_stats  = (bool) get_option( 'vep_display_auto_switch_stats', 0 );
 
         if ( 'recent_agreements' === $display_mode ) {
             $right_panel_title = __( 'Latest Agreements', 'volunteer-exchange-platform' );
@@ -344,6 +347,24 @@ class EventDisplayPage {
                                            class="regular-text">
                                     <p class="description">
                                         <?php esc_html_e('Uses the active event end date and time.', 'volunteer-exchange-platform'); ?>
+                                    </p>
+                                </td>
+                            </tr>
+                            <tr class="vep-display-advanced-row" style="display: none;">
+                                <th scope="row">
+                                    <?php esc_html_e( 'Auto-switch to statistics', 'volunteer-exchange-platform' ); ?>
+                                </th>
+                                <td>
+                                    <label>
+                                        <input type="checkbox"
+                                               name="auto_switch_to_stats"
+                                               id="auto_switch_to_stats"
+                                               value="1"
+                                               <?php checked( $auto_switch_stats, true ); ?>>
+                                        <?php esc_html_e( 'Auto-switch to statistics', 'volunteer-exchange-platform' ); ?>
+                                    </label>
+                                    <p class="description">
+                                        <?php esc_html_e( 'Automatically switch to the statistics view when the countdown expires.', 'volunteer-exchange-platform' ); ?>
                                     </p>
                                 </td>
                             </tr>
@@ -560,6 +581,7 @@ class EventDisplayPage {
                                 data-background-gradient-stop-3="<?php echo esc_attr( (string) $gradient_stop_3 ); ?>"
                                 data-background-gradient-angle="<?php echo esc_attr( (string) $gradient_angle ); ?>"
                                 data-text-color="<?php echo esc_attr($display_text_color); ?>"
+                                data-auto-switch-stats="<?php echo $auto_switch_stats ? '1' : '0'; ?>"
                                 style="margin-top: 10px;">
                             <span class="dashicons dashicons-visibility" style="margin-top: 6px;"></span>
                             <?php esc_html_e('Start Event Display', 'volunteer-exchange-platform'); ?>
@@ -584,6 +606,7 @@ class EventDisplayPage {
             <div class="vep-display-content">
                 <div class="vep-display-header">
                     <h1 id="vep-display-event-name"></h1>
+                    <h2 id="vep-display-time-up" class="vep-display-time-up" style="display: none;"><?php esc_html_e( "Time's up!", 'volunteer-exchange-platform' ); ?></h2>
                 </div>
                 
                 <div id="vep-display-main-content" class="vep-display-main-content">
@@ -617,6 +640,40 @@ class EventDisplayPage {
                                 <p class="vep-leaderboard-empty"><?php esc_html_e('No agreements yet...', 'volunteer-exchange-platform'); ?></p>
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                <div id="vep-post-time-actions" class="vep-post-time-actions" style="display: none;">
+                    <button type="button" id="vep-show-statistics" class="button button-primary button-hero vep-post-time-action-button">
+                        <?php esc_html_e( 'Show Statistics', 'volunteer-exchange-platform' ); ?>
+                    </button>
+                    <button type="button" id="vep-show-competitions" class="button button-primary button-hero vep-post-time-action-button">
+                        <?php esc_html_e( 'Show Competitions', 'volunteer-exchange-platform' ); ?>
+                    </button>
+                </div>
+
+                <div id="vep-statistics-view" class="vep-statistics-view" style="display: none;">
+                    <div class="vep-statistics-inner">
+                        <canvas id="vep-statistics-chart" class="vep-statistics-chart"></canvas>
+                        <div class="vep-statistics-summary">
+                            <div class="vep-stat-item">
+                                <div class="vep-stat-value" id="vep-stat-total">—</div>
+                                <div class="vep-stat-label"><?php esc_html_e( 'Total agreements', 'volunteer-exchange-platform' ); ?></div>
+                            </div>
+                            <div class="vep-stat-item">
+                                <div class="vep-stat-value" id="vep-stat-avg">—</div>
+                                <div class="vep-stat-label"><?php esc_html_e( 'Average agreements per minute', 'volunteer-exchange-platform' ); ?></div>
+                            </div>
+                            <div class="vep-stat-item">
+                                <div class="vep-stat-value" id="vep-stat-max">—</div>
+                                <div class="vep-stat-label"><?php esc_html_e( 'Most agreements by a single actor', 'volunteer-exchange-platform' ); ?></div>
+                            </div>
+                            <div class="vep-stat-item">
+                                <div class="vep-stat-value" id="vep-stat-first">—</div>
+                                <div class="vep-stat-label"><?php esc_html_e( 'First agreement after', 'volunteer-exchange-platform' ); ?></div>
+                            </div>
+                        </div>
+                        <p class="vep-statistics-error" style="display: none;"></p>
                     </div>
                 </div>
             </div>

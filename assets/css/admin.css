@@ -159,7 +159,7 @@ table.wp-list-table td.column-is_approved {
     width: 100%;
     height: 100%;
     pointer-events: none;
-    z-index: 999998;
+    z-index: 1000000;
     display: none;
 }
 
@@ -206,7 +206,7 @@ table.wp-list-table td.column-is_approved {
     color: var(--vep-display-text-color);
     font-size: 144px;
     font-weight: 700;
-    margin: 0 0 180px 0;
+    margin: 0 0 150px 0;
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
 }
 
@@ -354,6 +354,99 @@ table.wp-list-table td.column-is_approved {
     color: var(--vep-display-text-color);
     margin: 0;
     text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.vep-post-time-actions {
+    position: fixed;
+    left: 50%;
+    bottom: 36px;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 16px;
+    z-index: 1000001;
+}
+
+.vep-post-time-action-button {
+    min-width: 220px;
+}
+
+/* Statistics view */
+.vep-statistics-view {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    flex: 1;
+    padding: 40px 40px 20px;
+    box-sizing: border-box;
+    width: 100%;
+    overflow-y: auto;
+}
+
+.vep-statistics-inner {
+    width: 100%;
+    max-width: 960px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 36px;
+    background: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 20px;
+    padding: 36px 48px 32px;
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.4);
+}
+
+.vep-statistics-chart {
+    width: 100%;
+    height: 300px;
+    display: block;
+    border-radius: 8px;
+    background: transparent;
+}
+
+.vep-display-time-up {
+    color: var(--vep-display-text-color);
+    font-size: 130px;
+    font-weight: 700;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.vep-statistics-summary {
+    display: flex;
+    gap: 40px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.vep-stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    min-width: 180px;
+}
+
+.vep-stat-value {
+    font-size: 3.5rem;
+    font-weight: 700;
+    color: #ffffff;
+    line-height: 1;
+}
+
+.vep-stat-label {
+    font-size: 0.95rem;
+    color: rgba(255, 255, 255, 0.8);
+    text-align: center;
+    max-width: 200px;
+}
+
+.vep-statistics-error {
+    color: #ff6b6b;
+    font-size: 1rem;
+    margin: 0;
 }
 
 .vep-display-agreements {
@@ -586,7 +679,11 @@ table.wp-list-table td.column-is_approved {
 @media screen and (max-width: 1200px) {
     .vep-display-header h1 {
         font-size: 108px;
-        margin-bottom: 180px;
+        margin-bottom: 150px;
+    }
+
+    .vep-display-time-up {
+        font-size: 97px;
     }
     
     .vep-fullscreen-display .vep-countdown-value {
@@ -606,7 +703,11 @@ table.wp-list-table td.column-is_approved {
 @media screen and (max-width: 768px) {
     .vep-display-header h1 {
         font-size: 84px;
-        margin-bottom: 168px;
+        margin-bottom: 148px;
+    }
+
+    .vep-display-time-up {
+        font-size: 76px;
     }
     
     .vep-fullscreen-display .vep-countdown-value {
@@ -629,6 +730,35 @@ table.wp-list-table td.column-is_approved {
     .vep-agreements-box {
         padding: 40px 60px;
         min-width: 300px;
+    }
+
+    .vep-post-time-actions {
+        width: calc(100% - 24px);
+        max-width: 560px;
+        gap: 10px;
+        bottom: 20px;
+    }
+
+    .vep-post-time-action-button {
+        min-width: 0;
+        flex: 1;
+        padding: 14px 10px;
+    }
+
+    .vep-statistics-view {
+        padding: 20px 16px 12px;
+    }
+
+    .vep-statistics-chart {
+        height: 200px;
+    }
+
+    .vep-statistics-summary {
+        gap: 20px;
+    }
+
+    .vep-stat-value {
+        font-size: 2.5rem;
     }
 }
 

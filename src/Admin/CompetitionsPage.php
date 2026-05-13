@@ -164,6 +164,13 @@ class CompetitionsPage {
                             <a href="<?php echo esc_url( admin_url( 'admin.php?page=volunteer-exchange-competitions&action=edit&id=' . $competition->id ) ); ?>" class="button button-small">
                                 <?php esc_html_e( 'Edit', 'volunteer-exchange-platform' ); ?>
                             </a>
+                            <button
+                                class="button button-small vep-reset-winner"
+                                data-competition-id="<?php echo intval( $competition->id ); ?>"
+                                data-nonce="<?php echo esc_attr( wp_create_nonce( 'vep_set_competition_winner_' . $competition->id ) ); ?>"
+                            >
+                                <?php esc_html_e( 'Reset Winner', 'volunteer-exchange-platform' ); ?>
+                            </button>
                             <button class="button button-small vep-toggle-active" data-competition-id="<?php echo intval( $competition->id ); ?>" data-action="deactivate">
                                 <?php esc_html_e( 'Deactivate', 'volunteer-exchange-platform' ); ?>
                             </button>
@@ -207,6 +214,13 @@ class CompetitionsPage {
                                 <a href="<?php echo esc_url( admin_url( 'admin.php?page=volunteer-exchange-competitions&action=edit&id=' . $competition->id ) ); ?>" class="button button-small">
                                     <?php esc_html_e( 'Edit', 'volunteer-exchange-platform' ); ?>
                                 </a>
+                                <button
+                                    class="button button-small vep-reset-winner"
+                                    data-competition-id="<?php echo intval( $competition->id ); ?>"
+                                    data-nonce="<?php echo esc_attr( wp_create_nonce( 'vep_set_competition_winner_' . $competition->id ) ); ?>"
+                                >
+                                    <?php esc_html_e( 'Reset Winner', 'volunteer-exchange-platform' ); ?>
+                                </button>
                                 <button class="button button-small vep-toggle-active" data-competition-id="<?php echo intval( $competition->id ); ?>" data-action="activate">
                                     <?php esc_html_e( 'Activate', 'volunteer-exchange-platform' ); ?>
                                 </button>

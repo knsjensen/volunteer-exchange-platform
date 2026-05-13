@@ -533,4 +533,63 @@ class EventService extends AbstractService {
             array()
         );
     }
+
+    /**
+     * Get statistics for post-event display.
+     *
+     * Returns per-minute agreement counts, total, average per minute,
+     * and the highest agreement count by a single participant.
+     *
+     * @param int $event_id Event ID.
+     * @return array|null null on invalid input or error.
+     */
+    public function get_display_statistics( $event_id ) {
+        if ( ! $this->is_valid_id( $event_id ) ) {
+            return null;
+        }
+
+        return $this->run_guarded(
+            function () use ( $event_id ) {
+                $event_id = (int) $event_id;
+                $event    = $this->repository->get_by_id( $event_id );
+
+                if ( ! $event ) {
+                    return null;
+                }
+
+                $timezone         = wp_timezone();
+                $start_dt         = new \DateTimeImmutable( $event->start_date, $timezone );
+                $end_dt           = new \DateTimeImmutable( $event->end_date, $timezone );
+                $duration_seconds = max( 1, $end_dt->getTimestamp() - $start_dt->getTimestamp() );
+                $duration_minutes = max( 1, (int) ceil( $duration_seconds / 60 ) );
+
+                $rows       = $this->repository->get_agreements_over_time( $event_id, $event->start_date, $event->end_date );
+                $per_minute = array();
+
+                foreach ( $rows as $row ) {
+                    $minute = max( 0, (int) $row->minute_offset );
+                    if ( $minute < $duration_minutes ) {
+                        $per_minute[ $minute ] = (int) $row->cnt;
+                    }
+                }
+
+                $total       = array_sum( $per_minute );
+                $avg         = $duration_minutes > 0 ? round( $total / $duration_minutes, 2 ) : 0;
+                $leaderboard = $this->repository->get_event_leaderboard( $event_id, 1 );
+                $max_actor   = ! empty( $leaderboard ) ? (int) $leaderboard[0]->agreement_count : 0;
+
+                $first_seconds = $this->repository->get_first_agreement_offset_seconds( $event_id, $event->start_date );
+
+                return array(
+                    'total'                   => $total,
+                    'avg_per_minute'          => $avg,
+                    'max_by_actor'            => $max_actor,
+                    'first_agreement_seconds' => $first_seconds,
+                    'per_minute'              => $per_minute,
+                    'duration_minutes'        => $duration_minutes,
+                );
+            },
+            null
+        );
+    }
 }

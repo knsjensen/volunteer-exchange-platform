@@ -1037,6 +1037,14 @@ msgid "Times up!"
 msgstr "Tiden er gået!"
 
 #: src/Admin/EventDisplayPage.php
+msgid "Show Statistics"
+msgstr "Vis statistik"
+
+#: src/Admin/EventDisplayPage.php
+msgid "Show Competitions"
+msgstr "Vis konkurrencer"
+
+#: src/Admin/EventDisplayPage.php
 msgid "Uses the active event end date and time."
 msgstr "Bruger den aktive begivenheds slutdato og -tid."
 
@@ -1780,6 +1788,50 @@ msgstr "Kunne ikke kopiere aktive deltageres e-mailadresser. Prøv igen."
 #: src/Plugin/Plugin.php
 msgid "No active participant emails found."
 msgstr "Ingen aktive deltageres e-mailadresser fundet."
+
+#: src/Plugin/Plugin.php
+msgid "Agreements per minute"
+msgstr "Aftaler pr. minut"
+
+#: src/Plugin/Plugin.php
+msgid "Could not load statistics."
+msgstr "Statistik kunne ikke indlæses."
+
+#: src/Admin/EventDisplayPage.php
+msgid "Total agreements"
+msgstr "Samlet antal aftaler"
+
+#: src/Admin/EventDisplayPage.php
+msgid "Average agreements per minute"
+msgstr "Gennemsnitlige aftaler pr. minut"
+
+#: src/Admin/EventDisplayPage.php
+msgid "Most agreements by a single actor"
+msgstr "Flest aftaler af en enkelt aktør"
+
+#: src/Admin/EventDisplayPage.php
+msgid "First agreement after"
+msgstr "Første aftale efter"
+
+#: src/Admin/EventDisplayPage.php
+msgid "Auto-switch to statistics"
+msgstr "Skift automatisk til statistik"
+
+#: src/Admin/EventDisplayPage.php
+msgid "Automatically switch to the statistics view when the countdown expires."
+msgstr "Skift automatisk til statistikvisningen, når nedtællingen udløber."
+
+#: src/Admin/EventDisplayPage.php
+msgid "Time's up!"
+msgstr "Tiden er gået!"
+
+#: src/Admin/CompetitionsPage.php
+msgid "Reset Winner"
+msgstr "Nulstil vinder"
+
+#: src/Plugin/Plugin.php
+msgid "Winner reset successfully"
+msgstr "Vinder nulstillet"
 
 #: src/Admin/EventsPage.php
 msgid "Search agreements"

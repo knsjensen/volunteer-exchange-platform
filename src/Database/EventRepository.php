@@ -405,6 +405,58 @@ class EventRepository extends AbstractRepository {
     }
 
     /**
+     * Get per-minute agreement counts relative to event start.
+     *
+     * Returns one row per minute (with at least one agreement) containing
+     * the minute offset from $start_date and the count of agreements in that minute.
+     *
+     * @param int    $event_id   Event ID.
+     * @param string $start_date Event start datetime (MySQL Y-m-d H:i:s).
+     * @param string $end_date   Event end datetime (MySQL Y-m-d H:i:s).
+     * @return array  Objects with minute_offset (int) and cnt (int).
+     */
+    public function get_agreements_over_time( $event_id, $start_date, $end_date ) {
+        $agreements_table = $this->wpdb->prefix . 'vep_agreements';
+
+        return $this->get_results(
+            "SELECT FLOOR( TIMESTAMPDIFF( SECOND, %s, a.created_at ) / 60 ) AS minute_offset,
+                    COUNT(*) AS cnt
+             FROM {$agreements_table} a
+             WHERE a.event_id = %d
+               AND a.created_at >= %s
+               AND a.created_at <= %s
+             GROUP BY minute_offset
+             ORDER BY minute_offset ASC",
+            array( $start_date, (int) $event_id, $start_date, $end_date )
+        );
+    }
+
+    /**
+     * Get seconds from event start to the first agreement.
+     *
+     * @param int    $event_id   Event ID.
+     * @param string $start_date Event start datetime (MySQL format).
+     * @return int|null Seconds offset, or null if no agreements exist.
+     */
+    public function get_first_agreement_offset_seconds( $event_id, $start_date ) {
+        $agreements_table = $this->wpdb->prefix . 'vep_agreements';
+
+        $row = $this->get_row(
+            "SELECT TIMESTAMPDIFF( SECOND, %s, MIN(a.created_at) ) AS first_offset
+             FROM {$agreements_table} a
+             WHERE a.event_id = %d
+               AND a.created_at >= %s",
+            array( $start_date, (int) $event_id, $start_date )
+        );
+
+        if ( ! $row || is_null( $row->first_offset ) ) {
+            return null;
+        }
+
+        return max( 0, (int) $row->first_offset );
+    }
+
+    /**
      * Get latest agreements for event display.
      *
      * @param int $event_id Event ID.

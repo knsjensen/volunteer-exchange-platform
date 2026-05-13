@@ -247,9 +247,12 @@ class Plugin {
                     'reorderCompetitionFailed' => __( 'Failed to reorder competitions', 'volunteer-exchange-platform' ),
                     'competitionActionFailed'  => __( 'An error occurred. Please try again.', 'volunteer-exchange-platform' ),
                     'winnerSaved'             => __( 'Winner set successfully', 'volunteer-exchange-platform' ),
+                    'winnerReset'             => __( 'Winner reset successfully', 'volunteer-exchange-platform' ),
                     'copyActiveEmailsSuccess'  => __( 'Copied %d active participant emails to clipboard.', 'volunteer-exchange-platform' ),
                     'copyActiveEmailsFailed'   => __( 'Could not copy active participant emails. Please try again.', 'volunteer-exchange-platform' ),
                     'noActiveEmailsFound'      => __( 'No active participant emails found.', 'volunteer-exchange-platform' ),
+                    'statsChartLabel'          => __( 'Agreements per minute', 'volunteer-exchange-platform' ),
+                    'statsLoadingError'        => __( 'Could not load statistics.', 'volunteer-exchange-platform' ),
                 ),
                 'choicesI18n' => array(
                     'searchPlaceholderValue' => __( 'Search...', 'volunteer-exchange-platform' ),

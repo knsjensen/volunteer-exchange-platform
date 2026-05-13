@@ -103,12 +103,16 @@
         const closeButton = document.getElementById('vep-close-display');
         const displayMainContent = document.getElementById('vep-display-main-content');
         const rightPanel = document.getElementById('vep-display-right');
+        const postTimeActions = document.getElementById('vep-post-time-actions');
+        const statisticsView = document.getElementById('vep-statistics-view');
         
         if (!startButton || !displayModal) return;
         
         let countdownInterval = null;
         let pollingInterval = null;
         let fireworksAnimation = null;
+        let fireworksStopTimeout = null;
+        let postTimeRevealTimeout = null;
         
         // Start display
         startButton.addEventListener('click', function() {
@@ -155,17 +159,46 @@
             );
 
             applyDisplayTextColor(displayModal, textColor);
+
+            if (postTimeActions) {
+                postTimeActions.style.display = 'none';
+            }
+
+            if (statisticsView) {
+                statisticsView.style.display = 'none';
+            }
+
+            if (displayMainContent) {
+                displayMainContent.style.display = '';
+            }
+
+            if (postTimeRevealTimeout) {
+                clearTimeout(postTimeRevealTimeout);
+                postTimeRevealTimeout = null;
+            }
+
+            const timeUpEl = document.getElementById('vep-display-time-up');
+            if (timeUpEl) timeUpEl.style.display = 'none';
             
             // Request fullscreen
             requestFullscreen(displayModal);
             
             // Start countdown
-            startCountdown(countdownTime);
+            const autoSwitchStats = this.dataset.autoSwitchStats === '1';
+            startCountdown(countdownTime, autoSwitchStats);
             
             // Start polling for agreement count
             startPolling(eventId, displayMode);
         });
         
+        // Show statistics view
+        const showStatisticsBtn = document.getElementById('vep-show-statistics');
+        if (showStatisticsBtn) {
+            showStatisticsBtn.addEventListener('click', function() {
+                showStatisticsView(startButton.dataset.eventId);
+            });
+        }
+
         // Close display
         closeButton.addEventListener('click', closeDisplay);
         
@@ -199,16 +232,26 @@
         function closeDisplay() {
             // Stop intervals
             if (countdownInterval) clearInterval(countdownInterval);
-            if (fireworksAnimation) {
-                cancelAnimationFrame(fireworksAnimation);
-                fireworksAnimation = null;
-            }
+            stopFireworks();
             if (pollingInterval) clearInterval(pollingInterval);
-            
-            // Hide fireworks canvas
-            const canvas = document.getElementById('vep-fireworks-canvas');
-            if (canvas) {
-                canvas.style.display = 'none';
+            if (postTimeRevealTimeout) {
+                clearTimeout(postTimeRevealTimeout);
+                postTimeRevealTimeout = null;
+            }
+
+            if (postTimeActions) {
+                postTimeActions.style.display = 'none';
+            }
+
+            if (statisticsView) {
+                statisticsView.style.display = 'none';
+            }
+
+            const timeUpEl = document.getElementById('vep-display-time-up');
+            if (timeUpEl) timeUpEl.style.display = 'none';
+
+            if (displayMainContent) {
+                displayMainContent.style.display = '';
             }
             
             // Exit fullscreen
@@ -258,14 +301,23 @@
             }
         }
         
-        function startCountdown(targetDatetime) {
+        function startCountdown(targetDatetime, autoSwitchStats) {
             const targetTimestamp = Math.floor(new Date(targetDatetime).getTime() / 1000);
             const timerElement = displayModal.querySelector('.vep-countdown-timer');
             const expiredElement = displayModal.querySelector('.vep-countdown-expired');
+            let alreadyExpiredAtStart = false;
             
             // Reset display states
             timerElement.style.display = '';
             expiredElement.style.display = 'none';
+            if (postTimeActions) {
+                postTimeActions.style.display = 'none';
+            }
+
+            // Detect immediately if the event is already over before we start.
+            if (Math.floor(Date.now() / 1000) >= targetTimestamp) {
+                alreadyExpiredAtStart = true;
+            }
             
             function updateCountdown() {
                 const now = Math.floor(Date.now() / 1000);
@@ -275,7 +327,30 @@
                     timerElement.style.display = 'none';
                     expiredElement.style.display = 'block';
                     if (countdownInterval) clearInterval(countdownInterval);
+
+                    // Stop polling for agreement count — event is over.
+                    if (pollingInterval) {
+                        clearInterval(pollingInterval);
+                        pollingInterval = null;
+                    }
+
                     startFireworks();
+
+                    if (postTimeRevealTimeout) {
+                        clearTimeout(postTimeRevealTimeout);
+                    }
+
+                    // Auto-switch skips the delay entirely; action buttons keep the
+                    // 10-second grace period (0 if event was already over at start).
+                    const delay = autoSwitchStats ? 0 : (alreadyExpiredAtStart ? 0 : 10000);
+                    postTimeRevealTimeout = setTimeout(() => {
+                        if (displayModal.style.display !== 'flex') return;
+                        if (autoSwitchStats) {
+                            showStatisticsView(startButton.dataset.eventId, true);
+                        } else {
+                            if (postTimeActions) postTimeActions.style.display = 'flex';
+                        }
+                    }, delay);
                     return;
                 }
                 
@@ -422,6 +497,167 @@
             listElement.innerHTML = html;
         }
         
+        function showStatisticsView(eventId, showTimeUp) {
+            // Fireworks continue running over the statistics view.
+
+            // Stop countdown interval (polling continues for potential future use).
+            if (countdownInterval) clearInterval(countdownInterval);
+            if (postTimeRevealTimeout) {
+                clearTimeout(postTimeRevealTimeout);
+                postTimeRevealTimeout = null;
+            }
+
+            // Hide live-display content and action buttons
+            if (displayMainContent) displayMainContent.style.display = 'none';
+            if (postTimeActions) postTimeActions.style.display = 'none';
+
+            // Show/hide "Tiden er gået" heading
+            const timeUpEl = document.getElementById('vep-display-time-up');
+            if (timeUpEl) timeUpEl.style.display = showTimeUp ? '' : 'none';
+
+            // Show statistics view
+            if (statisticsView) statisticsView.style.display = 'flex';
+
+            // Fetch statistics from server
+            const formData = new FormData();
+            formData.append('action', 'vep_get_event_statistics');
+            formData.append('nonce', vepAdmin.nonce);
+            formData.append('event_id', eventId);
+
+            fetch(vepAdmin.ajaxUrl, {
+                method: 'POST',
+                body: formData,
+                credentials: 'same-origin'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (!data.success) throw new Error(data.data && data.data.message);
+                renderStatistics(data.data);
+            })
+            .catch(() => {
+                const errorEl = statisticsView ? statisticsView.querySelector('.vep-statistics-error') : null;
+                if (errorEl) {
+                    errorEl.textContent = vepAdmin.i18n.statsLoadingError || 'Could not load statistics.';
+                    errorEl.style.display = 'block';
+                }
+            });
+        }
+
+        function renderStatistics(stats) {
+            const totalEl = document.getElementById('vep-stat-total');
+            const avgEl   = document.getElementById('vep-stat-avg');
+            const maxEl   = document.getElementById('vep-stat-max');
+            const firstEl = document.getElementById('vep-stat-first');
+
+            if (totalEl) totalEl.textContent = stats.total;
+            if (avgEl)   avgEl.textContent   = stats.avg_per_minute;
+            if (maxEl)   maxEl.textContent   = stats.max_by_actor;
+
+            if (firstEl) {
+                const s = stats.first_agreement_seconds;
+                if (s === null || s === undefined || s < 0) {
+                    firstEl.textContent = '—';
+                } else if (s < 120) {
+                    firstEl.textContent = s + ' sek.';
+                } else {
+                    firstEl.textContent = Math.round(s / 60) + ' min.';
+                }
+            }
+
+            drawStatisticsChart(stats.per_minute, stats.duration_minutes);
+        }
+
+        function drawStatisticsChart(perMinute, durationMinutes) {
+            const chartCanvas = document.getElementById('vep-statistics-chart');
+            if (!chartCanvas) return;
+
+            const ctx = chartCanvas.getContext('2d');
+
+            // Measure the rendered size of the canvas element
+            const rect  = chartCanvas.getBoundingClientRect();
+            const width  = rect.width  || chartCanvas.offsetWidth  || 800;
+            const height = rect.height || chartCanvas.offsetHeight || 300;
+            chartCanvas.width  = width;
+            chartCanvas.height = height;
+
+            // Build full data array, filling minutes with no agreements as 0
+            const data = [];
+            for (let i = 0; i < durationMinutes; i++) {
+                data.push(perMinute[i] || 0);
+            }
+
+            const maxVal  = Math.max(1, ...data);
+            const padding = { top: 30, right: 20, bottom: 50, left: 50 };
+            const cw      = width  - padding.left - padding.right;
+            const ch      = height - padding.top  - padding.bottom;
+            const barW    = Math.max(1, cw / data.length);
+
+            ctx.clearRect(0, 0, width, height);
+
+            // Always use fixed light colours so the chart is readable on any
+            // background. The dark panel behind the statistics view provides contrast.
+            const textColor = 'rgba(255, 255, 255, 0.9)';
+            const gridColor = 'rgba(255, 255, 255, 0.25)';
+            const barColor  = 'rgba(255, 210, 60, 0.92)';
+
+            // Horizontal grid lines + Y-axis labels
+            const ySteps = 5;
+            ctx.lineWidth = 1;
+            for (let i = 0; i <= ySteps; i++) {
+                const y = padding.top + ch - (i / ySteps) * ch;
+                ctx.strokeStyle = gridColor;
+                ctx.beginPath();
+                ctx.moveTo(padding.left, y);
+                ctx.lineTo(padding.left + cw, y);
+                ctx.stroke();
+
+                ctx.fillStyle = textColor;
+                ctx.font = '12px sans-serif';
+                ctx.textAlign = 'right';
+                ctx.fillText(Math.round((i / ySteps) * maxVal), padding.left - 6, y + 4);
+            }
+
+            // Bars
+            data.forEach((val, i) => {
+                const barH = (val / maxVal) * ch;
+                const x    = padding.left + i * barW;
+                const y    = padding.top  + ch - barH;
+                ctx.fillStyle = barColor;
+                ctx.fillRect(x + 1, y, barW - 2, barH);
+            });
+
+            // X-axis label (chart title)
+            ctx.fillStyle = textColor;
+            ctx.font = '13px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(
+                vepAdmin.i18n.statsChartLabel || 'Agreements per minute',
+                padding.left + cw / 2,
+                height - 6
+            );
+
+            // X-axis minute ticks (at most 10 visible ticks)
+            const tickEvery = Math.max(1, Math.ceil(durationMinutes / 10));
+            ctx.font = '11px sans-serif';
+            for (let i = 0; i < durationMinutes; i += tickEvery) {
+                const x = padding.left + (i + 0.5) * barW;
+                ctx.fillText(i, x, padding.top + ch + 16);
+            }
+        }
+
+        function stopFireworks() {
+            if (fireworksAnimation) {
+                cancelAnimationFrame(fireworksAnimation);
+                fireworksAnimation = null;
+            }
+            if (fireworksStopTimeout) {
+                clearTimeout(fireworksStopTimeout);
+                fireworksStopTimeout = null;
+            }
+            const fwCanvas = document.getElementById('vep-fireworks-canvas');
+            if (fwCanvas) fwCanvas.style.display = 'none';
+        }
+
         function startFireworks() {
             const canvas = document.getElementById('vep-fireworks-canvas');
             if (!canvas) {
@@ -441,6 +677,10 @@
             // Show canvas
             canvas.style.display = 'block';
             console.log('Fireworks started!');
+
+            // Auto-stop after 2 minutes regardless of which view is showing.
+            if (fireworksStopTimeout) clearTimeout(fireworksStopTimeout);
+            fireworksStopTimeout = setTimeout(stopFireworks, 120000);
             
             const particles = [];
             const particleCount = 100;
@@ -487,8 +727,9 @@
             }
             
             function animate() {
-                ctx.fillStyle = 'rgba(30, 60, 114, 0.1)';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                // Clear the canvas fully so the chosen background shows through unchanged.
+                // Particle trails are handled by each particle's own alpha decay.
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
                 
                 // Update and draw particles
                 for (let i = particles.length - 1; i >= 0; i--) {
@@ -977,6 +1218,47 @@
                             return;
                         }
 
+                        reloadPage();
+                    })
+                    .catch(() => {
+                        this.disabled = false;
+                        showError(i18n.competitionActionFailed);
+                    });
+            });
+        });
+
+        document.querySelectorAll('.vep-reset-winner').forEach((button) => {
+            button.addEventListener('click', function() {
+                const competitionId = this.dataset.competitionId;
+                const buttonNonce = this.dataset.nonce;
+
+                if (!competitionId || !buttonNonce) {
+                    showError(i18n.competitionActionFailed);
+                    return;
+                }
+
+                this.disabled = true;
+
+                const formData = new FormData();
+                formData.append('action', 'vep_set_competition_winner');
+                formData.append('competition_id', competitionId);
+                formData.append('winner_id', '');
+                formData.append('nonce', buttonNonce);
+
+                fetch(ajaxUrl, {
+                    method: 'POST',
+                    body: formData,
+                    credentials: 'same-origin'
+                })
+                    .then((response) => response.json())
+                    .then((data) => {
+                        if (!data.success) {
+                            this.disabled = false;
+                            showError((data.data && data.data.message) || i18n.competitionActionFailed);
+                            return;
+                        }
+
+                        showCardNotice(this, i18n.winnerReset || 'Winner reset successfully', 'success');
                         reloadPage();
                     })
                     .catch(() => {
