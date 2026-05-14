@@ -70,8 +70,10 @@ class CompetitionHandler {
 
         add_action( 'wp_ajax_vep_reorder_competitions', array( $this, 'reorder_competitions_ajax' ) );
         add_action( 'wp_ajax_vep_set_competition_winner', array( $this, 'set_winner_ajax' ) );
+        add_action( 'wp_ajax_vep_set_competition_winner_text', array( $this, 'set_winner_text_ajax' ) );
         add_action( 'wp_ajax_vep_toggle_competition_active', array( $this, 'toggle_active_ajax' ) );
         add_action( 'wp_ajax_vep_delete_competition', array( $this, 'delete_competition_ajax' ) );
+        add_action( 'wp_ajax_vep_reset_all_winners', array( $this, 'reset_all_winners_ajax' ) );
     }
 
     /**
@@ -212,6 +214,65 @@ class CompetitionHandler {
             wp_send_json_success( array( 'message' => __( 'Competition deleted successfully', 'volunteer-exchange-platform' ) ) );
         } else {
             wp_send_json_error( array( 'message' => __( 'Failed to delete competition', 'volunteer-exchange-platform' ) ) );
+        }
+    }
+
+    /**
+     * Reset all competition winners for the active event via AJAX
+     *
+     * @return void
+     */
+    public function reset_all_winners_ajax() {
+        if ( ! $this->validate_ajax_nonce() ) {
+            wp_send_json_error( array( 'message' => __( 'Security check failed', 'volunteer-exchange-platform' ) ) );
+        }
+
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( array( 'message' => __( 'Unauthorized', 'volunteer-exchange-platform' ) ) );
+        }
+
+        $active_event = $this->event_service->get_active_event();
+
+        if ( ! $active_event ) {
+            wp_send_json_error( array( 'message' => __( 'No active event', 'volunteer-exchange-platform' ) ) );
+        }
+
+        $result = $this->competition_service->reset_all_winners_for_event( $active_event->id );
+
+        if ( $result ) {
+            wp_send_json_success( array( 'message' => __( 'All winners reset successfully', 'volunteer-exchange-platform' ) ) );
+        } else {
+            wp_send_json_error( array( 'message' => __( 'Failed to reset winners', 'volunteer-exchange-platform' ) ) );
+        }
+    }
+
+    /**
+     * Set free-text winner for a competition via AJAX
+     *
+     * @return void
+     */
+    public function set_winner_text_ajax() {
+        if ( ! $this->validate_ajax_nonce() ) {
+            wp_send_json_error( array( 'message' => __( 'Security check failed', 'volunteer-exchange-platform' ) ) );
+        }
+
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( array( 'message' => __( 'Unauthorized', 'volunteer-exchange-platform' ) ) );
+        }
+
+        $competition_id = isset( $_POST['competition_id'] ) ? (int) $_POST['competition_id'] : 0;
+        $winner_text    = isset( $_POST['winner_text'] ) ? sanitize_text_field( wp_unslash( $_POST['winner_text'] ) ) : '';
+
+        if ( ! $competition_id ) {
+            wp_send_json_error( array( 'message' => __( 'Competition ID is required', 'volunteer-exchange-platform' ) ) );
+        }
+
+        $result = $this->competition_service->set_winner_text( $competition_id, $winner_text );
+
+        if ( false !== $result ) {
+            wp_send_json_success( array( 'message' => __( 'Winner set successfully', 'volunteer-exchange-platform' ) ) );
+        } else {
+            wp_send_json_error( array( 'message' => __( 'Failed to set winner', 'volunteer-exchange-platform' ) ) );
         }
     }
 }

@@ -236,6 +236,17 @@ class CompetitionsPage {
                     ?>
                 </div>
             <?php endif; ?>
+
+            <hr>
+            <p>
+                <button
+                    type="button"
+                    class="button button-link-delete vep-reset-all-winners"
+                    data-nonce="<?php echo esc_attr( wp_create_nonce( 'vep_competitions_nonce' ) ); ?>"
+                >
+                    <?php esc_html_e( 'Reset All Winners', 'volunteer-exchange-platform' ); ?>
+                </button>
+            </p>
         </div>
         <?php
     }
@@ -394,6 +405,15 @@ class CompetitionsPage {
                             <textarea name="description" id="new_description" class="large-text" rows="4"></textarea>
                         </td>
                     </tr>
+                    <tr>
+                        <th scope="row"><label for="new_winner_input_type"><?php esc_html_e( 'Winner Input Type', 'volunteer-exchange-platform' ); ?></label></th>
+                        <td>
+                            <select name="winner_input_type" id="new_winner_input_type" class="regular-text">
+                                <option value="dropdown"><?php esc_html_e( 'Dropdown (participant)', 'volunteer-exchange-platform' ); ?></option>
+                                <option value="text"><?php esc_html_e( 'Text field (free text)', 'volunteer-exchange-platform' ); ?></option>
+                            </select>
+                        </td>
+                    </tr>
                 </table>
 
                 <div class="submit">
@@ -451,7 +471,18 @@ class CompetitionsPage {
                             <input type="text" value="<?php echo esc_attr( $competition->type_label ); ?>" class="regular-text" disabled>
                         </td>
                     </tr>
+                    <?php if ( 'custom' === $competition->type ) : ?>
                     <tr>
+                        <th scope="row"><label for="winner_input_type"><?php esc_html_e( 'Winner Input Type', 'volunteer-exchange-platform' ); ?></label></th>
+                        <td>
+                            <select name="winner_input_type" id="winner_input_type" class="regular-text">
+                                <option value="dropdown" <?php selected( ( $competition->winner_input_type ?? 'dropdown' ), 'dropdown' ); ?>><?php esc_html_e( 'Dropdown (participant)', 'volunteer-exchange-platform' ); ?></option>
+                                <option value="text" <?php selected( ( $competition->winner_input_type ?? 'dropdown' ), 'text' ); ?>><?php esc_html_e( 'Text field (free text)', 'volunteer-exchange-platform' ); ?></option>
+                            </select>
+                        </td>
+                    </tr>
+                    <?php endif; ?>
+                    <tr id="vep-winner-dropdown-row" <?php echo ( 'custom' === $competition->type && ( $competition->winner_input_type ?? 'dropdown' ) === 'text' ) ? 'style="display:none"' : ''; ?>>
                         <th scope="row"><label for="winner_id"><?php esc_html_e( 'Winner', 'volunteer-exchange-platform' ); ?></label></th>
                         <td>
                             <div class="vep-competition-winner-field">
@@ -466,6 +497,14 @@ class CompetitionsPage {
                             </div>
                         </td>
                     </tr>
+                    <?php if ( 'custom' === $competition->type ) : ?>
+                    <tr id="vep-winner-text-row" <?php echo ( ( $competition->winner_input_type ?? 'dropdown' ) !== 'text' ) ? 'style="display:none"' : ''; ?>>
+                        <th scope="row"><label for="winner_text"><?php esc_html_e( 'Winner', 'volunteer-exchange-platform' ); ?></label></th>
+                        <td>
+                            <input type="text" name="winner_text" id="winner_text" value="<?php echo esc_attr( $competition->winner_text ?? '' ); ?>" class="regular-text">
+                        </td>
+                    </tr>
+                    <?php endif; ?>
                     <tr>
                         <th scope="row"><?php esc_html_e( 'Status', 'volunteer-exchange-platform' ); ?></th>
                         <td>
@@ -476,6 +515,25 @@ class CompetitionsPage {
                         </td>
                     </tr>
                 </table>
+
+                <script>
+                (function() {
+                    var typeSelect = document.getElementById('winner_input_type');
+                    var dropdownRow = document.getElementById('vep-winner-dropdown-row');
+                    var textRow = document.getElementById('vep-winner-text-row');
+                    if (typeSelect && dropdownRow && textRow) {
+                        typeSelect.addEventListener('change', function() {
+                            if (this.value === 'text') {
+                                dropdownRow.style.display = 'none';
+                                textRow.style.display = '';
+                            } else {
+                                dropdownRow.style.display = '';
+                                textRow.style.display = 'none';
+                            }
+                        });
+                    }
+                })();
+                </script>
 
                 <div class="submit">
                     <button type="submit" class="button button-primary"><?php esc_html_e( 'Save Changes', 'volunteer-exchange-platform' ); ?></button>
@@ -510,10 +568,13 @@ class CompetitionsPage {
             check_admin_referer( 'vep_save_competition_new' );
         }
 
-        $title = isset( $_POST['title'] ) ? sanitize_text_field( wp_unslash( $_POST['title'] ) ) : '';
-        $description = isset( $_POST['description'] ) ? sanitize_textarea_field( wp_unslash( $_POST['description'] ) ) : '';
-        $winner_id = isset( $_POST['winner_id'] ) ? (int) $_POST['winner_id'] : null;
-        $is_active = isset( $_POST['is_active'] ) ? 1 : 0;
+        $title        = isset( $_POST['title'] ) ? sanitize_text_field( wp_unslash( $_POST['title'] ) ) : '';
+        $description  = isset( $_POST['description'] ) ? sanitize_textarea_field( wp_unslash( $_POST['description'] ) ) : '';
+        $winner_id    = isset( $_POST['winner_id'] ) ? (int) $_POST['winner_id'] : null;
+        $is_active    = isset( $_POST['is_active'] ) ? 1 : 0;
+        $winner_input_type_raw = isset( $_POST['winner_input_type'] ) ? sanitize_text_field( wp_unslash( $_POST['winner_input_type'] ) ) : 'dropdown';
+        $winner_input_type = in_array( $winner_input_type_raw, array( 'dropdown', 'text' ), true ) ? $winner_input_type_raw : 'dropdown';
+        $winner_text  = isset( $_POST['winner_text'] ) ? sanitize_text_field( wp_unslash( $_POST['winner_text'] ) ) : '';
 
         if ( ! $title ) {
             wp_die( esc_html__( 'Title is required', 'volunteer-exchange-platform' ) );
@@ -523,10 +584,12 @@ class CompetitionsPage {
             $updated = $this->competition_service->update_competition(
                 $competition_id,
                 array(
-                    'title'       => $title,
-                    'description' => $description,
-                    'winner_id'   => $winner_id,
-                    'is_active'   => $is_active,
+                    'title'             => $title,
+                    'description'       => $description,
+                    'winner_id'         => ( 'text' === $winner_input_type ) ? null : $winner_id,
+                    'winner_input_type' => $winner_input_type,
+                    'winner_text'       => ( 'text' === $winner_input_type ) ? $winner_text : null,
+                    'is_active'         => $is_active,
                 )
             );
 
@@ -540,12 +603,14 @@ class CompetitionsPage {
         }
 
         $competition_id = $this->competition_service->create_competition( array(
-            'event_id'     => $active_event->id,
-            'type'         => 'custom',
-            'title'        => $title,
-            'description'  => $description,
-            'is_active'    => 1,
-            'winner_id'    => $winner_id,
+            'event_id'          => $active_event->id,
+            'type'              => 'custom',
+            'title'             => $title,
+            'description'       => $description,
+            'is_active'         => 1,
+            'winner_input_type' => $winner_input_type,
+            'winner_id'         => ( 'text' === $winner_input_type ) ? null : $winner_id,
+            'winner_text'       => ( 'text' === $winner_input_type ) ? $winner_text : null,
         ) );
 
         if ( $competition_id ) {
@@ -600,8 +665,19 @@ class CompetitionsPage {
      * @return string
      */
     private function get_winner_selector_html( $competition, $participants ) {
-        $nonce = wp_create_nonce( 'vep_set_competition_winner_' . $competition->id );
-        $html = '<select name="winner_id" class="vep-competition-winner-select vep-choices" data-competition-id="' . intval( $competition->id ) . '" data-nonce="' . esc_attr( $nonce ) . '">';
+        $nonce            = wp_create_nonce( 'vep_set_competition_winner_' . $competition->id );
+        $winner_input_type = isset( $competition->winner_input_type ) ? $competition->winner_input_type : 'dropdown';
+
+        if ( 'text' === $winner_input_type ) {
+            $current_text = isset( $competition->winner_text ) ? $competition->winner_text : '';
+            $html  = '<div class="vep-competition-winner-text-wrap">';
+            $html .= '<input type="text" class="vep-competition-winner-text" value="' . esc_attr( $current_text ) . '" data-competition-id="' . intval( $competition->id ) . '" data-nonce="' . esc_attr( $nonce ) . '" placeholder="' . esc_attr__( 'Enter winner name', 'volunteer-exchange-platform' ) . '">';
+            $html .= '<button type="button" class="button button-small vep-competition-winner-text-save" data-competition-id="' . intval( $competition->id ) . '">' . esc_html__( 'Save', 'volunteer-exchange-platform' ) . '</button>';
+            $html .= '</div>';
+            return $html;
+        }
+
+        $html  = '<select name="winner_id" class="vep-competition-winner-select vep-choices" data-competition-id="' . intval( $competition->id ) . '" data-nonce="' . esc_attr( $nonce ) . '">';
         $html .= '<option value="">' . esc_html__( 'Select Winner', 'volunteer-exchange-platform' ) . '</option>';
         
         foreach ( $participants as $participant ) {

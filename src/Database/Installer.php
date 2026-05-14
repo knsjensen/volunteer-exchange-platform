@@ -188,6 +188,8 @@ class Installer {
             description text,
             is_active tinyint(1) DEFAULT 1,
             winner_id bigint(20) UNSIGNED DEFAULT NULL,
+            winner_input_type varchar(20) NOT NULL DEFAULT 'dropdown',
+            winner_text varchar(255) DEFAULT NULL,
             sort_order int(11) DEFAULT 0,
             custom_data longtext,
             created_at datetime DEFAULT CURRENT_TIMESTAMP,
@@ -441,6 +443,8 @@ class Installer {
                 description text,
                 is_active tinyint(1) DEFAULT 1,
                 winner_id bigint(20) UNSIGNED DEFAULT NULL,
+                winner_input_type varchar(20) NOT NULL DEFAULT 'dropdown',
+                winner_text varchar(255) DEFAULT NULL,
                 sort_order int(11) DEFAULT 0,
                 custom_data longtext,
                 created_at datetime DEFAULT CURRENT_TIMESTAMP,
@@ -465,6 +469,28 @@ class Installer {
             if ( ! $has_competition_description ) {
                 // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Direct schema migration query is required; interpolated table name is controlled from $wpdb->prefix.
                 $wpdb->query("ALTER TABLE $table_competitions ADD COLUMN description text AFTER title");
+            }
+
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Direct schema inspection query is required; interpolated table name is controlled from $wpdb->prefix.
+            $has_winner_input_type = $wpdb->get_var($wpdb->prepare(
+                // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Interpolated table name is controlled.
+                "SHOW COLUMNS FROM $table_competitions LIKE %s",
+                'winner_input_type'
+            ));
+            if ( ! $has_winner_input_type ) {
+                // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Direct schema migration query is required; interpolated table name is controlled from $wpdb->prefix.
+                $wpdb->query("ALTER TABLE $table_competitions ADD COLUMN winner_input_type varchar(20) NOT NULL DEFAULT 'dropdown' AFTER winner_id");
+            }
+
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Direct schema inspection query is required; interpolated table name is controlled from $wpdb->prefix.
+            $has_winner_text = $wpdb->get_var($wpdb->prepare(
+                // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Interpolated table name is controlled.
+                "SHOW COLUMNS FROM $table_competitions LIKE %s",
+                'winner_text'
+            ));
+            if ( ! $has_winner_text ) {
+                // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Direct schema migration query is required; interpolated table name is controlled from $wpdb->prefix.
+                $wpdb->query("ALTER TABLE $table_competitions ADD COLUMN winner_text varchar(255) DEFAULT NULL AFTER winner_input_type");
             }
         }
     }

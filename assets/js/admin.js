@@ -1269,8 +1269,7 @@
         });
 
         // Handle competition winner selection for custom competitions
-        document.querySelectorAll('.vep-competition-winner-select').forEach((select) => {
-            select.addEventListener('change', function() {
+        document.querySelectorAll('.vep-competition-winner-select').forEach((select) => {            select.addEventListener('change', function() {
                 const competitionId = this.dataset.competitionId;
                 const winnerId = this.value;
                 const nonce = this.dataset.nonce;
@@ -1320,6 +1319,71 @@
         });
 
         renumberCards();
+
+        // Handle free-text winner save for text-type custom competitions
+        document.querySelectorAll('.vep-competition-winner-text-save').forEach((button) => {            button.addEventListener('click', function() {
+                const competitionId = this.dataset.competitionId;
+                const wrap = this.closest('.vep-competition-winner-text-wrap');
+                const input = wrap ? wrap.querySelector('.vep-competition-winner-text') : null;
+
+                if (!input) {
+                    return;
+                }
+
+                const winnerText = input.value;
+                const formData = new FormData();
+                formData.append('action', 'vep_set_competition_winner_text');
+                formData.append('competition_id', competitionId);
+                formData.append('winner_text', winnerText);
+                formData.append('nonce', input.dataset.nonce);
+
+                fetch(ajaxUrl, {
+                    method: 'POST',
+                    body: formData,
+                    credentials: 'same-origin'
+                })
+                    .then((response) => response.json())
+                    .then((data) => {
+                        const msg = (data.data && data.data.message) || (data.success ? 'Saved.' : 'Error');
+                        showCardNotice(this, msg, data.success ? 'success' : 'error');
+                    })
+                    .catch(() => {
+                        showCardNotice(this, 'Error', 'error');
+                    });
+            });
+        });
+
+        // Handle reset all winners button
+        const resetAllBtn = document.querySelector('.vep-reset-all-winners');
+        if (resetAllBtn) {
+            resetAllBtn.addEventListener('click', function() {
+                const confirmMsg = i18n.resetAllWinnersConfirm || 'Are you sure you want to reset all winners? This cannot be undone.';
+                if (!window.confirm(confirmMsg)) {
+                    return;
+                }
+
+                const formData = new FormData();
+                formData.append('action', 'vep_reset_all_winners');
+                formData.append('nonce', this.dataset.nonce);
+
+                fetch(ajaxUrl, {
+                    method: 'POST',
+                    body: formData,
+                    credentials: 'same-origin'
+                })
+                    .then((response) => response.json())
+                    .then((data) => {
+                        if (data.success) {
+                            reloadPage();
+                        } else {
+                            showError((data.data && data.data.message) || i18n.competitionActionFailed);
+                        }
+                    })
+                    .catch(() => {
+                        showError(i18n.competitionActionFailed);
+                    });
+            });
+        }
     }
 
     function initAdminChoices() {

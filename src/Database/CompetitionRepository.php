@@ -49,32 +49,38 @@ class CompetitionRepository extends AbstractRepository {
         $table = $wpdb->prefix . $this->table_name;
         
         $defaults = array(
-            'event_id'    => 0,
-            'type'        => 'custom',
-            'title'       => '',
-            'description' => '',
-            'is_active'   => 1,
-            'winner_id'   => null,
-            'sort_order'  => 0,
-            'custom_data' => null,
+            'event_id'          => 0,
+            'type'              => 'custom',
+            'title'             => '',
+            'description'       => '',
+            'is_active'         => 1,
+            'winner_id'         => null,
+            'winner_input_type' => 'dropdown',
+            'winner_text'       => null,
+            'sort_order'        => 0,
+            'custom_data'       => null,
         );
         
         $data = wp_parse_args( $data, $defaults );
+
+        $winner_input_type = in_array( $data['winner_input_type'], array( 'dropdown', 'text' ), true ) ? $data['winner_input_type'] : 'dropdown';
         
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Direct insert is required for repository pattern
         $result = $wpdb->insert(
             $table,
             array(
-                'event_id'    => (int) $data['event_id'],
-                'type'        => sanitize_text_field( $data['type'] ),
-                'title'       => sanitize_text_field( $data['title'] ),
-                'description' => sanitize_textarea_field( $data['description'] ),
-                'is_active'   => (int) $data['is_active'],
-                'winner_id'   => $data['winner_id'] ? (int) $data['winner_id'] : null,
-                'sort_order'  => (int) $data['sort_order'],
-                'custom_data' => $data['custom_data'],
+                'event_id'          => (int) $data['event_id'],
+                'type'              => sanitize_text_field( $data['type'] ),
+                'title'             => sanitize_text_field( $data['title'] ),
+                'description'       => sanitize_textarea_field( $data['description'] ),
+                'is_active'         => (int) $data['is_active'],
+                'winner_id'         => $data['winner_id'] ? (int) $data['winner_id'] : null,
+                'winner_input_type' => $winner_input_type,
+                'winner_text'       => $data['winner_text'] ? sanitize_text_field( $data['winner_text'] ) : null,
+                'sort_order'        => (int) $data['sort_order'],
+                'custom_data'       => $data['custom_data'],
             ),
-            array( '%d', '%s', '%s', '%s', '%d', '%d', '%d', '%s' )
+            array( '%d', '%s', '%s', '%s', '%d', '%d', '%s', '%s', '%d', '%s' )
         );
         
         if ( $result ) {
@@ -243,15 +249,63 @@ class CompetitionRepository extends AbstractRepository {
     public function set_winner( $id, $winner_id = null ) {
         $global_wpdb = $GLOBALS['wpdb'];
         $table = $global_wpdb->prefix . $this->table_name;
-        
+
+        $update_data   = array( 'winner_id' => $winner_id ? (int) $winner_id : null );
+        $update_format = array( '%d' );
+
+        // When resetting the winner, also clear any free-text winner.
+        if ( ! $winner_id ) {
+            $update_data['winner_text'] = null;
+            $update_format[]            = '%s';
+        }
+
         $result = $global_wpdb->update(
             $table,
-            array( 'winner_id' => $winner_id ? (int) $winner_id : null ),
+            $update_data,
             array( 'id' => (int) $id ),
-            array( '%d' ),
+            $update_format,
             array( '%d' )
         );
         
+        return $result !== false;
+    }
+
+    /**
+     * Set free-text winner for a competition
+     *
+     * @param int    $id          Competition ID
+     * @param string $winner_text Free-text winner value
+     * @return bool
+     */
+    public function set_winner_text( $id, $winner_text ) {
+        return $this->update(
+            array( 'winner_text' => $winner_text !== '' ? sanitize_text_field( $winner_text ) : null ),
+            array( 'id' => (int) $id ),
+            array( '%s' ),
+            array( '%d' )
+        );
+    }
+
+    /**
+     * Reset winner_id and winner_text for all competitions of an event
+     *
+     * @param int $event_id Event ID
+     * @return bool
+     */
+    public function reset_all_winners_for_event( $event_id ) {
+        global $wpdb;
+
+        $table = $wpdb->prefix . $this->table_name;
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Direct bulk update required for repository pattern
+        $result = $wpdb->query(
+            $wpdb->prepare(
+                // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Interpolated table name is controlled from $wpdb->prefix.
+                "UPDATE $table SET winner_id = NULL, winner_text = NULL WHERE event_id = %d",
+                (int) $event_id
+            )
+        );
+
         return $result !== false;
     }
 

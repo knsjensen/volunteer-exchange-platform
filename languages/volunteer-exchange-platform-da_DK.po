@@ -1741,6 +1741,26 @@ msgstr "Konkurrence blev ikke fundet."
 msgid "Select Winner"
 msgstr "Vælg vinder"
 
+#: src/Admin/CompetitionsPage.php
+msgid "Winner Input Type"
+msgstr "Vinderinput-type"
+
+#: src/Admin/CompetitionsPage.php
+msgid "Dropdown (participant)"
+msgstr "Dropdown (deltager)"
+
+#: src/Admin/CompetitionsPage.php
+msgid "Text field (free text)"
+msgstr "Tekstfelt (fri tekst)"
+
+#: src/Admin/CompetitionsPage.php
+msgid "Enter winner name"
+msgstr "Indtast vinderens navn"
+
+#: src/Admin/CompetitionsPage.php
+msgid "Save"
+msgstr "Gem"
+
 #: src/Services/CompetitionService.php
 msgid "First Registered Participant"
 msgstr "Første tilmeldt deltager"
@@ -1829,9 +1849,25 @@ msgstr "Tiden er gået!"
 msgid "Reset Winner"
 msgstr "Nulstil vinder"
 
+#: src/Admin/CompetitionsPage.php
+msgid "Reset All Winners"
+msgstr "Nulstil alle vindere"
+
+#: src/Ajax/CompetitionHandler.php
+msgid "All winners reset successfully"
+msgstr "Alle vindere er nulstillet"
+
+#: src/Ajax/CompetitionHandler.php
+msgid "Failed to reset winners"
+msgstr "Kunne ikke nulstille vindere"
+
 #: src/Plugin/Plugin.php
 msgid "Winner reset successfully"
 msgstr "Vinder nulstillet"
+
+#: src/Plugin/Plugin.php
+msgid "Are you sure you want to reset all winners? This cannot be undone."
+msgstr "Er du sikker på, at du vil nulstille alle vindere? Dette kan ikke fortrydes."
 
 #: src/Admin/EventsPage.php
 msgid "Search agreements"

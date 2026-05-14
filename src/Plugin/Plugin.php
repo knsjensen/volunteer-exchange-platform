@@ -248,6 +248,7 @@ class Plugin {
                     'competitionActionFailed'  => __( 'An error occurred. Please try again.', 'volunteer-exchange-platform' ),
                     'winnerSaved'             => __( 'Winner set successfully', 'volunteer-exchange-platform' ),
                     'winnerReset'             => __( 'Winner reset successfully', 'volunteer-exchange-platform' ),
+                    'resetAllWinnersConfirm'  => __( 'Are you sure you want to reset all winners? This cannot be undone.', 'volunteer-exchange-platform' ),
                     'copyActiveEmailsSuccess'  => __( 'Copied %d active participant emails to clipboard.', 'volunteer-exchange-platform' ),
                     'copyActiveEmailsFailed'   => __( 'Could not copy active participant emails. Please try again.', 'volunteer-exchange-platform' ),
                     'noActiveEmailsFound'      => __( 'No active participant emails found.', 'volunteer-exchange-platform' ),

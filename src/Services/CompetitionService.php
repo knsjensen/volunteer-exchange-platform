@@ -187,6 +187,17 @@ class CompetitionService extends AbstractService {
             $update_data['winner_id'] = $data['winner_id'] ? (int) $data['winner_id'] : null;
             $format[] = $data['winner_id'] ? '%d' : '%s';
         }
+
+        if ( isset( $data['winner_input_type'] ) ) {
+            $winner_input_type = in_array( $data['winner_input_type'], array( 'dropdown', 'text' ), true ) ? $data['winner_input_type'] : 'dropdown';
+            $update_data['winner_input_type'] = $winner_input_type;
+            $format[] = '%s';
+        }
+
+        if ( isset( $data['winner_text'] ) ) {
+            $update_data['winner_text'] = $data['winner_text'] !== '' ? sanitize_text_field( $data['winner_text'] ) : null;
+            $format[] = '%s';
+        }
         
         if ( isset( $data['sort_order'] ) ) {
             $update_data['sort_order'] = (int) $data['sort_order'];
@@ -263,6 +274,27 @@ class CompetitionService extends AbstractService {
     }
 
     /**
+     * Set free-text winner for a competition
+     *
+     * @param int    $competition_id Competition ID
+     * @param string $winner_text    Free-text winner value
+     * @return bool
+     */
+    public function set_winner_text( $competition_id, $winner_text ) {
+        return $this->competition_repository->set_winner_text( $competition_id, $winner_text );
+    }
+
+    /**
+     * Reset all competition winners for an event
+     *
+     * @param int $event_id Event ID
+     * @return bool
+     */
+    public function reset_all_winners_for_event( $event_id ) {
+        return $this->competition_repository->reset_all_winners_for_event( $event_id );
+    }
+
+    /**
      * Check if a competition can be deleted
      *
      * @param int $competition_id Competition ID
@@ -306,6 +338,11 @@ class CompetitionService extends AbstractService {
 
         if ( ! (int) $competition->is_active || $competition->winner_id ) {
             // Doesn't exist, is inactive, or already has winner
+            return false;
+        }
+
+        // Text-type custom competitions are winner-managed manually; skip auto-select.
+        if ( isset( $competition->winner_input_type ) && 'text' === $competition->winner_input_type ) {
             return false;
         }
 
