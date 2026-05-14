@@ -223,7 +223,7 @@ class Plugin {
             wp_enqueue_script( 'choices-js', VEP_PLUGIN_URL . 'assets/vendor/choices-11.2.0/public/assets/scripts/choices.min.js', array(), VEP_VERSION, true );
         }
 
-        wp_enqueue_style( 'vep-admin-style', VEP_PLUGIN_URL . 'assets/css/admin.css', array(), VEP_VERSION );
+        wp_enqueue_style( 'vep-admin-style', VEP_PLUGIN_URL . 'assets/css/admin.css', array(), $this->asset_version( 'assets/css/admin.css' ) );
         wp_enqueue_script( 'vep-admin-script', VEP_PLUGIN_URL . 'assets/js/admin.js', array( 'jquery', 'jquery-ui-sortable', 'choices-js' ), $this->asset_version( 'assets/js/admin.js' ), true );
 
         wp_localize_script(

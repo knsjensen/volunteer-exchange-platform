@@ -113,6 +113,26 @@
         let fireworksAnimation = null;
         let fireworksStopTimeout = null;
         let postTimeRevealTimeout = null;
+
+        function syncRightPanelHeight() {
+            // Height equality is now handled entirely by CSS:
+            // - .vep-display-main-content uses align-items: stretch
+            // - .vep-display-right is position: relative and contributes 0 intrinsic height
+            //   (because .vep-leaderboard is position: absolute and removed from flow)
+            // - The flexbox row therefore takes exactly the left column's height,
+            //   and the absolutely-positioned leaderboard fills it precisely.
+            // Clear any leftover inline styles from previous JS-driven attempts.
+            if (rightPanel) {
+                rightPanel.style.height = '';
+            }
+            if (rightPanel) {
+                const leaderboardPanel = rightPanel.querySelector('.vep-leaderboard');
+                if (leaderboardPanel) {
+                    leaderboardPanel.style.height = '';
+                    leaderboardPanel.style.maxHeight = '';
+                }
+            }
+        }
         
         // Start display
         startButton.addEventListener('click', function() {
@@ -171,6 +191,8 @@
             if (displayMainContent) {
                 displayMainContent.style.display = '';
             }
+
+            syncRightPanelHeight();
 
             if (postTimeRevealTimeout) {
                 clearTimeout(postTimeRevealTimeout);
@@ -299,6 +321,8 @@
             if (displayMainContent) {
                 displayMainContent.classList.toggle('vep-display-main-content-no-right', !showRightPanel);
             }
+
+            syncRightPanelHeight();
         }
         
         function startCountdown(targetDatetime, autoSwitchStats) {
@@ -327,6 +351,8 @@
                     timerElement.style.display = 'none';
                     expiredElement.style.display = 'block';
                     if (countdownInterval) clearInterval(countdownInterval);
+
+                    syncRightPanelHeight();
 
                     // Stop polling for agreement count — event is over.
                     if (pollingInterval) {
@@ -362,6 +388,8 @@
                 const timeText = `${String(totalHours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
                 const timeEl = document.getElementById('vep-display-timer-time');
                 if (timeEl) timeEl.textContent = timeText;
+
+                syncRightPanelHeight();
             }
             
             // Initial update
@@ -428,7 +456,7 @@
             }
             
             let html = '';
-            leaderboard.forEach((participant, index) => {
+            leaderboard.slice(0, 4).forEach((participant, index) => {
                 const position = index + 1;
                 const medal = position === 1 ? '🥇' : position === 2 ? '🥈' : position === 3 ? '🥉' : position + '.';
                 const logoHtml = participant.logo_url 
@@ -448,6 +476,7 @@
             });
             
             listElement.innerHTML = html;
+            syncRightPanelHeight();
         }
 
         function updateRecentAgreements(recentAgreements) {
@@ -465,6 +494,7 @@
 
             if (!recentAgreements || recentAgreements.length === 0) {
                 listElement.innerHTML = '<p class="vep-leaderboard-empty">' + vepAdmin.i18n.noRecentAgreementsYet + '</p>';
+                syncRightPanelHeight();
                 return;
             }
 
@@ -495,7 +525,10 @@
             });
 
             listElement.innerHTML = html;
+            syncRightPanelHeight();
         }
+
+        window.addEventListener('resize', syncRightPanelHeight);
         
         function showStatisticsView(eventId, showTimeUp) {
             // Fireworks continue running over the statistics view.
@@ -612,7 +645,7 @@
                 ctx.stroke();
 
                 ctx.fillStyle = textColor;
-                ctx.font = '12px sans-serif';
+                ctx.font = '20px sans-serif';
                 ctx.textAlign = 'right';
                 ctx.fillText(Math.round((i / ySteps) * maxVal), padding.left - 6, y + 4);
             }
@@ -628,7 +661,7 @@
 
             // X-axis label (chart title)
             ctx.fillStyle = textColor;
-            ctx.font = '13px sans-serif';
+            ctx.font = '22px sans-serif';
             ctx.textAlign = 'center';
             ctx.fillText(
                 vepAdmin.i18n.statsChartLabel || 'Agreements per minute',
@@ -638,7 +671,7 @@
 
             // X-axis minute ticks (at most 10 visible ticks)
             const tickEvery = Math.max(1, Math.ceil(durationMinutes / 10));
-            ctx.font = '11px sans-serif';
+            ctx.font = '18px sans-serif';
             for (let i = 0; i < durationMinutes; i += tickEvery) {
                 const x = padding.left + (i + 0.5) * barW;
                 ctx.fillText(i, x, padding.top + ch + 16);
