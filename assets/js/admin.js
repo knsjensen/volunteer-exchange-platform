@@ -480,6 +480,7 @@
                     }
 
                     startFireworks();
+                    prefetchCompetitions(startButton.dataset.eventId);
 
                     if (postTimeRevealTimeout) {
                         clearTimeout(postTimeRevealTimeout);
@@ -875,6 +876,7 @@
             // Only show competitions that have a winner selected
             const winnersOnly = (competitions || []).filter(c => c.winner_id);
             winnersForDisplay = (competitions || []).filter(c => c.winner_name);
+            updateCompetitionButtonVisibility();
 
             if (winnersOnly.length === 0) {
                 listElement.innerHTML = '<p class="vep-competitions-empty">' + (vepAdmin.i18n.noCompetitionsAvailable || 'No competitions available.') + '</p>';
@@ -995,6 +997,34 @@
 
             // Switch to closing view
             switchView('vep-closing-view', 'vep-closing-actions');
+        }
+
+        function updateCompetitionButtonVisibility() {
+            const hasWinners = winnersForDisplay.length > 0;
+            const showCompBtn = document.getElementById('vep-show-competitions');
+            const showCompFromStatsBtn = document.getElementById('vep-show-competitions-from-statistics');
+            if (showCompBtn) showCompBtn.style.display = hasWinners ? '' : 'none';
+            if (showCompFromStatsBtn) showCompFromStatsBtn.style.display = hasWinners ? '' : 'none';
+        }
+
+        function prefetchCompetitions(eventId) {
+            const formData = new FormData();
+            formData.append('action', 'vep_get_event_competitions');
+            formData.append('nonce', vepAdmin.nonce);
+            formData.append('event_id', eventId);
+            fetch(vepAdmin.ajaxUrl, {
+                method: 'POST',
+                body: formData,
+                credentials: 'same-origin'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (!data.success) return;
+                loadedCompetitions = data.data.competitions;
+                winnersForDisplay = (loadedCompetitions || []).filter(c => c.winner_name);
+                updateCompetitionButtonVisibility();
+            })
+            .catch(() => {});
         }
 
         function stopFireworks() {
