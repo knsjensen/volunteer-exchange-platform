@@ -92,7 +92,7 @@ class CompetitionService extends AbstractService {
      * @return array
      */
     public function get_competitions_for_event( $event_id ) {
-        return $this->competition_repository->get_all_for_event( $event_id );
+        return $this->competition_repository->get_active_for_event( $event_id );
     }
 
     /**

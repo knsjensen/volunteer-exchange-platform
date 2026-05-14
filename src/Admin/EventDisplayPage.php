@@ -129,6 +129,37 @@ class EventDisplayPage {
             return;
         }
         
+        // Handle settings reset
+        if ( isset( $_POST['vep_reset_display_settings'] ) && check_admin_referer( 'vep_display_settings', 'vep_display_nonce' ) ) {
+            $options_to_delete = array(
+                'vep_display_title',
+                'vep_display_mode',
+                'vep_display_background_type',
+                'vep_display_background_solid_color',
+                'vep_display_background_gradient_color_1',
+                'vep_display_background_gradient_color_2',
+                'vep_display_background_gradient_color_3',
+                'vep_display_background_gradient_stop_1',
+                'vep_display_background_gradient_stop_2',
+                'vep_display_background_gradient_stop_3',
+                'vep_display_background_gradient_angle',
+                'vep_display_text_color',
+                'vep_display_auto_switch_stats',
+                'vep_display_closing_text',
+                'vep_display_time_up_text',
+                'vep_display_hide_buttons',
+                'vep_display_show_competitions',
+            );
+            foreach ( $options_to_delete as $option ) {
+                delete_option( $option );
+            }
+            wp_safe_redirect( add_query_arg( array(
+                'page'    => 'vep-event-display',
+                'message' => 'settings_reset',
+            ), admin_url( 'admin.php' ) ) );
+            exit;
+        }
+
         // Handle settings save
         if ( isset( $_POST['vep_save_display_settings'] ) && check_admin_referer( 'vep_display_settings', 'vep_display_nonce' ) ) {
             $event_end_datetime_raw = '';
@@ -171,27 +202,27 @@ class EventDisplayPage {
                 : '#1e3c72';
 
             $gradient_color_1 = isset( $_POST['vep_background_gradient_color_1'] )
-                ? $this->sanitize_hex_color_with_fallback( wp_unslash( $_POST['vep_background_gradient_color_1'] ), '#1e3c72' )
-                : '#1e3c72';
+                ? $this->sanitize_hex_color_with_fallback( wp_unslash( $_POST['vep_background_gradient_color_1'] ), '#db870f' )
+                : '#db870f';
             $gradient_color_2 = isset( $_POST['vep_background_gradient_color_2'] )
-                ? $this->sanitize_hex_color_with_fallback( wp_unslash( $_POST['vep_background_gradient_color_2'] ), '#2a5298' )
-                : '#2a5298';
+                ? $this->sanitize_hex_color_with_fallback( wp_unslash( $_POST['vep_background_gradient_color_2'] ), '#db870f' )
+                : '#db870f';
             $gradient_color_3 = isset( $_POST['vep_background_gradient_color_3'] )
-                ? $this->sanitize_hex_color_with_fallback( wp_unslash( $_POST['vep_background_gradient_color_3'] ), '#7e22ce' )
-                : '#7e22ce';
+                ? $this->sanitize_hex_color_with_fallback( wp_unslash( $_POST['vep_background_gradient_color_3'] ), '#b014db' )
+                : '#b014db';
 
             $gradient_stop_1 = isset( $_POST['vep_background_gradient_stop_1'] )
-                ? $this->sanitize_percentage( wp_unslash( $_POST['vep_background_gradient_stop_1'] ), 0 )
-                : 0;
+                ? $this->sanitize_percentage( wp_unslash( $_POST['vep_background_gradient_stop_1'] ), 10 )
+                : 10;
             $gradient_stop_2 = isset( $_POST['vep_background_gradient_stop_2'] )
-                ? $this->sanitize_percentage( wp_unslash( $_POST['vep_background_gradient_stop_2'] ), 50 )
-                : 50;
+                ? $this->sanitize_percentage( wp_unslash( $_POST['vep_background_gradient_stop_2'] ), 47 )
+                : 47;
             $gradient_stop_3 = isset( $_POST['vep_background_gradient_stop_3'] )
-                ? $this->sanitize_percentage( wp_unslash( $_POST['vep_background_gradient_stop_3'] ), 100 )
-                : 100;
+                ? $this->sanitize_percentage( wp_unslash( $_POST['vep_background_gradient_stop_3'] ), 85 )
+                : 85;
             $gradient_angle = isset( $_POST['vep_background_gradient_angle'] )
-                ? $this->sanitize_degrees( wp_unslash( $_POST['vep_background_gradient_angle'] ), 135 )
-                : 135;
+                ? $this->sanitize_degrees( wp_unslash( $_POST['vep_background_gradient_angle'] ), 128 )
+                : 128;
             $display_text_color = isset( $_POST['vep_display_text_color'] )
                 ? $this->sanitize_hex_color_with_fallback( wp_unslash( $_POST['vep_display_text_color'] ), '#ffffff' )
                 : '#ffffff';
@@ -222,8 +253,12 @@ class EventDisplayPage {
             update_option( 'vep_display_auto_switch_stats', $auto_switch_stats );
             $closing_text = isset( $_POST['vep_display_closing_text'] ) ? sanitize_textarea_field( wp_unslash( $_POST['vep_display_closing_text'] ) ) : '';
             update_option( 'vep_display_closing_text', $closing_text );
+            $time_up_text = isset( $_POST['vep_display_time_up_text'] ) ? sanitize_text_field( wp_unslash( $_POST['vep_display_time_up_text'] ) ) : '';
+            update_option( 'vep_display_time_up_text', $time_up_text );
             $hide_buttons = isset( $_POST['vep_display_hide_buttons'] ) ? 1 : 0;
             update_option( 'vep_display_hide_buttons', $hide_buttons );
+            $show_competitions = isset( $_POST['vep_display_show_competitions'] ) ? 1 : 0;
+            update_option( 'vep_display_show_competitions', $show_competitions );
             
             wp_safe_redirect( add_query_arg( array(
                 'page' => 'vep-event-display',
@@ -256,17 +291,21 @@ class EventDisplayPage {
         }
 
         $solid_color = $this->sanitize_hex_color_with_fallback( get_option('vep_display_background_solid_color', '#1e3c72'), '#1e3c72' );
-        $gradient_color_1 = $this->sanitize_hex_color_with_fallback( get_option('vep_display_background_gradient_color_1', '#1e3c72'), '#1e3c72' );
-        $gradient_color_2 = $this->sanitize_hex_color_with_fallback( get_option('vep_display_background_gradient_color_2', '#2a5298'), '#2a5298' );
-        $gradient_color_3 = $this->sanitize_hex_color_with_fallback( get_option('vep_display_background_gradient_color_3', '#7e22ce'), '#7e22ce' );
-        $gradient_stop_1 = $this->sanitize_percentage( get_option('vep_display_background_gradient_stop_1', 0), 0 );
-        $gradient_stop_2 = $this->sanitize_percentage( get_option('vep_display_background_gradient_stop_2', 50), 50 );
-        $gradient_stop_3 = $this->sanitize_percentage( get_option('vep_display_background_gradient_stop_3', 100), 100 );
-        $gradient_angle = $this->sanitize_degrees( get_option('vep_display_background_gradient_angle', 135), 135 );
+        $gradient_color_1 = $this->sanitize_hex_color_with_fallback( get_option('vep_display_background_gradient_color_1', '#db870f'), '#db870f' );
+        $gradient_color_2 = $this->sanitize_hex_color_with_fallback( get_option('vep_display_background_gradient_color_2', '#db870f'), '#db870f' );
+        $gradient_color_3 = $this->sanitize_hex_color_with_fallback( get_option('vep_display_background_gradient_color_3', '#b014db'), '#b014db' );
+        $gradient_stop_1 = $this->sanitize_percentage( get_option('vep_display_background_gradient_stop_1', 10), 10 );
+        $gradient_stop_2 = $this->sanitize_percentage( get_option('vep_display_background_gradient_stop_2', 47), 47 );
+        $gradient_stop_3 = $this->sanitize_percentage( get_option('vep_display_background_gradient_stop_3', 85), 85 );
+        $gradient_angle = $this->sanitize_degrees( get_option('vep_display_background_gradient_angle', 128), 128 );
         $display_text_color = $this->sanitize_hex_color_with_fallback( get_option('vep_display_text_color', '#ffffff'), '#ffffff' );
         $auto_switch_stats  = (bool) get_option( 'vep_display_auto_switch_stats', 0 );
-        $closing_text       = (string) get_option( 'vep_display_closing_text', __( 'Tak for denne gang', 'volunteer-exchange-platform' ) );
-        $hide_buttons       = (bool) get_option( 'vep_display_hide_buttons', 0 );
+        $closing_text       = (string) get_option( 'vep_display_closing_text', '' );
+        $closing_text       = $closing_text !== '' ? $closing_text : __( 'Tak for denne gang', 'volunteer-exchange-platform' );
+        $time_up_text       = (string) get_option( 'vep_display_time_up_text', '' );
+        $time_up_text       = $time_up_text !== '' ? $time_up_text : __( 'Tiden er gået', 'volunteer-exchange-platform' );
+        $hide_buttons       = (bool) get_option( 'vep_display_hide_buttons', 1 );
+        $show_competitions  = (bool) get_option( 'vep_display_show_competitions', 1 );
 
         if ( 'recent_agreements' === $display_mode ) {
             $right_panel_title = __( 'Latest Agreements', 'volunteer-exchange-platform' );
@@ -293,6 +332,10 @@ class EventDisplayPage {
                 <div class="notice notice-success is-dismissible">
                     <p><?php esc_html_e('Settings saved successfully.', 'volunteer-exchange-platform'); ?></p>
                 </div>
+            <?php elseif ( sanitize_key( (string) $message ) === 'settings_reset' ): ?>
+                <div class="notice notice-success is-dismissible">
+                    <p><?php esc_html_e('Settings reset to defaults.', 'volunteer-exchange-platform'); ?></p>
+                </div>
             <?php endif; ?>
             
             <?php if ( ! $active_event ): ?>
@@ -306,9 +349,9 @@ class EventDisplayPage {
             <?php endif; ?>
             
             <div class="vep-display-settings-container" style="max-width: 800px; margin-top: 20px;">
-                <div class="card" style="padding: 20px;">
-                    <h2><?php esc_html_e('Display Settings', 'volunteer-exchange-platform'); ?></h2>
-                    
+                <div class="card" id="vep-display-settings-card" style="padding: 20px;">
+                    <h2 style="margin-top:0;"><?php esc_html_e('Display Settings', 'volunteer-exchange-platform'); ?></h2>
+                    <div id="vep-display-settings-body" style="margin-top:16px;">
                     <form method="post" action="">
                         <?php wp_nonce_field('vep_display_settings', 'vep_display_nonce'); ?>
 
@@ -376,6 +419,17 @@ class EventDisplayPage {
                             </tr>
                             <tr class="vep-display-advanced-row" style="display: none;">
                                 <th scope="row">
+                                    <?php esc_html_e( 'Vis konkurrencer', 'volunteer-exchange-platform' ); ?>
+                                </th>
+                                <td>
+                                    <label>
+                                        <input type="checkbox" name="vep_display_show_competitions" value="1" <?php checked( $show_competitions ); ?> />
+                                        <?php esc_html_e( 'Vis konkurrenceknapper i visningerne', 'volunteer-exchange-platform' ); ?>
+                                    </label>
+                                </td>
+                            </tr>
+                            <tr class="vep-display-advanced-row" style="display: none;">
+                                <th scope="row">
                                     <?php esc_html_e( 'Skjul alle knapper', 'volunteer-exchange-platform' ); ?>
                                 </th>
                                 <td>
@@ -387,6 +441,17 @@ class EventDisplayPage {
                             </tr>
                             <tr class="vep-display-advanced-row" style="display: none;">
                                 <th scope="row">
+                                    <label for="vep_display_time_up_text"><?php esc_html_e( 'Tiden er gået tekst', 'volunteer-exchange-platform' ); ?></label>
+                                </th>
+                                <td>
+                                    <textarea id="vep_display_time_up_text"
+                                              name="vep_display_time_up_text"
+                                              rows="3"
+                                              class="regular-text"><?php echo esc_textarea( $time_up_text ); ?></textarea>
+                                </td>
+                            </tr>
+                            <tr class="vep-display-advanced-row" style="display: none;">
+                                <th scope="row">
                                     <label for="vep_display_closing_text"><?php esc_html_e( 'Afsluttende tekst', 'volunteer-exchange-platform' ); ?></label>
                                 </th>
                                 <td>
@@ -394,9 +459,6 @@ class EventDisplayPage {
                                               name="vep_display_closing_text"
                                               rows="3"
                                               class="regular-text"><?php echo esc_textarea( $closing_text ); ?></textarea>
-                                    <p class="description">
-                                        <?php esc_html_e( 'Tekst der vises på afslutningsskærmen efter konkurrencerne. Standard: Tak for denne gang.', 'volunteer-exchange-platform' ); ?>
-                                    </p>
                                 </td>
                             </tr>
                             <tr class="vep-display-advanced-row" style="display: none;">
@@ -439,13 +501,13 @@ class EventDisplayPage {
                                                 class="button"
                                                 data-default-type="gradient"
                                                 data-default-solid-color="#1e3c72"
-                                                data-default-gradient-color-1="#1e3c72"
-                                                data-default-gradient-color-2="#2a5298"
-                                                data-default-gradient-color-3="#7e22ce"
-                                                data-default-gradient-stop-1="0"
-                                                data-default-gradient-stop-2="50"
-                                                data-default-gradient-stop-3="100"
-                                                data-default-gradient-angle="135"
+                                                data-default-gradient-color-1="#db870f"
+                                                data-default-gradient-color-2="#db870f"
+                                                data-default-gradient-color-3="#b014db"
+                                                data-default-gradient-stop-1="10"
+                                                data-default-gradient-stop-2="47"
+                                                data-default-gradient-stop-3="85"
+                                                data-default-gradient-angle="128"
                                                 data-default-text-color="#ffffff">
                                             <?php esc_html_e('Reset Background', 'volunteer-exchange-platform'); ?>
                                         </button>
@@ -585,8 +647,10 @@ class EventDisplayPage {
                         
                         <p class="submit">
                             <input type="submit" name="vep_save_display_settings" class="button button-primary" value="<?php esc_attr_e('Save Settings', 'volunteer-exchange-platform'); ?>">
+                            <input type="submit" name="vep_reset_display_settings" class="button button-secondary" value="<?php esc_attr_e('Nulstil indstillinger', 'volunteer-exchange-platform'); ?>" onclick="return confirm('<?php esc_attr_e( 'Er du sikker på at du vil nulstille alle indstillinger til standard?', 'volunteer-exchange-platform' ); ?>')">
                         </p>
                     </form>
+                    </div><!-- #vep-display-settings-body -->
                 </div>
                 
                 <?php if ($active_event && !empty($event_end_datetime)): ?>
@@ -623,6 +687,84 @@ class EventDisplayPage {
                         </p>
                     </div>
                 <?php endif; ?>
+
+                <!-- Visningsnavigation box — shown by JS when display is active -->
+                <div id="vep-nav-box" class="card" style="padding: 20px; margin-top: 20px; display: none;">
+                    <h2><?php esc_html_e( 'Visningsnavigation', 'volunteer-exchange-platform' ); ?></h2>
+                    <p class="description" style="margin-bottom: 16px;">
+                        <?php esc_html_e( 'Styr visningen fra denne side. Knapperne synkroniseres med det aktive display.', 'volunteer-exchange-platform' ); ?>
+                    </p>
+
+                    <!-- Countdown view buttons -->
+                    <div id="vep-nav-countdown-actions" class="vep-nav-actions" style="display: none;">
+                        <button type="button" class="button button-primary vep-nav-btn" data-nav-action="showStatistics">
+                            <?php esc_html_e( 'Vis statistik', 'volunteer-exchange-platform' ); ?>
+                        </button>
+                        <button type="button" class="button button-primary vep-nav-btn vep-nav-btn-competitions" data-nav-action="showCompetitions">
+                            <?php esc_html_e( 'Vis konkurrencer', 'volunteer-exchange-platform' ); ?>
+                        </button>
+                    </div>
+
+                    <!-- Statistics view buttons -->
+                    <div id="vep-nav-statistics-actions" class="vep-nav-actions" style="display: none;">
+                        <button type="button" class="button button-primary vep-nav-btn vep-nav-btn-back-countdown" data-nav-action="showCountdown" style="display: none;">
+                            <?php esc_html_e( 'Tilbage til nedtælling', 'volunteer-exchange-platform' ); ?>
+                        </button>
+                        <button type="button" class="button button-primary vep-nav-btn vep-nav-btn-competitions" data-nav-action="showCompetitions">
+                            <?php esc_html_e( 'Vis konkurrencer', 'volunteer-exchange-platform' ); ?>
+                        </button>
+                        <button type="button" class="button button-primary vep-nav-btn vep-nav-btn-closing" data-nav-action="showClosing" style="display: none;">
+                            <?php esc_html_e( 'Afslut', 'volunteer-exchange-platform' ); ?>
+                        </button>
+                    </div>
+
+                    <!-- Competitions view buttons -->
+                    <div id="vep-nav-competitions-actions" class="vep-nav-actions" style="display: none;">
+                        <div id="vep-nav-competitions-list" class="vep-nav-competitions-list" style="display: none;"></div>
+                        <button type="button" class="button button-primary vep-nav-btn" data-nav-action="showStatistics">
+                            <?php esc_html_e( 'Vis statistik', 'volunteer-exchange-platform' ); ?>
+                        </button>
+                        <button type="button" class="button button-primary vep-nav-btn" data-nav-action="showWinner" data-winner-index="0">
+                            <?php esc_html_e( 'Vis første vinder', 'volunteer-exchange-platform' ); ?>
+                        </button>
+                    </div>
+
+                    <!-- Winner view buttons -->
+                    <div id="vep-nav-winner-actions" class="vep-nav-actions" style="display: none;">
+                        <button type="button" class="button button-primary vep-nav-btn" data-nav-action="showCompetitions">
+                            <?php esc_html_e( 'Konkurrence oversigt', 'volunteer-exchange-platform' ); ?>
+                        </button>
+                        <button type="button" class="button button-primary vep-nav-btn" id="vep-nav-winner-prev" data-nav-action="showWinner" data-winner-index="0" style="display: none;">
+                            <?php esc_html_e( 'Forrige vinder', 'volunteer-exchange-platform' ); ?>
+                        </button>
+                        <button type="button" class="button button-primary vep-nav-btn" id="vep-nav-winner-next" data-nav-action="showWinner" data-winner-index="0" style="display: none;">
+                            <?php esc_html_e( 'Næste vinder', 'volunteer-exchange-platform' ); ?>
+                        </button>
+                        <button type="button" class="button button-primary vep-nav-btn" id="vep-nav-winner-finish" data-nav-action="showClosing" style="display: none;">
+                            <?php esc_html_e( 'Afslut', 'volunteer-exchange-platform' ); ?>
+                        </button>
+                    </div>
+
+                    <!-- Closing view buttons -->
+                    <div id="vep-nav-closing-actions" class="vep-nav-actions" style="display: none;">
+                        <button type="button" class="button button-primary vep-nav-btn vep-nav-btn-closing-to-competitions" data-nav-action="showCompetitions">
+                            <?php esc_html_e( 'Tilbage til konkurrence oversigten', 'volunteer-exchange-platform' ); ?>
+                        </button>
+                        <button type="button" class="button button-primary vep-nav-btn vep-nav-btn-closing-to-statistics" data-nav-action="showStatistics" style="display: none;">
+                            <?php esc_html_e( 'Tilbage til statistik', 'volunteer-exchange-platform' ); ?>
+                        </button>
+                    </div>
+
+                    <p id="vep-nav-status" class="description" style="margin-top: 12px; font-style: italic;"></p>
+
+                    <hr style="margin: 16px 0;">
+                    <button type="button" id="vep-nav-reset" class="button button-secondary" style="color:#b32d2e;">
+                        <?php esc_html_e( 'Nulstil navigationssystem', 'volunteer-exchange-platform' ); ?>
+                    </button>
+                    <p class="description" style="margin-top:6px; font-size:11px;">
+                        <?php esc_html_e( 'Brug kun hvis navigationen er fastlåst. Sletter visningsdata i databasen.', 'volunteer-exchange-platform' ); ?>
+                    </p>
+                </div>
             </div>
         </div>
         
@@ -638,7 +780,7 @@ class EventDisplayPage {
                 <!-- Header Area -->
                 <div class="vep-display-header">
                     <h1 id="vep-display-event-name"></h1>
-                    <p id="vep-display-time-up" class="vep-display-subheading" style="display: none;"><?php esc_html_e( "Time's up!", 'volunteer-exchange-platform' ); ?></p>
+                    <p id="vep-display-time-up" class="vep-display-subheading" style="display: none;"></p>
                     <p id="vep-display-competitions-heading" class="vep-display-subheading" style="display: none;"><?php esc_html_e( 'Competitions', 'volunteer-exchange-platform' ); ?></p>
                     <p id="vep-display-winner-heading" class="vep-display-subheading" style="display: none;"></p>
                 </div>
@@ -656,7 +798,7 @@ class EventDisplayPage {
                                         </div>
                                     </div>
                                     <div class="vep-countdown-expired" style="display: none;">
-                                        <p><?php esc_html_e('Times up!', 'volunteer-exchange-platform'); ?></p>
+                                        <p id="vep-countdown-expired-text"></p>
                                     </div>
                                 </div>
                                 
@@ -719,7 +861,7 @@ class EventDisplayPage {
                     <!-- Winner View -->
                     <div id="vep-winner-view" class="vep-view" style="display: none;">
                         <div class="vep-winner-inner">
-                            <div class="vep-winner-label"><?php esc_html_e( 'Vinderen er:', 'volunteer-exchange-platform' ); ?></div>
+                            <div class="vep-winner-label"><u><?php esc_html_e( 'Vinderen er:', 'volunteer-exchange-platform' ); ?></u></div>
                             <div id="vep-winner-name" class="vep-winner-name"></div>
                         </div>
                     </div>
@@ -750,6 +892,9 @@ class EventDisplayPage {
                         <button type="button" id="vep-show-competitions-from-statistics" class="button button-primary button-hero vep-post-time-action-button">
                             <?php esc_html_e( 'Show Competitions', 'volunteer-exchange-platform' ); ?>
                         </button>
+                        <button type="button" id="vep-show-closing-from-statistics" class="button button-primary button-hero vep-post-time-action-button" style="display: none;">
+                            <?php esc_html_e( 'Afslut', 'volunteer-exchange-platform' ); ?>
+                        </button>
                     </div>
 
                     <div id="vep-competitions-actions" class="vep-action-buttons" style="display: none;">
@@ -779,6 +924,9 @@ class EventDisplayPage {
                     <div id="vep-closing-actions" class="vep-action-buttons" style="display: none;">
                         <button type="button" id="vep-closing-back-to-competitions" class="button button-primary button-hero vep-post-time-action-button">
                             <?php esc_html_e( 'Tilbage til konkurrence oversigten', 'volunteer-exchange-platform' ); ?>
+                        </button>
+                        <button type="button" id="vep-closing-back-to-statistics" class="button button-primary button-hero vep-post-time-action-button" style="display: none;">
+                            <?php esc_html_e( 'Tilbage til statistik', 'volunteer-exchange-platform' ); ?>
                         </button>
                     </div>
                 </div>

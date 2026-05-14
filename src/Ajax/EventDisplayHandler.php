@@ -58,6 +58,11 @@ class EventDisplayHandler {
         add_action('wp_ajax_vep_get_event_statistics', array($this, 'get_event_statistics'));
         add_action('wp_ajax_vep_get_event_competitions', array($this, 'get_event_competitions'));
         add_action('wp_ajax_vep_activate_competition_winners', array($this, 'activate_competition_winners'));
+        add_action('wp_ajax_vep_display_report_state', array($this, 'display_report_state'));
+        add_action('wp_ajax_vep_display_get_state', array($this, 'display_get_state'));
+        add_action('wp_ajax_vep_display_send_command', array($this, 'display_send_command'));
+        add_action('wp_ajax_vep_display_poll_command', array($this, 'display_poll_command'));
+        add_action('wp_ajax_vep_display_clear_state', array($this, 'display_clear_state'));
     }
     
     /**
@@ -179,5 +184,166 @@ class EventDisplayHandler {
         wp_send_json_success( array(
             'message' => 'Competition winners activated successfully'
         ) );
+    }
+
+    /**
+     * Display reports its current view state.
+     *
+     * @return void
+     */
+    public function display_report_state() {
+        check_ajax_referer( 'vep_admin_nonce', 'nonce' );
+
+        $event_id = isset( $_POST['event_id'] ) ? absint( wp_unslash( $_POST['event_id'] ) ) : 0;
+        if ( ! $event_id ) {
+            wp_send_json_error( array( 'message' => 'No event ID provided' ) );
+            return;
+        }
+
+        $allowed_views = array( 'countdown', 'statistics', 'competitions', 'winner', 'closing' );
+        $view = isset( $_POST['view'] ) ? sanitize_key( wp_unslash( $_POST['view'] ) ) : '';
+        if ( ! in_array( $view, $allowed_views, true ) ) {
+            wp_send_json_error( array( 'message' => 'Invalid view' ) );
+            return;
+        }
+
+        $competitions = array();
+        if ( isset( $_POST['competitions'] ) ) {
+            $raw = json_decode( wp_unslash( $_POST['competitions'] ), true );
+            if ( is_array( $raw ) ) {
+                foreach ( $raw as $item ) {
+                    if ( isset( $item['title'], $item['index'] ) ) {
+                        $competitions[] = array(
+                            'title' => sanitize_text_field( $item['title'] ),
+                            'index' => absint( $item['index'] ),
+                        );
+                    }
+                }
+            }
+        }
+
+        $state = array(
+            'view'          => $view,
+            'winner_index'  => isset( $_POST['winner_index'] ) ? absint( wp_unslash( $_POST['winner_index'] ) ) : 0,
+            'total_winners' => isset( $_POST['total_winners'] ) ? absint( wp_unslash( $_POST['total_winners'] ) ) : 0,
+            'auto_switch'   => isset( $_POST['auto_switch'] ) && '1' === $_POST['auto_switch'],
+            'competitions'  => $competitions,
+            'ts'            => time(),
+        );
+
+        // TTL 30 seconds — refreshed every 2 s by command polling; acts as heartbeat.
+        set_transient( 'vep_display_state_' . $event_id, $state, 30 );
+
+        wp_send_json_success();
+    }
+
+    /**
+     * Admin page polls for the current display state.
+     *
+     * @return void
+     */
+    public function display_get_state() {
+        check_ajax_referer( 'vep_admin_nonce', 'nonce' );
+
+        $event_id = isset( $_POST['event_id'] ) ? absint( wp_unslash( $_POST['event_id'] ) ) : 0;
+        if ( ! $event_id ) {
+            wp_send_json_error( array( 'message' => 'No event ID provided' ) );
+            return;
+        }
+
+        $state = get_transient( 'vep_display_state_' . $event_id );
+        if ( false === $state ) {
+            wp_send_json_success( array( 'active' => false ) );
+            return;
+        }
+
+        wp_send_json_success( array_merge( $state, array( 'active' => true ) ) );
+    }
+
+    /**
+     * Admin nav box sends a navigation command to the display.
+     *
+     * @return void
+     */
+    public function display_send_command() {
+        check_ajax_referer( 'vep_admin_nonce', 'nonce' );
+
+        $event_id = isset( $_POST['event_id'] ) ? absint( wp_unslash( $_POST['event_id'] ) ) : 0;
+        if ( ! $event_id ) {
+            wp_send_json_error( array( 'message' => 'No event ID provided' ) );
+            return;
+        }
+
+        $allowed_actions = array( 'showCountdown', 'showStatistics', 'showCompetitions', 'showWinner', 'showClosing' );
+        $action = isset( $_POST['nav_action'] ) ? sanitize_text_field( wp_unslash( $_POST['nav_action'] ) ) : '';
+        if ( ! in_array( $action, $allowed_actions, true ) ) {
+            wp_send_json_error( array( 'message' => 'Invalid action' ) );
+            return;
+        }
+
+        $command = array(
+            'action'       => $action,
+            'winner_index' => isset( $_POST['winner_index'] ) ? absint( wp_unslash( $_POST['winner_index'] ) ) : 0,
+            'timestamp'    => time(),
+        );
+
+        // TTL long enough for all displays (polling every 1 s) to receive the command.
+        set_transient( 'vep_display_command_' . $event_id, $command, 10 );
+
+        wp_send_json_success();
+    }
+
+    /**
+     * Display polls for a pending navigation command (and clears it).
+     *
+     * Also acts as a heartbeat to keep the state transient alive.
+     *
+     * @return void
+     */
+    public function display_poll_command() {
+        check_ajax_referer( 'vep_admin_nonce', 'nonce' );
+
+        $event_id = isset( $_POST['event_id'] ) ? absint( wp_unslash( $_POST['event_id'] ) ) : 0;
+        if ( ! $event_id ) {
+            wp_send_json_error( array( 'message' => 'No event ID provided' ) );
+            return;
+        }
+
+        // Refresh state TTL (heartbeat).
+        $state = get_transient( 'vep_display_state_' . $event_id );
+        if ( false !== $state ) {
+            set_transient( 'vep_display_state_' . $event_id, $state, 30 );
+        }
+
+        $command = get_transient( 'vep_display_command_' . $event_id );
+        if ( false === $command ) {
+            wp_send_json_success( array( 'command' => null ) );
+            return;
+        }
+
+        // Do NOT delete the transient — let TTL expire it so all open displays
+        // (multiple screens) can each receive and act on the same command.
+        wp_send_json_success( array( 'command' => $command ) );
+    }
+
+    /**
+     * Display signals that it has closed — removes the state transient immediately
+     * so the admin nav box hides on its next poll.
+     *
+     * @return void
+     */
+    public function display_clear_state() {
+        check_ajax_referer( 'vep_admin_nonce', 'nonce' );
+
+        $event_id = isset( $_POST['event_id'] ) ? absint( wp_unslash( $_POST['event_id'] ) ) : 0;
+        if ( ! $event_id ) {
+            wp_send_json_error( array( 'message' => 'No event ID provided' ) );
+            return;
+        }
+
+        delete_transient( 'vep_display_state_'   . $event_id );
+        delete_transient( 'vep_display_command_' . $event_id );
+
+        wp_send_json_success();
     }
 }

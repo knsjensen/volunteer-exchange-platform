@@ -261,8 +261,10 @@ class Plugin {
                     'winnerFinish'             => __( 'Afslut', 'volunteer-exchange-platform' ),
                     'noCompetitionsAvailable'  => __( 'No competitions available.', 'volunteer-exchange-platform' ),
                 ),
-                'closingText'  => get_option( 'vep_display_closing_text', __( 'Tak for denne gang', 'volunteer-exchange-platform' ) ),
-                'hideButtons'  => (bool) get_option( 'vep_display_hide_buttons', 0 ),
+                'closingText'        => get_option( 'vep_display_closing_text', __( 'Tak for denne gang', 'volunteer-exchange-platform' ) ),
+                'timeUpText'         => get_option( 'vep_display_time_up_text', __( 'Tiden er gået', 'volunteer-exchange-platform' ) ),
+                'hideButtons'        => (bool) get_option( 'vep_display_hide_buttons', 1 ),
+                'showCompetitions'   => (bool) get_option( 'vep_display_show_competitions', 1 ),
                 'choicesI18n' => array(
                     'searchPlaceholderValue' => __( 'Search...', 'volunteer-exchange-platform' ),
                     'itemSelectText' => __( 'Press to select', 'volunteer-exchange-platform' ),

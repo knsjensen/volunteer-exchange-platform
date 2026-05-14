@@ -675,6 +675,7 @@ table.wp-list-table td.column-is_approved {
     font-weight: 700;
     line-height: 1.2;
     text-shadow: 2px 4px 12px rgba(0, 0, 0, 0.35);
+    white-space: pre-wrap;
 }
 
 .vep-display-agreements {
@@ -1211,6 +1212,27 @@ table.wp-list-table td.column-is_approved {
     cursor: default;
 }
 
+.vep-competition-card.vep-competition-no-winner {
+    border-color: #dba617;
+    background: #fef9ec;
+}
+
+.vep-competition-card.vep-competition-no-winner::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 5px;
+    background: #dba617;
+    border-radius: 6px 0 0 6px;
+}
+
+.vep-competition-card.vep-competition-inactive.vep-competition-no-winner {
+    border-color: #c9a03e;
+    background: #fdf5de;
+}
+
 .vep-competition-header {
     display: flex;
     align-items: center;
@@ -1460,4 +1482,59 @@ table.wp-list-table td.column-is_approved {
     border-radius: 8px;
     min-height: 160px;
     box-sizing: border-box;
+}
+
+/* =========================================================
+   Visningsnavigation box
+   ========================================================= */
+
+#vep-nav-box {
+    border: 1px solid #c3c4c7;
+    border-radius: 4px;
+    background: #fff;
+    padding: 20px;
+    margin-top: 20px;
+}
+
+#vep-nav-box h2 {
+    margin-top: 0;
+    margin-bottom: 8px;
+    font-size: 1.1rem;
+}
+
+.vep-nav-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+
+.vep-nav-btn {
+    font-size: 13px;
+    padding: 6px 14px;
+    height: auto;
+    line-height: 1.4;
+}
+
+#vep-nav-status {
+    margin-top: 10px;
+    margin-bottom: 0;
+    color: #646970;
+    font-size: 12px;
+}
+
+.vep-nav-competitions-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 8px;
+    width: 100%;
+}
+
+.vep-nav-competition-item {
+    text-align: left !important;
+    white-space: normal !important;
+    height: auto !important;
+    padding: 6px 12px !important;
+    line-height: 1.4 !important;
 }

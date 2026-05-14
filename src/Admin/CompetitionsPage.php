@@ -144,7 +144,7 @@ class CompetitionsPage {
                     $competition = $this->competition_service->get_competition_with_label( $competition );
                     $can_delete = $this->competition_service->can_delete_competition( $competition->id );
                     ?>
-                    <div class="vep-competition-card" data-competition-id="<?php echo intval( $competition->id ); ?>">
+                    <div class="vep-competition-card<?php echo $this->has_winner( $competition ) ? '' : ' vep-competition-no-winner'; ?>" data-competition-id="<?php echo intval( $competition->id ); ?>">
                         <div class="vep-competition-header">
                             <span class="dashicons dashicons-move vep-competition-drag-handle" aria-hidden="true"></span>
                             <span class="vep-competition-number"><?php echo intval( $index ); ?></span>
@@ -196,7 +196,7 @@ class CompetitionsPage {
                         $competition = $this->competition_service->get_competition_with_label( $competition );
                         $can_delete = $this->competition_service->can_delete_competition( $competition->id );
                         ?>
-                        <div class="vep-competition-card vep-competition-inactive" data-competition-id="<?php echo intval( $competition->id ); ?>">
+                        <div class="vep-competition-card vep-competition-inactive<?php echo $this->has_winner( $competition ) ? '' : ' vep-competition-no-winner'; ?>" data-competition-id="<?php echo intval( $competition->id ); ?>">
                             <div class="vep-competition-header">
                                 <span class="vep-competition-title"><?php echo esc_html( $competition->title ); ?></span>
                             </div>
@@ -695,6 +695,21 @@ class CompetitionsPage {
      * @param object $competition Competition object.
      * @return string
      */
+    /**
+     * Determine whether a competition already has a winner assigned.
+     *
+     * @param object $competition Competition object.
+     * @return bool
+     */
+    private function has_winner( $competition ): bool {
+        if ( 'custom' === $competition->type
+            && isset( $competition->winner_input_type )
+            && 'text' === $competition->winner_input_type ) {
+            return ! empty( $competition->winner_text );
+        }
+        return ! empty( $competition->winner_id );
+    }
+
     private function get_winner_html( $competition ) {
         // For system competitions, show text display
         if ( empty( $competition->winner_id ) ) {
