@@ -21,6 +21,7 @@ use VolunteerExchangePlatform\Ajax\CompetitionHandler;
 use VolunteerExchangePlatform\Ajax\EventDisplayHandler;
 use VolunteerExchangePlatform\Ajax\ParticipantHandler;
 use VolunteerExchangePlatform\Database\CompetitionRepository;
+use VolunteerExchangePlatform\Database\CompetitionWinnerRepository;
 use VolunteerExchangePlatform\Database\EventRepository;
 use VolunteerExchangePlatform\Database\Installer;
 use VolunteerExchangePlatform\Database\ParticipantRepository;
@@ -96,11 +97,12 @@ class Plugin {
 
     private function build_repositories() {
         return array(
-            'competition' => new CompetitionRepository(),
-            'event' => new EventRepository(),
-            'participant' => new ParticipantRepository(),
-            'participant_type' => new ParticipantTypeRepository(),
-            'tag' => new TagRepository(),
+            'competition'        => new CompetitionRepository(),
+            'competition_winner' => new CompetitionWinnerRepository(),
+            'event'              => new EventRepository(),
+            'participant'        => new ParticipantRepository(),
+            'participant_type'   => new ParticipantTypeRepository(),
+            'tag'                => new TagRepository(),
         );
     }
 
@@ -120,7 +122,8 @@ class Plugin {
         $competition_service = new CompetitionService(
             $repositories['competition'],
             $repositories['event'],
-            $repositories['participant']
+            $repositories['participant'],
+            $repositories['competition_winner']
         );
 
         $participant_type_service = new ParticipantTypeService( $repositories['participant_type'] );

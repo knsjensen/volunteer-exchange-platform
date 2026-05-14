@@ -38,6 +38,7 @@ define('VEP_PLUGIN_BASENAME', plugin_basename(__FILE__));
 require_once VEP_PLUGIN_DIR . 'src/Database/Installer.php';
 require_once VEP_PLUGIN_DIR . 'src/Database/AbstractRepository.php';
 require_once VEP_PLUGIN_DIR . 'src/Database/CompetitionRepository.php';
+require_once VEP_PLUGIN_DIR . 'src/Database/CompetitionWinnerRepository.php';
 require_once VEP_PLUGIN_DIR . 'src/Database/EventRepository.php';
 require_once VEP_PLUGIN_DIR . 'src/Database/ParticipantRepository.php';
 require_once VEP_PLUGIN_DIR . 'src/Database/ParticipantTypeRepository.php';

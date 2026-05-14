@@ -49,14 +49,11 @@ class CompetitionRepository extends AbstractRepository {
         $table = $wpdb->prefix . $this->table_name;
         
         $defaults = array(
-            'event_id'          => 0,
             'type'              => 'custom',
             'title'             => '',
             'description'       => '',
             'is_active'         => 1,
-            'winner_id'         => null,
             'winner_input_type' => 'dropdown',
-            'winner_text'       => null,
             'sort_order'        => 0,
             'custom_data'       => null,
         );
@@ -69,18 +66,15 @@ class CompetitionRepository extends AbstractRepository {
         $result = $wpdb->insert(
             $table,
             array(
-                'event_id'          => (int) $data['event_id'],
                 'type'              => sanitize_text_field( $data['type'] ),
                 'title'             => sanitize_text_field( $data['title'] ),
                 'description'       => sanitize_textarea_field( $data['description'] ),
                 'is_active'         => (int) $data['is_active'],
-                'winner_id'         => $data['winner_id'] ? (int) $data['winner_id'] : null,
                 'winner_input_type' => $winner_input_type,
-                'winner_text'       => $data['winner_text'] ? sanitize_text_field( $data['winner_text'] ) : null,
                 'sort_order'        => (int) $data['sort_order'],
                 'custom_data'       => $data['custom_data'],
             ),
-            array( '%d', '%s', '%s', '%s', '%d', '%d', '%s', '%s', '%d', '%s' )
+            array( '%s', '%s', '%s', '%d', '%s', '%d', '%s' )
         );
         
         if ( $result ) {
@@ -150,69 +144,101 @@ class CompetitionRepository extends AbstractRepository {
     }
 
     /**
-     * Get all competitions for an event
+     * Get all global competitions (not tied to any event)
      *
-     * @param int $event_id Event ID
      * @return array
      */
-    public function get_all_for_event( $event_id ) {
+    public function get_all() {
         global $wpdb;
         
         $table = $wpdb->prefix . $this->table_name;
         
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Direct query is required for repository pattern
         $results = $wpdb->get_results(
-            $wpdb->prepare(
-                "SELECT * FROM $table WHERE event_id = %d ORDER BY sort_order ASC, id ASC",
-                (int) $event_id
-            )
+            "SELECT * FROM $table ORDER BY sort_order ASC, id ASC" // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is controlled from $wpdb->prefix.
         );
         
         return $results ?: array();
     }
 
     /**
-     * Get active competitions for an event
+     * Get all active global competitions
      *
-     * @param int $event_id Event ID
      * @return array
      */
-    public function get_active_for_event( $event_id ) {
+    public function get_active() {
         global $wpdb;
         
         $table = $wpdb->prefix . $this->table_name;
         
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Direct query is required for repository pattern
         $results = $wpdb->get_results(
-            $wpdb->prepare(
-                "SELECT * FROM $table WHERE event_id = %d AND is_active = 1 ORDER BY sort_order ASC, id ASC",
-                (int) $event_id
-            )
+            "SELECT * FROM $table WHERE is_active = 1 ORDER BY sort_order ASC, id ASC" // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is controlled from $wpdb->prefix.
         );
         
         return $results ?: array();
     }
 
     /**
-     * Get inactive competitions for an event
+     * Get all inactive global competitions
      *
-     * @param int $event_id Event ID
      * @return array
      */
-    public function get_inactive_for_event( $event_id ) {
+    public function get_inactive() {
         global $wpdb;
         
         $table = $wpdb->prefix . $this->table_name;
         
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Direct query is required for repository pattern
         $results = $wpdb->get_results(
-            $wpdb->prepare(
-                "SELECT * FROM $table WHERE event_id = %d AND is_active = 0 ORDER BY sort_order ASC, id ASC",
-                (int) $event_id
-            )
+            "SELECT * FROM $table WHERE is_active = 0 ORDER BY sort_order ASC, id ASC" // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is controlled from $wpdb->prefix.
         );
         
         return $results ?: array();
+    }
+
+    /**
+     * Get a competition by type (returns first match)
+     *
+     * @param string $type Competition type.
+     * @return object|null
+     */
+    public function get_by_type( $type ) {
+        global $wpdb;
+        
+        $table = $wpdb->prefix . $this->table_name;
+        
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Direct query is required for repository pattern
+        return $wpdb->get_row(
+            $wpdb->prepare(
+                "SELECT * FROM $table WHERE type = %s LIMIT 1",
+                sanitize_text_field( $type )
+            )
+        );
+    }
+
+    /**
+     * Get a competition by type and title
+     *
+     * Used for custom competitions where multiple can share the same type.
+     *
+     * @param string $type  Competition type.
+     * @param string $title Competition title.
+     * @return object|null
+     */
+    public function get_by_type_and_title( $type, $title ) {
+        global $wpdb;
+        
+        $table = $wpdb->prefix . $this->table_name;
+        
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Direct query is required for repository pattern
+        return $wpdb->get_row(
+            $wpdb->prepare(
+                "SELECT * FROM $table WHERE type = %s AND title = %s LIMIT 1",
+                sanitize_text_field( $type ),
+                sanitize_text_field( $title )
+            )
+        );
     }
 
     /**
@@ -239,125 +265,5 @@ class CompetitionRepository extends AbstractRepository {
         return true;
     }
 
-    /**
-     * Set winner for a competition
-     *
-     * @param int      $id Competition ID
-     * @param int|null $winner_id Participant ID (or null to unset)
-     * @return bool
-     */
-    public function set_winner( $id, $winner_id = null ) {
-        $global_wpdb = $GLOBALS['wpdb'];
-        $table = $global_wpdb->prefix . $this->table_name;
-
-        $update_data   = array( 'winner_id' => $winner_id ? (int) $winner_id : null );
-        $update_format = array( '%d' );
-
-        // When resetting the winner, also clear any free-text winner.
-        if ( ! $winner_id ) {
-            $update_data['winner_text'] = null;
-            $update_format[]            = '%s';
-        }
-
-        $result = $global_wpdb->update(
-            $table,
-            $update_data,
-            array( 'id' => (int) $id ),
-            $update_format,
-            array( '%d' )
-        );
-        
-        return $result !== false;
-    }
-
-    /**
-     * Set free-text winner for a competition
-     *
-     * @param int    $id          Competition ID
-     * @param string $winner_text Free-text winner value
-     * @return bool
-     */
-    public function set_winner_text( $id, $winner_text ) {
-        return $this->update(
-            array( 'winner_text' => $winner_text !== '' ? sanitize_text_field( $winner_text ) : null ),
-            array( 'id' => (int) $id ),
-            array( '%s' ),
-            array( '%d' )
-        );
-    }
-
-    /**
-     * Reset winner_id and winner_text for all competitions of an event
-     *
-     * @param int $event_id Event ID
-     * @return bool
-     */
-    public function reset_all_winners_for_event( $event_id ) {
-        global $wpdb;
-
-        $table = $wpdb->prefix . $this->table_name;
-
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Direct bulk update required for repository pattern
-        $result = $wpdb->query(
-            $wpdb->prepare(
-                // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Interpolated table name is controlled from $wpdb->prefix.
-                "UPDATE $table SET winner_id = NULL, winner_text = NULL WHERE event_id = %d",
-                (int) $event_id
-            )
-        );
-
-        return $result !== false;
-    }
-
-    /**
-     * Get competition by event and type
-     *
-     * @param int    $event_id Event ID
-     * @param string $type Competition type
-     * @return object|null
-     */
-    public function get_by_event_and_type( $event_id, $type ) {
-        global $wpdb;
-        
-        $table = $wpdb->prefix . $this->table_name;
-        
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Direct query is required for repository pattern
-        $result = $wpdb->get_row(
-            $wpdb->prepare(
-                "SELECT * FROM $table WHERE event_id = %d AND type = %s LIMIT 1",
-                (int) $event_id,
-                sanitize_text_field( $type )
-            )
-        );
-        
-        return $result;
-    }
-
-    /**
-     * Get competition by event, type, and title
-     *
-     * Used for custom competitions where multiple can have the same type
-     *
-     * @param int    $event_id Event ID
-     * @param string $type Competition type
-     * @param string $title Competition title
-     * @return object|null Competition object or null
-     */
-    public function get_by_event_and_type_and_title( $event_id, $type, $title ) {
-        global $wpdb;
-        
-        $table = $wpdb->prefix . $this->table_name;
-        
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Direct query is required for repository pattern
-        $result = $wpdb->get_row(
-            $wpdb->prepare(
-                "SELECT * FROM $table WHERE event_id = %d AND type = %s AND title = %s LIMIT 1",
-                (int) $event_id,
-                sanitize_text_field( $type ),
-                sanitize_text_field( $title )
-            )
-        );
-        
-        return $result;
-    }
 }
+

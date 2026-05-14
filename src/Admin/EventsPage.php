@@ -762,7 +762,7 @@ class EventsPage {
             );
 
             if ( $created_event_id ) {
-                $this->competition_service->ensure_default_competitions_for_event( $created_event_id );
+                $this->competition_service->ensure_default_competitions();
                 $message = __('Event created successfully and set as active.', 'volunteer-exchange-platform');
             } else {
                 $message = __('Could not create event.', 'volunteer-exchange-platform');

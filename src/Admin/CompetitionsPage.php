@@ -87,7 +87,7 @@ class CompetitionsPage {
             return;
         }
 
-        $this->competition_service->ensure_default_competitions_for_event( $active_event->id );
+        $this->competition_service->ensure_default_competitions();
         $this->competition_service->auto_select_winners_for_event( $active_event->id );
 
         $action = isset( $_GET['action'] ) ? sanitize_text_field( wp_unslash( $_GET['action'] ) ) : '';
@@ -151,6 +151,9 @@ class CompetitionsPage {
                             <span class="vep-competition-title"><?php echo esc_html( $competition->title ); ?></span>
                         </div>
                         <div class="vep-competition-type"><?php echo esc_html( $competition->type_label ); ?></div>
+                        <?php if ( ! empty( $competition->description ) ) : ?>
+                            <div class="vep-competition-description"><?php echo esc_html( $competition->description ); ?></div>
+                        <?php endif; ?>
                         <div class="vep-competition-winner">
                             <?php
                             if ( 'custom' === $competition->type ) {
@@ -196,11 +199,14 @@ class CompetitionsPage {
                         $competition = $this->competition_service->get_competition_with_label( $competition );
                         $can_delete = $this->competition_service->can_delete_competition( $competition->id );
                         ?>
-                        <div class="vep-competition-card vep-competition-inactive<?php echo $this->has_winner( $competition ) ? '' : ' vep-competition-no-winner'; ?>" data-competition-id="<?php echo intval( $competition->id ); ?>">
+                        <div class="vep-competition-card vep-competition-inactive" data-competition-id="<?php echo intval( $competition->id ); ?>">
                             <div class="vep-competition-header">
                                 <span class="vep-competition-title"><?php echo esc_html( $competition->title ); ?></span>
                             </div>
                             <div class="vep-competition-type"><?php echo esc_html( $competition->type_label ); ?></div>
+                            <?php if ( ! empty( $competition->description ) ) : ?>
+                                <div class="vep-competition-description"><?php echo esc_html( $competition->description ); ?></div>
+                            <?php endif; ?>
                             <div class="vep-competition-winner">
                                 <?php
                                 if ( 'custom' === $competition->type ) {
@@ -269,7 +275,10 @@ class CompetitionsPage {
             wp_send_json_error( array( 'message' => esc_html__( 'Security check failed', 'volunteer-exchange-platform' ) ) );
         }
 
-        $updated = $this->competition_service->set_winner( $competition_id, $winner_id > 0 ? $winner_id : null );
+        $active_event = $this->event_service->get_active_event();
+        $event_id     = $active_event ? (int) $active_event->id : 0;
+
+        $updated = $this->competition_service->set_winner( $competition_id, $winner_id > 0 ? $winner_id : null, $event_id );
 
         if ( false !== $updated ) {
             wp_send_json_success( array( 'message' => esc_html__( 'Winner set successfully', 'volunteer-exchange-platform' ) ) );
@@ -436,7 +445,7 @@ class CompetitionsPage {
         $competition_repo = new \VolunteerExchangePlatform\Database\CompetitionRepository();
         $competition = $competition_repo->get_by_id( $competition_id );
 
-        if ( ! $competition || $competition->event_id !== $active_event->id ) {
+        if ( ! $competition ) {
             echo '<div class="notice notice-error"><p>' . esc_html__( 'Competition not found.', 'volunteer-exchange-platform' ) . '</p></div>';
             return;
         }
@@ -586,12 +595,18 @@ class CompetitionsPage {
                 array(
                     'title'             => $title,
                     'description'       => $description,
-                    'winner_id'         => ( 'text' === $winner_input_type ) ? null : $winner_id,
                     'winner_input_type' => $winner_input_type,
-                    'winner_text'       => ( 'text' === $winner_input_type ) ? $winner_text : null,
                     'is_active'         => $is_active,
                 )
             );
+
+            if ( $updated ) {
+                if ( 'text' === $winner_input_type ) {
+                    $this->competition_service->set_winner_text( $competition_id, $winner_text, $active_event->id );
+                } else {
+                    $this->competition_service->set_winner( $competition_id, $winner_id > 0 ? $winner_id : null, $active_event->id );
+                }
+            }
 
             $notice = $updated ? 'success' : 'error';
             $message = $updated
@@ -603,14 +618,11 @@ class CompetitionsPage {
         }
 
         $competition_id = $this->competition_service->create_competition( array(
-            'event_id'          => $active_event->id,
             'type'              => 'custom',
             'title'             => $title,
             'description'       => $description,
             'is_active'         => 1,
             'winner_input_type' => $winner_input_type,
-            'winner_id'         => ( 'text' === $winner_input_type ) ? null : $winner_id,
-            'winner_text'       => ( 'text' === $winner_input_type ) ? $winner_text : null,
         ) );
 
         if ( $competition_id ) {

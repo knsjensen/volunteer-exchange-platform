@@ -140,7 +140,13 @@ class CompetitionHandler {
             $winner_id_int = (int) $winner_id;
         }
 
-        $result = $this->competition_service->set_winner( $competition_id, $winner_id_int );
+        $active_event = $this->event_service->get_active_event();
+
+        if ( ! $active_event ) {
+            wp_send_json_error( array( 'message' => __( 'No active event', 'volunteer-exchange-platform' ) ) );
+        }
+
+        $result = $this->competition_service->set_winner( $competition_id, $winner_id_int, (int) $active_event->id );
 
         if ( $result ) {
             wp_send_json_success( array( 'message' => __( 'Winner set successfully', 'volunteer-exchange-platform' ) ) );
@@ -267,7 +273,13 @@ class CompetitionHandler {
             wp_send_json_error( array( 'message' => __( 'Competition ID is required', 'volunteer-exchange-platform' ) ) );
         }
 
-        $result = $this->competition_service->set_winner_text( $competition_id, $winner_text );
+        $active_event = $this->event_service->get_active_event();
+
+        if ( ! $active_event ) {
+            wp_send_json_error( array( 'message' => __( 'No active event', 'volunteer-exchange-platform' ) ) );
+        }
+
+        $result = $this->competition_service->set_winner_text( $competition_id, $winner_text, (int) $active_event->id );
 
         if ( false !== $result ) {
             wp_send_json_success( array( 'message' => __( 'Winner set successfully', 'volunteer-exchange-platform' ) ) );

@@ -178,31 +178,43 @@ class Installer {
         ) $charset_collate;";
         dbDelta($sql_participant_reminders);
 
-        // Create vep_competitions table
+        // Create vep_competitions table (global — not tied to a specific event)
         $table_competitions = $wpdb->prefix . 'vep_competitions';
         $sql_competitions = "CREATE TABLE $table_competitions (
             id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-            event_id bigint(20) UNSIGNED NOT NULL,
             type varchar(50) NOT NULL,
             title varchar(255) NOT NULL,
             description text,
             is_active tinyint(1) DEFAULT 1,
-            winner_id bigint(20) UNSIGNED DEFAULT NULL,
             winner_input_type varchar(20) NOT NULL DEFAULT 'dropdown',
-            winner_text varchar(255) DEFAULT NULL,
             sort_order int(11) DEFAULT 0,
             custom_data longtext,
             created_at datetime DEFAULT CURRENT_TIMESTAMP,
             updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             PRIMARY KEY (id),
-            KEY event_id (event_id),
             KEY type (type),
             KEY is_active (is_active),
-            KEY sort_order (sort_order),
-            KEY winner_id (winner_id)
+            KEY sort_order (sort_order)
         ) $charset_collate;";
         dbDelta($sql_competitions);
-        
+
+        // Create vep_competition_winners table (per-event winner data)
+        $table_competition_winners = $wpdb->prefix . 'vep_competition_winners';
+        $sql_competition_winners = "CREATE TABLE $table_competition_winners (
+            id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+            event_id bigint(20) UNSIGNED NOT NULL,
+            competition_id bigint(20) UNSIGNED NOT NULL,
+            winner_id bigint(20) UNSIGNED DEFAULT NULL,
+            winner_text varchar(255) DEFAULT NULL,
+            created_at datetime DEFAULT CURRENT_TIMESTAMP,
+            updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            UNIQUE KEY event_competition (event_id, competition_id),
+            KEY event_id (event_id),
+            KEY competition_id (competition_id)
+        ) $charset_collate;";
+        dbDelta($sql_competition_winners);
+
         // Update version
         update_option('vep_db_version', VEP_VERSION);
     }
@@ -435,30 +447,29 @@ class Installer {
             $charset_collate = $wpdb->get_charset_collate();
             require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
 
+            // Fresh install: use new schema without event_id / winner columns.
             $sql_competitions = "CREATE TABLE $table_competitions (
                 id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-                event_id bigint(20) UNSIGNED NOT NULL,
                 type varchar(50) NOT NULL,
                 title varchar(255) NOT NULL,
                 description text,
                 is_active tinyint(1) DEFAULT 1,
-                winner_id bigint(20) UNSIGNED DEFAULT NULL,
                 winner_input_type varchar(20) NOT NULL DEFAULT 'dropdown',
-                winner_text varchar(255) DEFAULT NULL,
                 sort_order int(11) DEFAULT 0,
                 custom_data longtext,
                 created_at datetime DEFAULT CURRENT_TIMESTAMP,
                 updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                 PRIMARY KEY (id),
-                KEY event_id (event_id),
                 KEY type (type),
                 KEY is_active (is_active),
-                KEY sort_order (sort_order),
-                KEY winner_id (winner_id)
+                KEY sort_order (sort_order)
             ) $charset_collate;";
 
             dbDelta($sql_competitions);
         } else {
+            // Existing install: add description / winner_input_type columns if missing
+            // (legacy upgrades from very early versions).
+
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Direct schema inspection query is required; interpolated table name is controlled from $wpdb->prefix.
             $has_competition_description = $wpdb->get_var($wpdb->prepare(
                 // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Interpolated table name is controlled.
@@ -479,18 +490,149 @@ class Installer {
             ));
             if ( ! $has_winner_input_type ) {
                 // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Direct schema migration query is required; interpolated table name is controlled from $wpdb->prefix.
-                $wpdb->query("ALTER TABLE $table_competitions ADD COLUMN winner_input_type varchar(20) NOT NULL DEFAULT 'dropdown' AFTER winner_id");
+                $wpdb->query("ALTER TABLE $table_competitions ADD COLUMN winner_input_type varchar(20) NOT NULL DEFAULT 'dropdown'");
+            }
+        }
+
+        // -----------------------------------------------------------------------
+        // Migration: split per-event winner data into vep_competition_winners
+        // -----------------------------------------------------------------------
+
+        $table_competition_winners = $wpdb->prefix . 'vep_competition_winners';
+
+        // Step 1: Create vep_competition_winners table if it does not exist yet.
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Direct schema inspection query is required during install/upgrade.
+        $winners_table_exists = $wpdb->get_var($wpdb->prepare(
+            'SHOW TABLES LIKE %s',
+            $table_competition_winners
+        ));
+        if ($winners_table_exists !== $table_competition_winners) {
+            $charset_collate = $wpdb->get_charset_collate();
+            require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+
+            $sql_competition_winners = "CREATE TABLE $table_competition_winners (
+                id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+                event_id bigint(20) UNSIGNED NOT NULL,
+                competition_id bigint(20) UNSIGNED NOT NULL,
+                winner_id bigint(20) UNSIGNED DEFAULT NULL,
+                winner_text varchar(255) DEFAULT NULL,
+                created_at datetime DEFAULT CURRENT_TIMESTAMP,
+                updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                PRIMARY KEY (id),
+                UNIQUE KEY event_competition (event_id, competition_id),
+                KEY event_id (event_id),
+                KEY competition_id (competition_id)
+            ) $charset_collate;";
+
+            dbDelta($sql_competition_winners);
+        }
+
+        // Step 2: If vep_competitions still has event_id column, migrate winner
+        // data into vep_competition_winners and deduplicate competition rows.
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Direct schema inspection required; table name is from $wpdb->prefix.
+        $has_event_id_col = $wpdb->get_var($wpdb->prepare(
+            // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name controlled.
+            "SHOW COLUMNS FROM $table_competitions LIKE %s",
+            'event_id'
+        ));
+
+        if ($has_event_id_col) {
+
+            // 2a. Determine canonical competition ID for every (type, title) pair.
+            //     Canonical = the row with the lowest id.
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Direct migration query; table name is from $wpdb->prefix.
+            $canonical_rows = $wpdb->get_results(
+                "SELECT MIN(id) AS canonical_id, type, title FROM $table_competitions GROUP BY type, title"
+            );
+
+            $canonical_map = array(); // "type||title" => canonical_id
+            $canonical_ids = array();
+            foreach ( $canonical_rows as $row ) {
+                $key                  = $row->type . '||' . $row->title;
+                $canonical_map[ $key ] = (int) $row->canonical_id;
+                $canonical_ids[]      = (int) $row->canonical_id;
             }
 
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Direct schema inspection query is required; interpolated table name is controlled from $wpdb->prefix.
-            $has_winner_text = $wpdb->get_var($wpdb->prepare(
-                // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Interpolated table name is controlled.
-                "SHOW COLUMNS FROM $table_competitions LIKE %s",
-                'winner_text'
-            ));
-            if ( ! $has_winner_text ) {
-                // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Direct schema migration query is required; interpolated table name is controlled from $wpdb->prefix.
-                $wpdb->query("ALTER TABLE $table_competitions ADD COLUMN winner_text varchar(255) DEFAULT NULL AFTER winner_input_type");
+            // 2b. Migrate winner data: for each competition that has event_id > 0
+            //     and a winner_id or winner_text, insert a row into the winners table
+            //     (only if one does not already exist for that event + canonical comp).
+            if ( $wpdb->get_var($wpdb->prepare( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+                "SHOW COLUMNS FROM $table_competitions LIKE %s", 'winner_id' // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+            )) ) {
+                // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Direct migration query; table name is from $wpdb->prefix.
+                $comps_with_winners = $wpdb->get_results(
+                    "SELECT id, event_id, type, title, winner_id, winner_text
+                     FROM $table_competitions
+                     WHERE event_id > 0
+                       AND ( winner_id IS NOT NULL
+                             OR ( winner_text IS NOT NULL AND winner_text != '' ) )"
+                );
+
+                foreach ( $comps_with_winners as $comp ) {
+                    $key          = $comp->type . '||' . $comp->title;
+                    $canonical_id = isset( $canonical_map[ $key ] ) ? $canonical_map[ $key ] : (int) $comp->id;
+                    $event_id_val = (int) $comp->event_id;
+
+                    if ( $event_id_val <= 0 || $canonical_id <= 0 ) {
+                        continue;
+                    }
+
+                    // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Direct migration query; table name is from $wpdb->prefix.
+                    $winner_exists = $wpdb->get_var($wpdb->prepare(
+                        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name controlled.
+                        "SELECT id FROM $table_competition_winners WHERE event_id = %d AND competition_id = %d LIMIT 1",
+                        $event_id_val,
+                        $canonical_id
+                    ));
+
+                    if ( ! $winner_exists ) {
+                        $winner_id_val   = $comp->winner_id ? (int) $comp->winner_id : null;
+                        $winner_text_val = ( $comp->winner_text !== null && $comp->winner_text !== '' )
+                            ? sanitize_text_field( $comp->winner_text )
+                            : null;
+
+                        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Direct insert for migration.
+                        $wpdb->insert(
+                            $table_competition_winners,
+                            array(
+                                'event_id'       => $event_id_val,
+                                'competition_id' => $canonical_id,
+                                'winner_id'      => $winner_id_val,
+                                'winner_text'    => $winner_text_val,
+                            ),
+                            array( '%d', '%d', '%d', '%s' )
+                        );
+                    }
+                }
+            }
+
+            // 2c. Delete non-canonical competition rows (duplicates across events).
+            if ( ! empty( $canonical_ids ) ) {
+                $placeholders = implode( ',', array_fill( 0, count( $canonical_ids ), '%d' ) );
+                // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Direct migration delete; table name from $wpdb->prefix.
+                $wpdb->query(
+                    $wpdb->prepare(
+                        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name and placeholders are controlled.
+                        "DELETE FROM $table_competitions WHERE id NOT IN ($placeholders)",
+                        ...$canonical_ids
+                    )
+                );
+            }
+
+            // 2d. Drop obsolete columns: event_id, winner_id, winner_text.
+            //     winner_input_type stays on vep_competitions (it is a property of
+            //     the competition definition, not of a per-event winner).
+            foreach ( array( 'event_id', 'winner_id', 'winner_text' ) as $drop_col ) {
+                // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Direct schema inspection; table name from $wpdb->prefix.
+                $col_exists = $wpdb->get_var($wpdb->prepare(
+                    // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name controlled.
+                    "SHOW COLUMNS FROM $table_competitions LIKE %s",
+                    $drop_col
+                ));
+                if ( $col_exists ) {
+                    // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Direct schema change for migration; table name and column are controlled.
+                    $wpdb->query( "ALTER TABLE $table_competitions DROP COLUMN $drop_col" );
+                }
             }
         }
     }

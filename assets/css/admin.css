@@ -671,7 +671,7 @@ table.wp-list-table td.column-is_approved {
 
 .vep-closing-text {
     color: var(--vep-display-text-color, #ffffff);
-    font-size: clamp(4rem, 8vw, 9rem);
+    font-size: clamp(3rem, 6vw, 7rem);
     font-weight: 700;
     line-height: 1.2;
     text-shadow: 2px 4px 12px rgba(0, 0, 0, 0.35);
@@ -1331,6 +1331,10 @@ table.wp-list-table td.column-is_approved {
 
 .vep-competition-winner .choices.is-open {
     z-index: 30;
+}
+
+.vep-competition-card:has(.choices.is-open) {
+    z-index: 100;
 }
 
 .vep-competition-winner .choices__list--dropdown .choices__item,

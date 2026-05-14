@@ -10,6 +10,7 @@
 namespace VolunteerExchangePlatform\Services;
 
 use VolunteerExchangePlatform\Database\CompetitionRepository;
+use VolunteerExchangePlatform\Database\CompetitionWinnerRepository;
 use VolunteerExchangePlatform\Database\EventRepository;
 use VolunteerExchangePlatform\Database\ParticipantRepository;
 
@@ -35,12 +36,19 @@ class CompetitionService extends AbstractService {
     private $competition_repository;
     
     /**
+     * Competition winner repository
+     *
+     * @var CompetitionWinnerRepository
+     */
+    private $winner_repository;
+
+    /**
      * Event repository
      *
      * @var EventRepository
      */
     private $event_repository;
-    
+
     /**
      * Participant repository
      *
@@ -51,48 +59,95 @@ class CompetitionService extends AbstractService {
     /**
      * Constructor
      *
-     * @param CompetitionRepository|null $competition_repository Competition repository
-     * @param EventRepository|null       $event_repository Event repository
-     * @param ParticipantRepository|null $participant_repository Participant repository
+     * @param CompetitionRepository|null       $competition_repository Competition repository
+     * @param EventRepository|null             $event_repository       Event repository
+     * @param ParticipantRepository|null       $participant_repository Participant repository
+     * @param CompetitionWinnerRepository|null $winner_repository      Competition winner repository
      */
     public function __construct(
         ?CompetitionRepository $competition_repository = null,
         ?EventRepository $event_repository = null,
-        ?ParticipantRepository $participant_repository = null
+        ?ParticipantRepository $participant_repository = null,
+        ?CompetitionWinnerRepository $winner_repository = null
     ) {
         $this->competition_repository = $competition_repository ?: new CompetitionRepository();
-        $this->event_repository = $event_repository ?: new EventRepository();
-        $this->participant_repository = $participant_repository ?: new ParticipantRepository();
+        $this->event_repository       = $event_repository       ?: new EventRepository();
+        $this->participant_repository = $participant_repository  ?: new ParticipantRepository();
+        $this->winner_repository      = $winner_repository      ?: new CompetitionWinnerRepository();
     }
 
     /**
-     * Get active competitions for an event
+     * Get active competitions enriched with per-event winner data.
      *
      * @param int $event_id Event ID
      * @return array
      */
     public function get_active_competitions( $event_id ) {
-        return $this->competition_repository->get_active_for_event( $event_id );
+        return $this->enrich_competitions_with_winners(
+            $this->competition_repository->get_active(),
+            $event_id
+        );
     }
 
     /**
-     * Get inactive competitions for an event
+     * Get inactive competitions enriched with per-event winner data.
      *
      * @param int $event_id Event ID
      * @return array
      */
     public function get_inactive_competitions( $event_id ) {
-        return $this->competition_repository->get_inactive_for_event( $event_id );
+        return $this->enrich_competitions_with_winners(
+            $this->competition_repository->get_inactive(),
+            $event_id
+        );
     }
 
     /**
-     * Get all competitions for an event sorted by sort_order
+     * Get all active competitions enriched with per-event winner data.
      *
      * @param int $event_id Event ID
      * @return array
      */
     public function get_competitions_for_event( $event_id ) {
-        return $this->competition_repository->get_active_for_event( $event_id );
+        return $this->enrich_competitions_with_winners(
+            $this->competition_repository->get_active(),
+            $event_id
+        );
+    }
+
+    /**
+     * Enrich a list of competition objects with winner data for a specific event.
+     *
+     * @param array $competitions Array of competition objects.
+     * @param int   $event_id     Event ID.
+     * @return array The same array, each object augmented with winner_id / winner_text.
+     */
+    private function enrich_competitions_with_winners( array $competitions, $event_id ) {
+        if ( empty( $competitions ) ) {
+            return $competitions;
+        }
+
+        if ( (int) $event_id <= 0 ) {
+            foreach ( $competitions as $competition ) {
+                $competition->winner_id   = null;
+                $competition->winner_text = null;
+            }
+            return $competitions;
+        }
+
+        $winners_map = $this->winner_repository->get_all_for_event_keyed( (int) $event_id );
+
+        foreach ( $competitions as $competition ) {
+            $id     = (int) $competition->id;
+            $winner = isset( $winners_map[ $id ] ) ? $winners_map[ $id ] : null;
+
+            $competition->winner_id   = ( $winner && $winner->winner_id ) ? (int) $winner->winner_id : null;
+            $competition->winner_text = ( $winner && null !== $winner->winner_text && '' !== $winner->winner_text )
+                ? $winner->winner_text
+                : null;
+        }
+
+        return $competitions;
     }
 
     /**
@@ -102,35 +157,35 @@ class CompetitionService extends AbstractService {
      * @return int|false Competition ID or false on failure
      */
     public function create_competition( array $data ) {
-        if ( empty( $data['sort_order'] ) && ! empty( $data['event_id'] ) ) {
-            $data['sort_order'] = count( $this->competition_repository->get_all_for_event( (int) $data['event_id'] ) ) + 1;
+        if ( empty( $data['sort_order'] ) ) {
+            $data['sort_order'] = count( $this->competition_repository->get_all() ) + 1;
         }
+
+        // Strip event-specific or winner fields; competitions are now global.
+        unset( $data['event_id'], $data['winner_id'], $data['winner_text'] );
 
         return $this->competition_repository->create( $data );
     }
 
     /**
-     * Ensure all predefined competitions exist for an event.
+     * Ensure all predefined competitions exist globally.
      *
-     * @param int $event_id Event ID.
+     * Idempotent; safe to call multiple times.
+     *
      * @return int Number of competitions created.
      */
-    public function ensure_default_competitions_for_event( $event_id ) {
-        $event_id = (int) $event_id;
-
-        if ( $event_id <= 0 ) {
-            return 0;
-        }
-
-        $created = 0;
+    public function ensure_default_competitions() {
+        $created     = 0;
         $definitions = $this->get_default_competition_definitions();
 
         foreach ( $definitions as $index => $definition ) {
-            // For custom type, check by type AND title since there can be multiple custom competitions
             if ( 'custom' === $definition['type'] ) {
-                $existing = $this->competition_repository->get_by_event_and_type_and_title( $event_id, $definition['type'], $definition['title'] );
+                $existing = $this->competition_repository->get_by_type_and_title(
+                    $definition['type'],
+                    $definition['title']
+                );
             } else {
-                $existing = $this->competition_repository->get_by_event_and_type( $event_id, $definition['type'] );
+                $existing = $this->competition_repository->get_by_type( $definition['type'] );
             }
 
             if ( $existing ) {
@@ -139,13 +194,11 @@ class CompetitionService extends AbstractService {
 
             $result = $this->competition_repository->create(
                 array(
-                    'event_id'   => $event_id,
-                    'type'       => $definition['type'],
-                    'title'      => $definition['title'],
-                    'description'=> isset( $definition['description'] ) ? $definition['description'] : '',
-                    'is_active'  => ( 'custom' === $definition['type'] ) ? 1 : 0,
-                    'winner_id'  => null,
-                    'sort_order' => $index + 1,
+                    'type'        => $definition['type'],
+                    'title'       => $definition['title'],
+                    'description' => isset( $definition['description'] ) ? $definition['description'] : '',
+                    'is_active'   => ( 'custom' === $definition['type'] ) ? 1 : 0,
+                    'sort_order'  => $index + 1,
                 )
             );
 
@@ -158,16 +211,28 @@ class CompetitionService extends AbstractService {
     }
 
     /**
+     * Back-compat alias for ensure_default_competitions().
+     *
+     * The $event_id parameter is ignored; competitions are now global.
+     *
+     * @param int $event_id Ignored.
+     * @return int
+     */
+    public function ensure_default_competitions_for_event( $event_id ) {
+        return $this->ensure_default_competitions();
+    }
+
+    /**
      * Update a competition
      *
-     * @param int   $id Competition ID
-     * @param array $data Competition data
+     * @param int   $id   Competition ID
+     * @param array $data Competition data (winner fields are managed via set_winner / set_winner_text)
      * @return bool
      */
     public function update_competition( $id, array $data ) {
         $update_data = array();
-        $format = array();
-        
+        $format      = array();
+
         if ( isset( $data['title'] ) ) {
             $update_data['title'] = sanitize_text_field( $data['title'] );
             $format[] = '%s';
@@ -177,37 +242,29 @@ class CompetitionService extends AbstractService {
             $update_data['description'] = sanitize_textarea_field( $data['description'] );
             $format[] = '%s';
         }
-        
+
         if ( isset( $data['is_active'] ) ) {
             $update_data['is_active'] = (int) $data['is_active'];
             $format[] = '%d';
         }
-        
-        if ( isset( $data['winner_id'] ) ) {
-            $update_data['winner_id'] = $data['winner_id'] ? (int) $data['winner_id'] : null;
-            $format[] = $data['winner_id'] ? '%d' : '%s';
-        }
 
         if ( isset( $data['winner_input_type'] ) ) {
-            $winner_input_type = in_array( $data['winner_input_type'], array( 'dropdown', 'text' ), true ) ? $data['winner_input_type'] : 'dropdown';
+            $winner_input_type = in_array( $data['winner_input_type'], array( 'dropdown', 'text' ), true )
+                ? $data['winner_input_type']
+                : 'dropdown';
             $update_data['winner_input_type'] = $winner_input_type;
             $format[] = '%s';
         }
 
-        if ( isset( $data['winner_text'] ) ) {
-            $update_data['winner_text'] = $data['winner_text'] !== '' ? sanitize_text_field( $data['winner_text'] ) : null;
-            $format[] = '%s';
-        }
-        
         if ( isset( $data['sort_order'] ) ) {
             $update_data['sort_order'] = (int) $data['sort_order'];
             $format[] = '%d';
         }
-        
+
         if ( empty( $update_data ) ) {
             return false;
         }
-        
+
         return $this->competition_repository->update( $update_data, array( 'id' => $id ), $format, array( '%d' ) );
     }
 
@@ -263,35 +320,49 @@ class CompetitionService extends AbstractService {
     }
 
     /**
-     * Set winner for a competition
+     * Set winner for a competition on a specific event.
+     *
+     * Pass null as $winner_id to clear the winner (deletes the winner record).
      *
      * @param int      $competition_id Competition ID
-     * @param int|null $winner_id Participant ID or null to clear
+     * @param int|null $winner_id      Participant ID or null to clear
+     * @param int      $event_id       Event ID
      * @return bool
      */
-    public function set_winner( $competition_id, $winner_id = null ) {
-        return $this->competition_repository->set_winner( $competition_id, $winner_id );
+    public function set_winner( $competition_id, $winner_id = null, $event_id = 0 ) {
+        if ( $winner_id ) {
+            return $this->winner_repository->upsert( (int) $event_id, (int) $competition_id, (int) $winner_id, null );
+        }
+
+        return $this->winner_repository->reset_for_event_and_competition( (int) $event_id, (int) $competition_id );
     }
 
     /**
-     * Set free-text winner for a competition
+     * Set free-text winner for a competition on a specific event.
+     *
+     * Pass an empty string to clear the winner text.
      *
      * @param int    $competition_id Competition ID
      * @param string $winner_text    Free-text winner value
+     * @param int    $event_id       Event ID
      * @return bool
      */
-    public function set_winner_text( $competition_id, $winner_text ) {
-        return $this->competition_repository->set_winner_text( $competition_id, $winner_text );
+    public function set_winner_text( $competition_id, $winner_text, $event_id = 0 ) {
+        if ( '' !== $winner_text ) {
+            return $this->winner_repository->upsert( (int) $event_id, (int) $competition_id, null, sanitize_text_field( $winner_text ) );
+        }
+
+        return $this->winner_repository->reset_for_event_and_competition( (int) $event_id, (int) $competition_id );
     }
 
     /**
-     * Reset all competition winners for an event
+     * Reset all competition winners for an event.
      *
      * @param int $event_id Event ID
      * @return bool
      */
     public function reset_all_winners_for_event( $event_id ) {
-        return $this->competition_repository->reset_all_winners_for_event( $event_id );
+        return $this->winner_repository->reset_all_for_event( (int) $event_id );
     }
 
     /**
@@ -313,11 +384,11 @@ class CompetitionService extends AbstractService {
     /**
      * Auto-select winner if criteria are met.
      *
-     * Checks if event timing conditions are met and no winner is set yet,
-     * then automatically selects winner based on competition type.
+     * The competition object must already be enriched with winner_id / winner_text
+     * (via enrich_competitions_with_winners / get_competitions_for_event).
      *
-     * @param object $competition Competition object.
-     * @param object $event Event object.
+     * @param object $competition Enriched competition object.
+     * @param object $event       Event object.
      * @return bool|int Participant ID if winner was set, false otherwise
      */
     public function auto_select_winner_if_needed( $competition, $event ) {
@@ -330,14 +401,14 @@ class CompetitionService extends AbstractService {
         }
 
         $competition_id = isset( $competition->id ) ? (int) $competition->id : 0;
-        $event_id = isset( $competition->event_id ) ? (int) $competition->event_id : ( isset( $event->id ) ? (int) $event->id : 0 );
+        $event_id       = isset( $event->id ) ? (int) $event->id : 0;
 
         if ( $event_id <= 0 ) {
             return false;
         }
 
         if ( ! (int) $competition->is_active || $competition->winner_id ) {
-            // Doesn't exist, is inactive, or already has winner
+            // Inactive or already has a winner.
             return false;
         }
 
@@ -349,15 +420,15 @@ class CompetitionService extends AbstractService {
         if ( ! $this->should_auto_select_now( $competition->type, $event ) ) {
             return false;
         }
-        
+
         $winner_id = $this->get_competition_winner( $competition->type, $event_id );
-        
+
         if ( ! $winner_id ) {
             return false;
         }
-        
-        $this->competition_repository->set_winner( $competition_id, $winner_id );
-        
+
+        $this->winner_repository->upsert( $event_id, $competition_id, $winner_id, null );
+
         return $winner_id;
     }
 
@@ -374,22 +445,18 @@ class CompetitionService extends AbstractService {
             return array();
         }
 
+        $event = $this->event_repository->get_by_id( $event_id );
+
+        if ( ! is_object( $event ) ) {
+            return array();
+        }
+
         $selected_winners = array();
-        $competitions = $this->competition_repository->get_all_for_event( $event_id );
-        $events_by_id = array();
+        // Fetch global active competitions enriched with per-event winners.
+        $competitions = $this->get_competitions_for_event( $event_id );
 
         foreach ( $competitions as $competition ) {
-            $competition_event_id = isset( $competition->event_id ) ? (int) $competition->event_id : $event_id;
-
-            if ( ! isset( $events_by_id[ $competition_event_id ] ) ) {
-                $events_by_id[ $competition_event_id ] = $this->event_repository->get_by_id( $competition_event_id );
-            }
-
-            if ( ! is_object( $events_by_id[ $competition_event_id ] ) ) {
-                continue;
-            }
-
-            $winner_id = $this->auto_select_winner_if_needed( $competition, $events_by_id[ $competition_event_id ] );
+            $winner_id = $this->auto_select_winner_if_needed( $competition, $event );
 
             if ( $winner_id ) {
                 $selected_winners[ (int) $competition->id ] = (int) $winner_id;
@@ -571,7 +638,7 @@ class CompetitionService extends AbstractService {
                     array(
                         'type'  => 'first_registered',
                         'title' => __( 'First Registered Participant', 'volunteer-exchange-platform' ),
-                        'description' => __( 'Gives til den deltager, der forst blev registreret til eventet.', 'volunteer-exchange-platform' ),
+                        'description' => __( 'Gives til den deltager, der først blev registreret til eventet.', 'volunteer-exchange-platform' ),
                     ),
                     array(
                         'type'  => 'last_minute',
@@ -581,12 +648,12 @@ class CompetitionService extends AbstractService {
                     array(
                         'type'  => 'longest_description',
                         'title' => __( 'Longest Description', 'volunteer-exchange-platform' ),
-                        'description' => __( 'Gives til den deltager, der har skrevet den laengste profilbeskrivelse.', 'volunteer-exchange-platform' ),
+                        'description' => __( 'Gives til den deltager, der har skrevet den længste profilbeskrivelse.', 'volunteer-exchange-platform' ),
                     ),
                     array(
                         'type'  => 'first_agreement',
                         'title' => __( 'First Agreement', 'volunteer-exchange-platform' ),
-                        'description' => __( 'Gives til begge deltagere i den forste aftale, der blev indgaet pa eventet.', 'volunteer-exchange-platform' ),
+                        'description' => __( 'Gives til begge deltagere i den første aftale, der blev indgået på eventet.', 'volunteer-exchange-platform' ),
                     ),
                     array(
                         'type'  => 'last_agreement',
@@ -596,12 +663,12 @@ class CompetitionService extends AbstractService {
                     array(
                         'type'  => 'deadline_rush',
                         'title' => __( 'Last Minute Agreement', 'volunteer-exchange-platform' ),
-                        'description' => __( 'Gives til begge deltagere i den aftale, der blev indgaet taettest pa eventets afslutning.', 'volunteer-exchange-platform' ),
+                        'description' => __( 'Gives til begge deltagere i den aftale, der blev indgået tættest på eventets afslutning.', 'volunteer-exchange-platform' ),
                     ),
                     array(
                         'type'  => 'most_agreements',
                         'title' => __( 'Actor with Most Agreements', 'volunteer-exchange-platform' ),
-                        'description' => __( 'Gives til den deltager, der har indgaet flest aftaler i lobet af eventet.', 'volunteer-exchange-platform' ),
+                        'description' => __( 'Gives til den deltager, der har indgået flest aftaler i løbet af eventet.', 'volunteer-exchange-platform' ),
                     ),
                     array(
                         'type'  => 'shortest_time',
@@ -611,7 +678,7 @@ class CompetitionService extends AbstractService {
                     array(
                         'type'  => 'custom',
                         'title' => __( 'Bedste børsudklædning', 'volunteer-exchange-platform' ),
-                        'description' => __( 'Gives til den stand, der har den mest kreative og gennemforte udklaedning.', 'volunteer-exchange-platform' ),
+                        'description' => __( 'Gives til den aktør, der har den mest kreative og gennemførte udklædning.', 'volunteer-exchange-platform' ),
                     ),
                     array(
                         'type'  => 'custom',
