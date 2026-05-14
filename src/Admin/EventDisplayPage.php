@@ -220,6 +220,10 @@ class EventDisplayPage {
             update_option( 'vep_display_text_color', $display_text_color );
             $auto_switch_stats = isset( $_POST['auto_switch_to_stats'] ) ? 1 : 0;
             update_option( 'vep_display_auto_switch_stats', $auto_switch_stats );
+            $closing_text = isset( $_POST['vep_display_closing_text'] ) ? sanitize_textarea_field( wp_unslash( $_POST['vep_display_closing_text'] ) ) : '';
+            update_option( 'vep_display_closing_text', $closing_text );
+            $hide_buttons = isset( $_POST['vep_display_hide_buttons'] ) ? 1 : 0;
+            update_option( 'vep_display_hide_buttons', $hide_buttons );
             
             wp_safe_redirect( add_query_arg( array(
                 'page' => 'vep-event-display',
@@ -261,6 +265,8 @@ class EventDisplayPage {
         $gradient_angle = $this->sanitize_degrees( get_option('vep_display_background_gradient_angle', 135), 135 );
         $display_text_color = $this->sanitize_hex_color_with_fallback( get_option('vep_display_text_color', '#ffffff'), '#ffffff' );
         $auto_switch_stats  = (bool) get_option( 'vep_display_auto_switch_stats', 0 );
+        $closing_text       = (string) get_option( 'vep_display_closing_text', __( 'Tak for denne gang', 'volunteer-exchange-platform' ) );
+        $hide_buttons       = (bool) get_option( 'vep_display_hide_buttons', 0 );
 
         if ( 'recent_agreements' === $display_mode ) {
             $right_panel_title = __( 'Latest Agreements', 'volunteer-exchange-platform' );
@@ -365,6 +371,31 @@ class EventDisplayPage {
                                     </label>
                                     <p class="description">
                                         <?php esc_html_e( 'Automatically switch to the statistics view when the countdown expires.', 'volunteer-exchange-platform' ); ?>
+                                    </p>
+                                </td>
+                            </tr>
+                            <tr class="vep-display-advanced-row" style="display: none;">
+                                <th scope="row">
+                                    <?php esc_html_e( 'Skjul alle knapper', 'volunteer-exchange-platform' ); ?>
+                                </th>
+                                <td>
+                                    <label>
+                                        <input type="checkbox" name="vep_display_hide_buttons" value="1" <?php checked( $hide_buttons ); ?> />
+                                        <?php esc_html_e( 'Skjul alle navigationsknapper i bunden af visningerne', 'volunteer-exchange-platform' ); ?>
+                                    </label>
+                                </td>
+                            </tr>
+                            <tr class="vep-display-advanced-row" style="display: none;">
+                                <th scope="row">
+                                    <label for="vep_display_closing_text"><?php esc_html_e( 'Afsluttende tekst', 'volunteer-exchange-platform' ); ?></label>
+                                </th>
+                                <td>
+                                    <textarea id="vep_display_closing_text"
+                                              name="vep_display_closing_text"
+                                              rows="3"
+                                              class="regular-text"><?php echo esc_textarea( $closing_text ); ?></textarea>
+                                    <p class="description">
+                                        <?php esc_html_e( 'Tekst der vises på afslutningsskærmen efter konkurrencerne. Standard: Tak for denne gang.', 'volunteer-exchange-platform' ); ?>
                                     </p>
                                 </td>
                             </tr>
@@ -604,76 +635,151 @@ class EventDisplayPage {
             <canvas id="vep-fireworks-canvas" class="vep-fireworks-canvas"></canvas>
             
             <div class="vep-display-content">
+                <!-- Header Area -->
                 <div class="vep-display-header">
                     <h1 id="vep-display-event-name"></h1>
-                    <h2 id="vep-display-time-up" class="vep-display-time-up" style="display: none;"><?php esc_html_e( "Time's up!", 'volunteer-exchange-platform' ); ?></h2>
+                    <p id="vep-display-time-up" class="vep-display-subheading" style="display: none;"><?php esc_html_e( "Time's up!", 'volunteer-exchange-platform' ); ?></p>
+                    <p id="vep-display-competitions-heading" class="vep-display-subheading" style="display: none;"><?php esc_html_e( 'Competitions', 'volunteer-exchange-platform' ); ?></p>
+                    <p id="vep-display-winner-heading" class="vep-display-subheading" style="display: none;"></p>
                 </div>
-                
-                <div id="vep-display-main-content" class="vep-display-main-content">
-                    <div class="vep-display-left">
-                        <div class="vep-display-countdown">
-                            <div class="vep-countdown-timer">
-                                <div class="vep-countdown-clock">
-                                    <span id="vep-display-timer-time" class="vep-timer-time">00:00:00</span>
+
+                <!-- Content Area (only one view shown at a time) -->
+                <div class="vep-display-content-area">
+                    <!-- Countdown View -->
+                    <div id="vep-countdown-view" class="vep-view vep-view-active">
+                        <div class="vep-display-main-content">
+                            <div class="vep-display-left">
+                                <div class="vep-display-countdown">
+                                    <div class="vep-countdown-timer">
+                                        <div class="vep-countdown-clock">
+                                            <span id="vep-display-timer-time" class="vep-timer-time">00:00:00</span>
+                                        </div>
+                                    </div>
+                                    <div class="vep-countdown-expired" style="display: none;">
+                                        <p><?php esc_html_e('Times up!', 'volunteer-exchange-platform'); ?></p>
+                                    </div>
+                                </div>
+                                
+                                <div class="vep-display-agreements">
+                                    <div class="vep-agreements-box">
+                                        <div class="vep-agreements-count" id="vep-agreements-count">0</div>
+                                        <div class="vep-agreements-label"><?php esc_html_e('Agreements Made', 'volunteer-exchange-platform'); ?></div>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="vep-countdown-expired" style="display: none;">
-                                <p><?php esc_html_e('Times up!', 'volunteer-exchange-platform'); ?></p>
-                            </div>
-                        </div>
-                        
-                        <div class="vep-display-agreements">
-                            <div class="vep-agreements-box">
-                                <div class="vep-agreements-count" id="vep-agreements-count">0</div>
-                                <div class="vep-agreements-label"><?php esc_html_e('Agreements Made', 'volunteer-exchange-platform'); ?></div>
+                            
+                            <div id="vep-display-right" class="vep-display-right" <?php echo 'none' === $display_mode ? 'style="display: none;"' : ''; ?>>
+                                <div class="vep-leaderboard">
+                                    <h2 class="vep-leaderboard-title">
+                                        <span id="vep-display-right-panel-icon" class="dashicons dashicons-awards" <?php echo 'leaderboard' === $display_mode ? '' : 'style="display: none;"'; ?>></span>
+                                        <span id="vep-display-right-panel-title"><?php echo esc_html( $right_panel_title ); ?></span>
+                                    </h2>
+                                    <div id="vep-leaderboard-list" class="vep-leaderboard-list">
+                                        <p class="vep-leaderboard-empty"><?php esc_html_e('No agreements yet...', 'volunteer-exchange-platform'); ?></p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    
-                    <div id="vep-display-right" class="vep-display-right" <?php echo 'none' === $display_mode ? 'style="display: none;"' : ''; ?>>
-                        <div class="vep-leaderboard">
-                            <h2 class="vep-leaderboard-title">
-                                <span id="vep-display-right-panel-icon" class="dashicons dashicons-awards" <?php echo 'leaderboard' === $display_mode ? '' : 'style="display: none;"'; ?>></span>
-                                <span id="vep-display-right-panel-title"><?php echo esc_html( $right_panel_title ); ?></span>
-                            </h2>
-                            <div id="vep-leaderboard-list" class="vep-leaderboard-list">
-                                <p class="vep-leaderboard-empty"><?php esc_html_e('No agreements yet...', 'volunteer-exchange-platform'); ?></p>
+
+                    <!-- Statistics View -->
+                    <div id="vep-statistics-view" class="vep-view" style="display: none;">
+                        <div class="vep-statistics-inner">
+                            <canvas id="vep-statistics-chart" class="vep-statistics-chart"></canvas>
+                            <div class="vep-statistics-summary">
+                                <div class="vep-stat-item">
+                                    <div class="vep-stat-value" id="vep-stat-total">—</div>
+                                    <div class="vep-stat-label"><?php esc_html_e( 'Total agreements', 'volunteer-exchange-platform' ); ?></div>
+                                </div>
+                                <div class="vep-stat-item">
+                                    <div class="vep-stat-value" id="vep-stat-avg">—</div>
+                                    <div class="vep-stat-label"><?php esc_html_e( 'Average agreements per minute', 'volunteer-exchange-platform' ); ?></div>
+                                </div>
+                                <div class="vep-stat-item">
+                                    <div class="vep-stat-value" id="vep-stat-max">—</div>
+                                    <div class="vep-stat-label"><?php esc_html_e( 'Most agreements by a single actor', 'volunteer-exchange-platform' ); ?></div>
+                                </div>
+                                <div class="vep-stat-item">
+                                    <div class="vep-stat-value" id="vep-stat-first">—</div>
+                                    <div class="vep-stat-label"><?php esc_html_e( 'First agreement after', 'volunteer-exchange-platform' ); ?></div>
+                                </div>
                             </div>
+                            <p class="vep-statistics-error" style="display: none;"></p>
+                        </div>
+                    </div>
+
+                    <!-- Competitions View -->
+                    <div id="vep-competitions-view" class="vep-view" style="display: none;">
+                        <div id="vep-competitions-list" class="vep-competitions-list">
+                            <p class="vep-competitions-empty"><?php esc_html_e( 'No competitions available.', 'volunteer-exchange-platform' ); ?></p>
+                        </div>
+                        <p class="vep-competitions-error" style="display: none;"></p>
+                    </div>
+
+                    <!-- Winner View -->
+                    <div id="vep-winner-view" class="vep-view" style="display: none;">
+                        <div class="vep-winner-inner">
+                            <div class="vep-winner-label"><?php esc_html_e( 'Vinderen er:', 'volunteer-exchange-platform' ); ?></div>
+                            <div id="vep-winner-name" class="vep-winner-name"></div>
+                        </div>
+                    </div>
+
+                    <!-- Closing View -->
+                    <div id="vep-closing-view" class="vep-view" style="display: none;">
+                        <div class="vep-closing-inner">
+                            <div id="vep-closing-text" class="vep-closing-text"></div>
                         </div>
                     </div>
                 </div>
 
-                <div id="vep-post-time-actions" class="vep-post-time-actions" style="display: none;">
-                    <button type="button" id="vep-show-statistics" class="button button-primary button-hero vep-post-time-action-button">
-                        <?php esc_html_e( 'Show Statistics', 'volunteer-exchange-platform' ); ?>
-                    </button>
-                    <button type="button" id="vep-show-competitions" class="button button-primary button-hero vep-post-time-action-button">
-                        <?php esc_html_e( 'Show Competitions', 'volunteer-exchange-platform' ); ?>
-                    </button>
-                </div>
+                <!-- Actions Area (buttons at bottom) -->
+                <div class="vep-display-actions">
+                    <div id="vep-post-time-actions" class="vep-action-buttons" style="display: none;">
+                        <button type="button" id="vep-show-statistics" class="button button-primary button-hero vep-post-time-action-button">
+                            <?php esc_html_e( 'Show Statistics', 'volunteer-exchange-platform' ); ?>
+                        </button>
+                        <button type="button" id="vep-show-competitions" class="button button-primary button-hero vep-post-time-action-button">
+                            <?php esc_html_e( 'Show Competitions', 'volunteer-exchange-platform' ); ?>
+                        </button>
+                    </div>
 
-                <div id="vep-statistics-view" class="vep-statistics-view" style="display: none;">
-                    <div class="vep-statistics-inner">
-                        <canvas id="vep-statistics-chart" class="vep-statistics-chart"></canvas>
-                        <div class="vep-statistics-summary">
-                            <div class="vep-stat-item">
-                                <div class="vep-stat-value" id="vep-stat-total">—</div>
-                                <div class="vep-stat-label"><?php esc_html_e( 'Total agreements', 'volunteer-exchange-platform' ); ?></div>
-                            </div>
-                            <div class="vep-stat-item">
-                                <div class="vep-stat-value" id="vep-stat-avg">—</div>
-                                <div class="vep-stat-label"><?php esc_html_e( 'Average agreements per minute', 'volunteer-exchange-platform' ); ?></div>
-                            </div>
-                            <div class="vep-stat-item">
-                                <div class="vep-stat-value" id="vep-stat-max">—</div>
-                                <div class="vep-stat-label"><?php esc_html_e( 'Most agreements by a single actor', 'volunteer-exchange-platform' ); ?></div>
-                            </div>
-                            <div class="vep-stat-item">
-                                <div class="vep-stat-value" id="vep-stat-first">—</div>
-                                <div class="vep-stat-label"><?php esc_html_e( 'First agreement after', 'volunteer-exchange-platform' ); ?></div>
-                            </div>
-                        </div>
-                        <p class="vep-statistics-error" style="display: none;"></p>
+                    <div id="vep-statistics-actions" class="vep-action-buttons" style="display: none;">
+                        <button type="button" id="vep-back-to-countdown" class="button button-primary button-hero vep-post-time-action-button" style="display: none;">
+                            <?php esc_html_e( 'Back to Countdown', 'volunteer-exchange-platform' ); ?>
+                        </button>
+                        <button type="button" id="vep-show-competitions-from-statistics" class="button button-primary button-hero vep-post-time-action-button">
+                            <?php esc_html_e( 'Show Competitions', 'volunteer-exchange-platform' ); ?>
+                        </button>
+                    </div>
+
+                    <div id="vep-competitions-actions" class="vep-action-buttons" style="display: none;">
+                        <button type="button" id="vep-show-statistics-from-competitions" class="button button-primary button-hero vep-post-time-action-button">
+                            <?php esc_html_e( 'Back to Statistics', 'volunteer-exchange-platform' ); ?>
+                        </button>
+                        <button type="button" id="vep-show-first-winner" class="button button-primary button-hero vep-post-time-action-button">
+                            <?php esc_html_e( 'Vis første vinder', 'volunteer-exchange-platform' ); ?>
+                        </button>
+                    </div>
+
+                    <div id="vep-winner-actions" class="vep-action-buttons" style="display: none;">
+                        <button type="button" id="vep-winner-back-to-list" class="button button-primary button-hero vep-post-time-action-button">
+                            <?php esc_html_e( 'Tilbage til konkurrence oversigt', 'volunteer-exchange-platform' ); ?>
+                        </button>
+                        <button type="button" id="vep-winner-prev" class="button button-primary button-hero vep-post-time-action-button" style="display: none;">
+                            <?php esc_html_e( 'Forrige vinder', 'volunteer-exchange-platform' ); ?>
+                        </button>
+                        <button type="button" id="vep-winner-next" class="button button-primary button-hero vep-post-time-action-button" style="display: none;">
+                            <?php esc_html_e( 'Næste vinder', 'volunteer-exchange-platform' ); ?>
+                        </button>
+                        <button type="button" id="vep-winner-finish" class="button button-primary button-hero vep-post-time-action-button" style="display: none;">
+                            <?php esc_html_e( 'Afslut', 'volunteer-exchange-platform' ); ?>
+                        </button>
+                    </div>
+
+                    <div id="vep-closing-actions" class="vep-action-buttons" style="display: none;">
+                        <button type="button" id="vep-closing-back-to-competitions" class="button button-primary button-hero vep-post-time-action-button">
+                            <?php esc_html_e( 'Tilbage til konkurrence oversigten', 'volunteer-exchange-platform' ); ?>
+                        </button>
                     </div>
                 </div>
             </div>

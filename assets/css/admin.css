@@ -165,10 +165,63 @@ table.wp-list-table td.column-is_approved {
 
 .vep-display-content {
     width: 100%;
-    max-width: 1400px;
     text-align: center;
     position: relative;
     z-index: 999999;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+/* Header Area */
+.vep-display-header {
+    flex-shrink: 0;
+    padding: 52px 64px 28px;
+}
+
+.vep-display-header h1 {
+    margin: 0;
+    font-size: 36px;
+    font-weight: 700;
+    color: var(--vep-display-text-color);
+}
+
+/* Content Area */
+.vep-display-content-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 28px 64px;
+}
+
+/* Views (only one shown at a time) */
+.vep-view {
+    display: none;
+    width: 100%;
+    height: 100%;
+}
+
+.vep-view-active {
+    display: flex !important;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+/* Actions Area */
+.vep-display-actions {
+    position: fixed;
+    left: 50%;
+    bottom: 36px;
+    transform: translateX(-50%);
+    z-index: 1000001;
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+}
+
+.vep-action-buttons {
+    display: flex;
+    gap: 16px;
 }
 
 .vep-close-display {
@@ -206,7 +259,7 @@ table.wp-list-table td.column-is_approved {
     color: var(--vep-display-text-color);
     font-size: 144px;
     font-weight: 700;
-    margin: 0 0 150px 0;
+    margin: 0 0 80px 0;
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
 }
 
@@ -263,9 +316,8 @@ table.wp-list-table td.column-is_approved {
     border-radius: 30px;
     padding: 50px 80px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    box-sizing: border-box;
     width: 100%;
-    max-width: 760px;
-    min-width: 400px;
 }
 
 .vep-timer-time {
@@ -375,48 +427,56 @@ table.wp-list-table td.column-is_approved {
     min-width: 220px;
 }
 
+.vep-statistics-actions {
+    position: fixed;
+    left: 50%;
+    bottom: 36px;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 16px;
+    z-index: 1000001;
+}
+
+.vep-statistics-actions button {
+    min-width: 220px;
+}
+
 /* Statistics view */
 .vep-statistics-view {
-    display: none;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-start;
-    flex: 1;
-    padding: 40px 40px 20px;
-    box-sizing: border-box;
-    width: 100%;
-    overflow-y: auto;
+    width: 100% !important;
+    height: auto !important;
 }
 
 .vep-statistics-inner {
     width: 100%;
-    max-width: 960px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 36px;
+    gap: 40px;
     background: rgba(0, 0, 0, 0.45);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 20px;
-    padding: 36px 48px 32px;
+    padding: 48px 56px 44px;
     box-shadow: 0 8px 40px rgba(0, 0, 0, 0.4);
 }
 
 .vep-statistics-chart {
     width: 100%;
-    height: 300px;
+    height: 380px;
     display: block;
     border-radius: 8px;
     background: transparent;
 }
 
-.vep-display-time-up {
+.vep-display-subheading {
     color: var(--vep-display-text-color);
-    font-size: 130px;
-    font-weight: 700;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    font-size: 5.5rem;
+    font-weight: 600;
+    opacity: 0.85;
+    margin: 6px 0 0 0;
+    letter-spacing: 0.02em;
 }
 
 .vep-statistics-summary {
@@ -454,6 +514,169 @@ table.wp-list-table td.column-is_approved {
     margin: 0;
 }
 
+/* Competitions display grid (fullscreen event display view) */
+#vep-competitions-view .vep-competitions-list {
+    width: 100%;
+    overflow-y: auto;
+}
+
+#vep-competitions-view .vep-competitions-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+    width: 100%;
+    padding: 8px 0 40px;
+}
+
+.vep-competition-display-card {
+    background: rgba(0, 0, 0, 0.45) !important;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    border-radius: 16px !important;
+    padding: 28px 28px 24px !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+    cursor: default;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.vep-competition-display-card:hover {
+    transform: none;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+}
+
+.vep-competition-clickable {
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.vep-competition-clickable:hover {
+    transform: translateY(-3px) !important;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5) !important;
+    border-color: rgba(255, 255, 255, 0.5) !important;
+}
+
+.vep-competition-display-title {
+    color: var(--vep-display-text-color, #ffffff);
+    font-size: 1.4rem;
+    font-weight: 700;
+    line-height: 1.3;
+}
+
+.vep-competition-display-description {
+    color: rgba(255, 255, 255, 0.75);
+    font-size: 1rem;
+    line-height: 1.5;
+}
+
+.vep-competition-display-winner {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: auto;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.vep-competition-winner-logo {
+    width: 56px;
+    height: 56px;
+    object-fit: contain;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    flex-shrink: 0;
+}
+
+.vep-competition-display-winner-info {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.vep-competition-winner-label {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.6);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.vep-competition-winner-name {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--vep-display-text-color, #ffffff);
+}
+
+.vep-competition-winner-org {
+    font-size: 0.95rem;
+    color: rgba(255, 255, 255, 0.75);
+}
+
+.vep-competitions-error {
+    color: #ff6b6b;
+    font-size: 1rem;
+}
+
+.vep-competitions-empty {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 1.1rem;
+}
+
+/* Winner view */
+#vep-winner-view {
+    justify-content: center;
+    align-items: center;
+}
+
+.vep-winner-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 32px;
+    text-align: center;
+    margin-top: -120px;
+}
+
+.vep-winner-label {
+    color: var(--vep-display-text-color, #ffffff);
+    font-size: clamp(2.5rem, 4vw, 4rem);
+    font-weight: 600;
+    opacity: 0.85;
+    letter-spacing: 0.02em;
+}
+
+.vep-winner-name {
+    color: var(--vep-display-text-color, #ffffff);
+    font-size: clamp(4rem, 8vw, 9rem);
+    font-weight: 700;
+    line-height: 1.15;
+    text-shadow: 2px 4px 12px rgba(0, 0, 0, 0.35);
+    opacity: 0;
+}
+
+/* Closing view */
+#vep-closing-view {
+    justify-content: center;
+    align-items: center;
+}
+
+.vep-closing-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.vep-closing-text {
+    color: var(--vep-display-text-color, #ffffff);
+    font-size: clamp(4rem, 8vw, 9rem);
+    font-weight: 700;
+    line-height: 1.2;
+    text-shadow: 2px 4px 12px rgba(0, 0, 0, 0.35);
+}
+
 .vep-display-agreements {
     margin: 40px 0 0 0;
     display: flex;
@@ -466,11 +689,10 @@ table.wp-list-table td.column-is_approved {
     backdrop-filter: blur(10px);
     border: 3px solid rgba(255, 255, 255, 0.3);
     border-radius: 30px;
+    box-sizing: border-box;
     width: 100%;
-    max-width: 760px;
     padding: 50px 80px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-    min-width: 400px;
 }
 
 /* Leaderboard */
@@ -709,10 +931,6 @@ table.wp-list-table td.column-is_approved {
         margin-bottom: 150px;
     }
 
-    .vep-display-time-up {
-        font-size: 97px;
-    }
-    
     .vep-fullscreen-display .vep-countdown-value {
         font-size: 72px;
     }
@@ -733,10 +951,6 @@ table.wp-list-table td.column-is_approved {
         margin-bottom: 148px;
     }
 
-    .vep-display-time-up {
-        font-size: 76px;
-    }
-    
     .vep-fullscreen-display .vep-countdown-value {
         font-size: 56px;
     }

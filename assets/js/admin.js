@@ -95,16 +95,50 @@
     }
     
     /**
+     * Helper function to switch views
+     * @param {string} viewId - The ID of the view to show ('countdown', 'statistics', 'competitions')
+     * @param {string|null} actionButtonsId - The ID of the action buttons to show, or null to hide all
+     */
+    function switchView(viewId, actionButtonsId = null) {
+        // Hide all views
+        const allViews = document.querySelectorAll('.vep-view');
+        allViews.forEach(view => {
+            view.classList.remove('vep-view-active');
+            view.style.display = 'none';
+        });
+
+        // Show selected view
+        const selectedView = document.getElementById(viewId);
+        if (selectedView) {
+            selectedView.style.display = 'flex';
+            selectedView.classList.add('vep-view-active');
+        }
+
+        // Hide all action buttons
+        const allActionButtons = document.querySelectorAll('.vep-action-buttons');
+        allActionButtons.forEach(btn => btn.style.display = 'none');
+
+        // Show selected action buttons (unless hide buttons setting is active)
+        if (actionButtonsId && !(vepAdmin && vepAdmin.hideButtons)) {
+            const selectedActionButtons = document.getElementById(actionButtonsId);
+            if (selectedActionButtons) {
+                selectedActionButtons.style.display = 'flex';
+            }
+        }
+    }
+    
+    /**
      * Initialize Event Display functionality
      */
     function initEventDisplay() {
         const startButton = document.getElementById('vep-start-event-display');
         const displayModal = document.getElementById('vep-fullscreen-display');
         const closeButton = document.getElementById('vep-close-display');
-        const displayMainContent = document.getElementById('vep-display-main-content');
-        const rightPanel = document.getElementById('vep-display-right');
+        const countdownView = document.getElementById('vep-countdown-view');
         const postTimeActions = document.getElementById('vep-post-time-actions');
         const statisticsView = document.getElementById('vep-statistics-view');
+        const displayMainContent = document.querySelector('.vep-display-main-content');
+        const rightPanel = document.getElementById('vep-display-right');
         
         if (!startButton || !displayModal) return;
         
@@ -113,6 +147,10 @@
         let fireworksAnimation = null;
         let fireworksStopTimeout = null;
         let postTimeRevealTimeout = null;
+        let loadedCompetitions = null;
+        let winnerRevealTimeout = null;
+        let currentWinnerIndex = 0;
+        let winnersForDisplay = [];
 
         function syncRightPanelHeight() {
             // Height equality is now handled entirely by CSS:
@@ -184,13 +222,8 @@
                 postTimeActions.style.display = 'none';
             }
 
-            if (statisticsView) {
-                statisticsView.style.display = 'none';
-            }
-
-            if (displayMainContent) {
-                displayMainContent.style.display = '';
-            }
+            // Ensure we start in countdown view
+            switchView('vep-countdown-view', null);
 
             syncRightPanelHeight();
 
@@ -218,6 +251,90 @@
         if (showStatisticsBtn) {
             showStatisticsBtn.addEventListener('click', function() {
                 showStatisticsView(startButton.dataset.eventId);
+            });
+        }
+
+        // Show competitions view
+        const showCompetitionsBtn = document.getElementById('vep-show-competitions');
+        if (showCompetitionsBtn) {
+            showCompetitionsBtn.addEventListener('click', function() {
+                showCompetitionsView(startButton.dataset.eventId);
+            });
+        }
+
+        // Back to statistics from competitions
+        const backToStatisticsBtn = document.getElementById('vep-show-statistics-from-competitions');
+        if (backToStatisticsBtn) {
+            backToStatisticsBtn.addEventListener('click', function() {
+                showStatisticsView(startButton.dataset.eventId, false);
+            });
+        }
+
+        // Show first winner from competitions
+        const showFirstWinnerBtn = document.getElementById('vep-show-first-winner');
+        if (showFirstWinnerBtn) {
+            showFirstWinnerBtn.addEventListener('click', function() {
+                if (winnersForDisplay.length > 0) {
+                    showWinnerView(0);
+                }
+            });
+        }
+
+        // Winner view navigation
+        const winnerBackToListBtn = document.getElementById('vep-winner-back-to-list');
+        if (winnerBackToListBtn) {
+            winnerBackToListBtn.addEventListener('click', function() {
+                showCompetitionsView(startButton.dataset.eventId);
+            });
+        }
+
+        const winnerPrevBtn = document.getElementById('vep-winner-prev');
+        if (winnerPrevBtn) {
+            winnerPrevBtn.addEventListener('click', function() {
+                if (currentWinnerIndex > 0) {
+                    showWinnerView(currentWinnerIndex - 1);
+                }
+            });
+        }
+
+        const winnerNextBtn = document.getElementById('vep-winner-next');
+        if (winnerNextBtn) {
+            winnerNextBtn.addEventListener('click', function() {
+                if (currentWinnerIndex < winnersForDisplay.length - 1) {
+                    showWinnerView(currentWinnerIndex + 1);
+                }
+            });
+        }
+
+        const winnerFinishBtn = document.getElementById('vep-winner-finish');
+        if (winnerFinishBtn) {
+            winnerFinishBtn.addEventListener('click', function() {
+                showClosingView();
+            });
+        }
+
+        const closingBackBtn = document.getElementById('vep-closing-back-to-competitions');
+        if (closingBackBtn) {
+            closingBackBtn.addEventListener('click', function() {
+                showCompetitionsView(startButton.dataset.eventId);
+            });
+        }
+
+        // Show competitions from statistics
+        const showCompetitionsFromStatisticsBtn = document.getElementById('vep-show-competitions-from-statistics');
+        if (showCompetitionsFromStatisticsBtn) {
+            showCompetitionsFromStatisticsBtn.addEventListener('click', function() {
+                showCompetitionsView(startButton.dataset.eventId);
+            });
+        }
+
+        // Back to countdown from statistics (manual navigation only)
+        const backToCountdownBtn = document.getElementById('vep-back-to-countdown');
+        if (backToCountdownBtn) {
+            backToCountdownBtn.addEventListener('click', function() {
+                switchView('vep-countdown-view', 'vep-post-time-actions');
+                const timeUpEl = document.getElementById('vep-display-time-up');
+                if (timeUpEl) timeUpEl.style.display = 'none';
             });
         }
 
@@ -261,20 +378,22 @@
                 postTimeRevealTimeout = null;
             }
 
-            if (postTimeActions) {
-                postTimeActions.style.display = 'none';
+            // Cancel any pending winner reveal
+            if (winnerRevealTimeout) {
+                clearTimeout(winnerRevealTimeout);
+                winnerRevealTimeout = null;
             }
 
-            if (statisticsView) {
-                statisticsView.style.display = 'none';
-            }
-
+            // Hide all subheadings
             const timeUpEl = document.getElementById('vep-display-time-up');
             if (timeUpEl) timeUpEl.style.display = 'none';
+            const compHeadingEl = document.getElementById('vep-display-competitions-heading');
+            if (compHeadingEl) compHeadingEl.style.display = 'none';
+            const winnerHeadingEl = document.getElementById('vep-display-winner-heading');
+            if (winnerHeadingEl) winnerHeadingEl.style.display = 'none';
 
-            if (displayMainContent) {
-                displayMainContent.style.display = '';
-            }
+            // Switch back to countdown view
+            switchView('vep-countdown-view', null);
             
             // Exit fullscreen
             exitFullscreen();
@@ -372,6 +491,20 @@
                     postTimeRevealTimeout = setTimeout(() => {
                         if (displayModal.style.display !== 'flex') return;
                         if (autoSwitchStats) {
+                            // Activate competition winners before showing statistics
+                            const winnerFormData = new FormData();
+                            winnerFormData.append('action', 'vep_activate_competition_winners');
+                            winnerFormData.append('nonce', vepAdmin.nonce);
+                            winnerFormData.append('event_id', startButton.dataset.eventId);
+
+                            fetch(vepAdmin.ajaxUrl, {
+                                method: 'POST',
+                                body: winnerFormData,
+                                credentials: 'same-origin'
+                            })
+                            .then(response => response.json())
+                            .catch(error => console.error('Error activating winners:', error));
+
                             showStatisticsView(startButton.dataset.eventId, true);
                         } else {
                             if (postTimeActions) postTimeActions.style.display = 'flex';
@@ -531,7 +664,10 @@
         window.addEventListener('resize', syncRightPanelHeight);
         
         function showStatisticsView(eventId, showTimeUp) {
-            // Fireworks continue running over the statistics view.
+            // Stop fireworks only if this is a manual button click (not automatic switch)
+            if (showTimeUp !== true) {
+                stopFireworks();
+            }
 
             // Stop countdown interval (polling continues for potential future use).
             if (countdownInterval) clearInterval(countdownInterval);
@@ -540,16 +676,20 @@
                 postTimeRevealTimeout = null;
             }
 
-            // Hide live-display content and action buttons
-            if (displayMainContent) displayMainContent.style.display = 'none';
-            if (postTimeActions) postTimeActions.style.display = 'none';
-
-            // Show/hide "Tiden er gået" heading
+            // Show/hide the header subheadings
             const timeUpEl = document.getElementById('vep-display-time-up');
-            if (timeUpEl) timeUpEl.style.display = showTimeUp ? '' : 'none';
+            if (timeUpEl) timeUpEl.style.display = showTimeUp === true ? '' : 'none';
+            const compHeadingEl = document.getElementById('vep-display-competitions-heading');
+            if (compHeadingEl) compHeadingEl.style.display = 'none';
+            const winnerHeadingElStat = document.getElementById('vep-display-winner-heading');
+            if (winnerHeadingElStat) winnerHeadingElStat.style.display = 'none';
 
-            // Show statistics view
-            if (statisticsView) statisticsView.style.display = 'flex';
+            // Show back-to-countdown button only on manual navigation
+            const backToCountdownBtn = document.getElementById('vep-back-to-countdown');
+            if (backToCountdownBtn) backToCountdownBtn.style.display = showTimeUp === true ? 'none' : '';
+
+            // Switch to statistics view with action buttons (switchView handles hiding all other views)
+            switchView('vep-statistics-view', 'vep-statistics-actions');
 
             // Fetch statistics from server
             const formData = new FormData();
@@ -568,6 +708,7 @@
                 renderStatistics(data.data);
             })
             .catch(() => {
+                const statisticsView = document.getElementById('vep-statistics-view');
                 const errorEl = statisticsView ? statisticsView.querySelector('.vep-statistics-error') : null;
                 if (errorEl) {
                     errorEl.textContent = vepAdmin.i18n.statsLoadingError || 'Could not load statistics.';
@@ -669,13 +810,191 @@
                 height - 6
             );
 
-            // X-axis minute ticks (at most 10 visible ticks)
+            // X-axis minute ticks (at most 10 visible ticks), 1-based labels
             const tickEvery = Math.max(1, Math.ceil(durationMinutes / 10));
             ctx.font = '18px sans-serif';
             for (let i = 0; i < durationMinutes; i += tickEvery) {
                 const x = padding.left + (i + 0.5) * barW;
-                ctx.fillText(i, x, padding.top + ch + 16);
+                ctx.fillText(i + 1, x, padding.top + ch + 16);
             }
+            // Always show the last minute tick if not already included
+            const lastMinute = durationMinutes - 1;
+            if (lastMinute > 0 && lastMinute % tickEvery !== 0) {
+                const x = padding.left + (lastMinute + 0.5) * barW;
+                ctx.fillText(lastMinute + 1, x, padding.top + ch + 16);
+            }
+        }
+
+        function showCompetitionsView(eventId) {
+            // Stop fireworks (manual button click)
+            stopFireworks();
+
+            // Show competitions subheading, hide others
+            const compHeadingEl = document.getElementById('vep-display-competitions-heading');
+            if (compHeadingEl) compHeadingEl.style.display = '';
+            const timeUpEl = document.getElementById('vep-display-time-up');
+            if (timeUpEl) timeUpEl.style.display = 'none';
+            const winnerHeadingElComp = document.getElementById('vep-display-winner-heading');
+            if (winnerHeadingElComp) winnerHeadingElComp.style.display = 'none';
+
+            // Switch to competitions view with action buttons
+            switchView('vep-competitions-view', 'vep-competitions-actions');
+
+            // Fetch competitions from server
+            const formData = new FormData();
+            formData.append('action', 'vep_get_event_competitions');
+            formData.append('nonce', vepAdmin.nonce);
+            formData.append('event_id', eventId);
+
+            fetch(vepAdmin.ajaxUrl, {
+                method: 'POST',
+                body: formData,
+                credentials: 'same-origin'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (!data.success) throw new Error(data.data && data.data.message);
+                loadedCompetitions = data.data.competitions;
+                renderCompetitions(loadedCompetitions);
+            })
+            .catch(() => {
+                const compView = document.getElementById('vep-competitions-view');
+                const errorEl = compView ? compView.querySelector('.vep-competitions-error') : null;
+                if (errorEl) {
+                    errorEl.textContent = vepAdmin.i18n.competitionsLoadingError || 'Could not load competitions.';
+                    errorEl.style.display = 'block';
+                }
+            });
+        }
+
+        function renderCompetitions(competitions) {
+            const listElement = document.getElementById('vep-competitions-list');
+
+            if (!listElement) return;
+
+            // Only show competitions that have a winner selected
+            const winnersOnly = (competitions || []).filter(c => c.winner_id);
+            winnersForDisplay = (competitions || []).filter(c => c.winner_name);
+
+            if (winnersOnly.length === 0) {
+                listElement.innerHTML = '<p class="vep-competitions-empty">' + (vepAdmin.i18n.noCompetitionsAvailable || 'No competitions available.') + '</p>';
+                return;
+            }
+
+            let html = '<div class="vep-competitions-grid">';
+            winnersOnly.forEach((competition) => {
+                const winnerIndex = winnersForDisplay.findIndex(c => c.id === competition.id);
+                const clickable  = winnerIndex !== -1;
+                html += `
+                    <div class="vep-competition-card vep-competition-display-card${clickable ? ' vep-competition-clickable' : ''}" data-competition-id="${competition.id}">
+                        <div class="vep-competition-display-title">${competition.title || ''}</div>
+                        ${competition.description ? '<div class="vep-competition-display-description">' + competition.description + '</div>' : ''}
+                    </div>
+                `;
+            });
+            html += '</div>';
+
+            listElement.innerHTML = html;
+
+            listElement.addEventListener('click', function handler(e) {
+                const card = e.target.closest('.vep-competition-clickable');
+                if (!card) return;
+                const competitionId = card.dataset.competitionId;
+                const idx = winnersForDisplay.findIndex(c => String(c.id) === competitionId);
+                if (idx !== -1) showWinnerView(idx);
+            });
+        }
+
+        function showWinnerView(index) {
+            const competition = winnersForDisplay[index];
+            if (!competition) return;
+
+            currentWinnerIndex = index;
+            stopFireworks();
+
+            if (winnerRevealTimeout) {
+                clearTimeout(winnerRevealTimeout);
+                winnerRevealTimeout = null;
+            }
+
+            // Show competition title as subheading, hide others
+            const winnerHeadingEl = document.getElementById('vep-display-winner-heading');
+            if (winnerHeadingEl) {
+                winnerHeadingEl.textContent = competition.title || '';
+                winnerHeadingEl.style.display = '';
+            }
+            const compHeadingEl = document.getElementById('vep-display-competitions-heading');
+            if (compHeadingEl) compHeadingEl.style.display = 'none';
+            const timeUpEl = document.getElementById('vep-display-time-up');
+            if (timeUpEl) timeUpEl.style.display = 'none';
+
+            // Switch to winner view
+            switchView('vep-winner-view', 'vep-winner-actions');
+
+            // Update navigation buttons for this position
+            updateWinnerButtons(index, winnersForDisplay.length);
+
+            // Set winner name hidden initially
+            const winnerNameEl = document.getElementById('vep-winner-name');
+            if (winnerNameEl) {
+                winnerNameEl.textContent = competition.winner_name || '';
+                winnerNameEl.style.opacity = '0';
+                winnerNameEl.style.transition = 'none';
+            }
+
+            // Fade in winner name after 3 seconds
+            winnerRevealTimeout = setTimeout(() => {
+                winnerRevealTimeout = null;
+                if (winnerNameEl) {
+                    winnerNameEl.style.transition = 'opacity 1s ease-in';
+                    winnerNameEl.style.opacity = '1';
+                }
+                // Start fireworks when the winner's name is revealed
+                startFireworks();
+            }, 2000);
+        }
+
+        function updateWinnerButtons(index, total) {
+            const backBtn  = document.getElementById('vep-winner-back-to-list');
+            const prevBtn  = document.getElementById('vep-winner-prev');
+            const nextBtn  = document.getElementById('vep-winner-next');
+            const finishBtn = document.getElementById('vep-winner-finish');
+
+            if (backBtn) {
+                backBtn.textContent = index === 0
+                    ? (vepAdmin.i18n.winnerBackFirst || 'Tilbage til konkurrence oversigt')
+                    : (vepAdmin.i18n.winnerBackOther || 'Konkurrence oversigt');
+            }
+
+            if (prevBtn)   prevBtn.style.display   = index > 0                ? '' : 'none';
+            if (nextBtn)   nextBtn.style.display   = index < total - 1        ? '' : 'none';
+            if (finishBtn) finishBtn.style.display = index === total - 1      ? '' : 'none';
+        }
+
+        function showClosingView() {
+            stopFireworks();
+
+            if (winnerRevealTimeout) {
+                clearTimeout(winnerRevealTimeout);
+                winnerRevealTimeout = null;
+            }
+
+            // Hide all subheadings
+            const winnerHeadingEl = document.getElementById('vep-display-winner-heading');
+            if (winnerHeadingEl) winnerHeadingEl.style.display = 'none';
+            const compHeadingEl = document.getElementById('vep-display-competitions-heading');
+            if (compHeadingEl) compHeadingEl.style.display = 'none';
+            const timeUpEl = document.getElementById('vep-display-time-up');
+            if (timeUpEl) timeUpEl.style.display = 'none';
+
+            // Populate closing text from localized option
+            const closingTextEl = document.getElementById('vep-closing-text');
+            if (closingTextEl) {
+                closingTextEl.textContent = (vepAdmin && vepAdmin.closingText) ? vepAdmin.closingText : 'Tak for denne gang';
+            }
+
+            // Switch to closing view
+            switchView('vep-closing-view', 'vep-closing-actions');
         }
 
         function stopFireworks() {

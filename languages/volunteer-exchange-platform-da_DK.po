@@ -1884,3 +1884,15 @@ msgstr "Søg"
 #: src/Admin/EventsPage.php
 msgid "No agreements match your search."
 msgstr "Ingen aftaler matcher din søgning."
+
+#: src/Admin/EventDisplayPage.php
+msgid "Back to Countdown"
+msgstr "Tilbage til nedtælling"
+
+#: src/Admin/EventDisplayPage.php
+msgid "Back to Statistics"
+msgstr "Tilbage til statistik"
+
+#: src/Admin/EventDisplayPage.php
+msgid "No competitions available."
+msgstr "Ingen konkurrencer tilgængelige."

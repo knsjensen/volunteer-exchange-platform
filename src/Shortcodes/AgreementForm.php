@@ -63,7 +63,8 @@ class AgreementForm {
         }
 
         $event_end_ts = isset( $active_event->end_date ) ? strtotime( (string) $active_event->end_date ) : false;
-        if ( false !== $event_end_ts && $event_end_ts < current_time( 'timestamp' ) ) {
+        $agreement_grace_period_seconds = 30 * MINUTE_IN_SECONDS;
+        if ( false !== $event_end_ts && ( $event_end_ts + $agreement_grace_period_seconds ) < current_time( 'timestamp' ) ) {
             $event_name = isset( $active_event->name ) ? (string) $active_event->name : '';
 
             return '<div class="vep-message vep-info">' . sprintf(
