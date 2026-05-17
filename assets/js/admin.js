@@ -159,6 +159,7 @@
         let currentAutoSwitch = false;
         let competitionsFingerprint = null;
         let competitionsRefreshInterval = null;
+        let currentStatistics = null;
 
         function syncRightPanelHeight() {
             // Height equality is now handled entirely by CSS:
@@ -794,7 +795,13 @@
             syncRightPanelHeight();
         }
 
-        window.addEventListener('resize', syncRightPanelHeight);
+        window.addEventListener('resize', function() {
+            syncRightPanelHeight();
+
+            if (currentDisplayView === 'statistics' && currentStatistics) {
+                drawStatisticsChart(currentStatistics.per_minute, currentStatistics.duration_minutes);
+            }
+        });
         
         function showStatisticsView(eventId, showTimeUp) {
             stopCompetitionsRefresh();
@@ -854,6 +861,8 @@
         }
 
         function renderStatistics(stats) {
+            currentStatistics = stats;
+
             const totalEl = document.getElementById('vep-stat-total');
             const avgEl   = document.getElementById('vep-stat-avg');
             const maxEl   = document.getElementById('vep-stat-max');
