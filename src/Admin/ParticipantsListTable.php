@@ -44,6 +44,11 @@ class ParticipantsListTable extends \WP_List_Table {
      * @var EventService
      */
     private $event_service;
+
+    /**
+     * @var string
+     */
+    private $selected_per_page = '25';
     
     /**
      * Get default event ID (cached)
@@ -316,8 +321,8 @@ class ParticipantsListTable extends \WP_List_Table {
                 __('Delete', 'volunteer-exchange-platform')
             )
         );
-        
-        return sprintf('%1$s %2$s', $item->organization_name, $this->row_actions($actions));
+
+        return sprintf('%1$s %2$s', esc_html( $item->organization_name ), $this->row_actions($actions));
     }
 
     /**
@@ -327,10 +332,6 @@ class ParticipantsListTable extends \WP_List_Table {
      * @return void
      */
     protected function extra_tablenav($which) {
-        if ($which !== 'top') {
-            return;
-        }
-
         $events = $this->event_service->get_all_for_select();
 
         $event_id_param_present = filter_has_var( INPUT_GET, 'event_id' );
@@ -338,19 +339,74 @@ class ParticipantsListTable extends \WP_List_Table {
         $selected_event_id = $event_id_param_present
             ? absint( (int) $selected_event_raw )
             : $this->get_default_event_id();
+
+        if ( 'top' === $which ) {
+            ?>
+            <div class="alignleft actions vep-participants-toolbar">
+                <label class="screen-reader-text" for="filter-by-event"><?php esc_html_e('Filter by event', 'volunteer-exchange-platform'); ?></label>
+                <select name="event_id" id="filter-by-event">
+                    <option value="0"><?php esc_html_e('All Events', 'volunteer-exchange-platform'); ?></option>
+                    <?php foreach ($events as $event): ?>
+                        <option value="<?php echo esc_attr($event->id); ?>" <?php selected($selected_event_id, (int) $event->id); ?>>
+                            <?php echo esc_html($event->name); ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+                <?php submit_button(__('Filter', 'volunteer-exchange-platform'), '', 'filter_action', false); ?>
+                <button type="button" class="button button-primary vep-print-selected-button" id="vep-print-selected-participants">
+                    <?php esc_html_e( 'Print selected', 'volunteer-exchange-platform' ); ?>
+                </button>
+            </div>
+            <?php
+            return;
+        }
+    }
+
+    /**
+     * Render the table tablenav with per-page selector next to pagination.
+     *
+     * @param string $which Top or bottom tablenav.
+     * @return void
+     */
+    public function display_tablenav( $which ) {
+        if ( ! $this->has_items() ) {
+            return;
+        }
+
         ?>
-        <div class="alignleft actions">
-            <label class="screen-reader-text" for="filter-by-event"><?php esc_html_e('Filter by event', 'volunteer-exchange-platform'); ?></label>
-            <select name="event_id" id="filter-by-event">
-                <option value="0"><?php esc_html_e('All Events', 'volunteer-exchange-platform'); ?></option>
-                <?php foreach ($events as $event): ?>
-                    <option value="<?php echo esc_attr($event->id); ?>" <?php selected($selected_event_id, (int) $event->id); ?>>
-                        <?php echo esc_html($event->name); ?>
-                    </option>
-                <?php endforeach; ?>
-            </select>
-            <?php submit_button(__('Filter', 'volunteer-exchange-platform'), '', 'filter_action', false); ?>
+        <div class="tablenav <?php echo esc_attr( $which ); ?>">
+            <?php wp_nonce_field( 'bulk-' . $this->_args['plural'] ); ?>
+
+            <div class="alignleft actions bulkactions">
+                <?php $this->bulk_actions( $which ); ?>
+            </div>
+
+            <?php $this->extra_tablenav( $which ); ?>
+
+            <div class="alignright actions vep-tablenav-right">
+                <?php $this->render_per_page_control(); ?>
+                <?php $this->pagination( $which ); ?>
+            </div>
+
+            <br class="clear" />
         </div>
+        <?php
+    }
+
+    /**
+     * Render per-page selector used in the top and bottom tablenav.
+     *
+     * @return void
+     */
+    private function render_per_page_control() {
+        ?>
+        <label for="vep-per-page-select"><?php esc_html_e( 'Rows per page', 'volunteer-exchange-platform' ); ?></label>
+        <select class="vep-per-page-select" id="vep-per-page-select" data-per-page-control="1">
+            <option value="25" <?php selected( $this->selected_per_page, '25' ); ?>>25</option>
+            <option value="50" <?php selected( $this->selected_per_page, '50' ); ?>>50</option>
+            <option value="100" <?php selected( $this->selected_per_page, '100' ); ?>>100</option>
+            <option value="all" <?php selected( $this->selected_per_page, 'all' ); ?>><?php esc_html_e( 'All', 'volunteer-exchange-platform' ); ?></option>
+        </select>
         <?php
     }
     
@@ -362,24 +418,29 @@ class ParticipantsListTable extends \WP_List_Table {
      * @return void
      */
     public function prepare_items() {
-        $per_page = 20;
-        $current_page = $this->get_pagenum();
-
         $orderby_raw = filter_input( INPUT_GET, 'orderby', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
         $order_raw = filter_input( INPUT_GET, 'order', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
         $approval_status_raw = filter_input( INPUT_GET, 'approval_status', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+        $per_page_raw = filter_input( INPUT_GET, 'per_page', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
         $orderby = $orderby_raw ? sanitize_key( $orderby_raw ) : 'created_at';
         $order_param = $order_raw ? sanitize_key( $order_raw ) : '';
         $order = 'asc' === $order_param ? 'ASC' : 'DESC';
 
-        $offset = ($current_page - 1) * $per_page;
-
         $approval_status = $approval_status_raw ? sanitize_key( $approval_status_raw ) : 'all';
+        $per_page_value = $per_page_raw ? sanitize_key( $per_page_raw ) : '25';
 
         // Event filter (default to active event when not explicitly provided)
         $event_id_param_present = filter_has_var( INPUT_GET, 'event_id' );
         $event_id_raw = filter_input( INPUT_GET, 'event_id', FILTER_VALIDATE_INT );
         $event_id = $event_id_param_present ? absint( (int) $event_id_raw ) : $this->get_default_event_id();
+
+        $total_items = $this->participant_service->count_with_filters($approval_status, $event_id);
+        $allowed_per_page = array( '25', '50', '100', 'all' );
+        $per_page_value = in_array( $per_page_value, $allowed_per_page, true ) ? $per_page_value : '25';
+        $this->selected_per_page = $per_page_value;
+        $per_page = 'all' === $per_page_value ? max( 1, $total_items ) : (int) $per_page_value;
+        $current_page = $this->get_pagenum();
+        $offset = 'all' === $per_page_value ? 0 : ($current_page - 1) * $per_page;
 
         $this->items = $this->participant_service->get_paginated_with_filters(
             $per_page,
@@ -389,8 +450,6 @@ class ParticipantsListTable extends \WP_List_Table {
             $approval_status,
             $event_id
         );
-
-        $total_items = $this->participant_service->count_with_filters($approval_status, $event_id);
         
         $this->set_pagination_args(array(
             'total_items' => $total_items,

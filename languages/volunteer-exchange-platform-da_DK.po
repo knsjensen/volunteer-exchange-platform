@@ -356,8 +356,28 @@ msgid "All Events"
 msgstr "Alle begivenheder"
 
 #: src/Admin/ParticipantsListTable.php
+msgid "Rows per page"
+msgstr "Rækker pr. side"
+
+#: src/Admin/ParticipantsListTable.php
+msgid "Print selected"
+msgstr "Print valgte"
+
+#: src/Plugin/Plugin.php
+msgid "Select at least one participant in the table."
+msgstr "Vælg mindst én deltager i tabellen."
+
+#: src/Plugin/Plugin.php
+msgid "Select at least one field."
+msgstr "Vælg mindst ét felt."
+
+#: src/Admin/ParticipantsListTable.php
 msgid "✗ Unapprove"
 msgstr "✗ Fjern godkendelse"
+
+#: src/Admin/ParticipantPrintPage.php
+msgid "Unknown"
+msgstr "Ukendt"
 
 #: src/Shortcodes/ParticipantsGrid.php:106
 msgid "Filter by tag"
@@ -1433,6 +1453,99 @@ msgstr "Vælg et ikon fra vælgeren."
 #: src/Shortcodes/Registration.php:159
 msgid "Phone"
 msgstr "Telefon"
+
+#: src/Admin/ParticipantsPage.php
+#: src/Admin/ParticipantsPage.php
+msgid "Allow boxes to break across pages (save paper)"
+msgstr "Tillad at bokse skæres over på siderne (spar papir)"
+
+#: src/Admin/ParticipantsPage.php
+msgid "Participant Number"
+msgstr "Deltagernummer"
+
+#: src/Admin/ParticipantsPage.php
+msgid "Organization Name"
+msgstr "Organisationsnavn"
+
+#: src/Admin/ParticipantsPage.php
+msgid "Description"
+msgstr "Beskrivelse"
+
+#: src/Admin/ParticipantsPage.php
+msgid "Expected Participants"
+msgstr "Forventede antal deltagere"
+
+#: src/Admin/ParticipantsPage.php
+msgid "Participant Names"
+msgstr "Navne på deltager(e)"
+
+#: src/Admin/ParticipantsPage.php
+msgid "Contact Person"
+msgstr "Kontaktperson"
+
+#: src/Admin/ParticipantsPage.php
+msgid "Email"
+msgstr "E-mail"
+
+#: src/Admin/ParticipantsPage.php
+msgid "Phone"
+msgstr "Telefon"
+
+#: src/Admin/ParticipantsPage.php
+msgid "We Offer"
+msgstr "Vi tilbyder"
+
+#: src/Admin/ParticipantsPage.php
+msgid "Missing Fields"
+msgstr "Mangler at udfylde"
+
+#: src/Admin/ParticipantsPage.php
+msgid "Print Participant"
+msgstr "Print deltager"
+
+#: src/Admin/ParticipantsPage.php
+msgid "Select Fields"
+msgstr "Vælg felter"
+
+#: src/Admin/ParticipantsPage.php
+msgid "Check the fields to print and drag to reorder."
+msgstr "Marker de felter der skal printes og træk for at ændre rækkefølge."
+
+#: src/Admin/ParticipantsPage.php
+msgid "Show checkbox (empty box for manual checking on paper)"
+msgstr "Vis afkrydsningsboks (tom firkant til manuel afkrydsning på papir)"
+
+#: src/Admin/ParticipantsPage.php
+msgid "Drag to reorder"
+msgstr "Træk for at sortere"
+
+#: src/Admin/ParticipantsPage.php
+msgid "List"
+msgstr "Liste"
+
+#: src/Admin/ParticipantsPage.php
+msgid "Columns per row"
+msgstr "Antal pr. linje"
+
+#: src/Admin/ParticipantsPage.php
+msgid "Orientation"
+msgstr "Retning"
+
+#: src/Admin/ParticipantsPage.php
+msgid "Portrait"
+msgstr "Stående"
+
+#: src/Admin/ParticipantsPage.php
+msgid "Landscape"
+msgstr "Liggende"
+
+#: src/Admin/ParticipantsPage.php
+msgid "Paper Format"
+msgstr "Papirformat"
+
+#: src/Admin/ParticipantsPage.php
+msgid "Close"
+msgstr "Luk"
 
 #: src/Frontend/ParticipantPage.php:198
 msgid "Phone:"

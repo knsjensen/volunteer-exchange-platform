@@ -13,6 +13,7 @@ use VolunteerExchangePlatform\Admin\EventDisplayPage;
 use VolunteerExchangePlatform\Admin\EventsPage;
 use VolunteerExchangePlatform\Admin\Menu;
 use VolunteerExchangePlatform\Admin\ParticipantsPage;
+use VolunteerExchangePlatform\Admin\ParticipantPrintPage;
 use VolunteerExchangePlatform\Admin\ParticipantTypesPage;
 use VolunteerExchangePlatform\Admin\SettingsPage;
 use VolunteerExchangePlatform\Admin\TagsPage;
@@ -146,6 +147,7 @@ class Plugin {
         $event_display_page = new EventDisplayPage( $services['event'] );
         $competitions_page   = new CompetitionsPage( $services['competition'], $services['event'], $services['participant'] );
         $settings_page = new SettingsPage();
+        new ParticipantPrintPage( $services['participant'] );
 
         new Menu(
             $events_page,
@@ -234,6 +236,8 @@ class Plugin {
             'vepAdmin',
             array(
                 'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+                'adminPostUrl' => admin_url( 'admin-post.php' ),
+                'printNonce' => wp_create_nonce( 'vep_print_participant' ),
                 'nonce' => wp_create_nonce( 'vep_admin_nonce' ),
                 'competitionNonce' => wp_create_nonce( 'vep_competitions_nonce' ),
                 'placeholderText' => __( 'Please select icon', 'volunteer-exchange-platform' ),
@@ -263,6 +267,8 @@ class Plugin {
                     'winnerNext'               => __( 'N\u00e6ste vinder', 'volunteer-exchange-platform' ),
                     'winnerFinish'             => __( 'Afslut', 'volunteer-exchange-platform' ),
                     'noCompetitionsAvailable'  => __( 'No competitions available.', 'volunteer-exchange-platform' ),
+                    'printNoSelection'         => __( 'Select at least one participant in the table.', 'volunteer-exchange-platform' ),
+                    'printNoFields'            => __( 'Select at least one field.', 'volunteer-exchange-platform' ),
                 ),
                 'closingText'        => get_option( 'vep_display_closing_text', __( 'Tak for denne gang', 'volunteer-exchange-platform' ) ),
                 'timeUpText'         => get_option( 'vep_display_time_up_text', __( 'Tiden er gået', 'volunteer-exchange-platform' ) ),

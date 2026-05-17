@@ -121,6 +121,8 @@ class ParticipantsPage {
         $approval_status_raw = filter_input( INPUT_GET, 'approval_status', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
         $event_id_param_present = filter_has_var( INPUT_GET, 'event_id' );
         $event_id_raw = filter_input( INPUT_GET, 'event_id', FILTER_VALIDATE_INT );
+        $per_page_raw = filter_input( INPUT_GET, 'per_page', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+        $per_page_value = $per_page_raw ? sanitize_key( $per_page_raw ) : '25';
         $notice_type = $notice_raw ? sanitize_key( $notice_raw ) : 'success';
         ?>
         <div class="wrap">
@@ -146,10 +148,126 @@ class ParticipantsPage {
                 if ( $event_id_param_present ) {
                     echo '<input type="hidden" name="event_id" value="' . esc_attr( absint( (int) $event_id_raw ) ) . '" />';
                 }
+                echo '<input type="hidden" name="per_page" id="vep-per-page-hidden" value="' . esc_attr( $per_page_value ) . '" />';
                 $list_table->display(); 
                 ?>
             </form>
         </div>
+
+        <?php $this->render_print_modal(); ?>
+        <?php
+    }
+
+    /**
+     * Render the participant print modal.
+     *
+    * The modal is hidden on page load; the print button above the table
+    * opens it via JavaScript and uses the selected participant IDs.
+     *
+     * @return void
+     */
+    private function render_print_modal() {
+        $print_fields = array(
+            'logo'               => __( 'Logo', 'volunteer-exchange-platform' ),
+            'participant_number' => __( 'Participant Number', 'volunteer-exchange-platform' ),
+            'organization_name'  => __( 'Organization Name', 'volunteer-exchange-platform' ),
+            'description'        => __( 'Description', 'volunteer-exchange-platform' ),
+            'type'               => __( 'Type', 'volunteer-exchange-platform' ),
+            'expected_count'     => __( 'Expected Participants', 'volunteer-exchange-platform' ),
+            'expected_names'     => __( 'Participant Names', 'volunteer-exchange-platform' ),
+            'contact_person'     => __( 'Contact Person', 'volunteer-exchange-platform' ),
+            'email'              => __( 'Email', 'volunteer-exchange-platform' ),
+            'phone'              => __( 'Phone', 'volunteer-exchange-platform' ),
+            'we_offer'           => __( 'We Offer', 'volunteer-exchange-platform' ),
+            'status'             => __( 'Status', 'volunteer-exchange-platform' ),
+            'missing_fields'     => __( 'Missing Fields', 'volunteer-exchange-platform' ),
+        );
+
+        $default_checked_fields = array(
+            'participant_number',
+            'organization_name',
+            'expected_count',
+            'expected_names',
+        );
+        ?>
+        <div id="vep-print-modal" class="vep-modal-overlay" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="vep-print-modal-title">
+            <div class="vep-modal-container">
+
+                <div class="vep-modal-header">
+                    <h2 id="vep-print-modal-title"><?php esc_html_e( 'Print Participant', 'volunteer-exchange-platform' ); ?></h2>
+                    <button type="button" id="vep-print-modal-close" class="vep-modal-close" aria-label="<?php esc_attr_e( 'Close', 'volunteer-exchange-platform' ); ?>">&times;</button>
+                </div>
+
+                <div class="vep-modal-body">
+
+                    <div class="vep-print-section">
+                        <h3><?php esc_html_e( 'Select Fields', 'volunteer-exchange-platform' ); ?></h3>
+                        <p class="vep-print-hint"><?php esc_html_e( 'Check the fields to print and drag to reorder.', 'volunteer-exchange-platform' ); ?></p>
+                        <ul id="vep-print-fields-list" class="vep-sortable-list">
+                            <?php foreach ( $print_fields as $key => $label ) : ?>
+                            <li class="vep-sortable-item" data-field="<?php echo esc_attr( $key ); ?>">
+                                <span class="vep-drag-handle" title="<?php esc_attr_e( 'Drag to reorder', 'volunteer-exchange-platform' ); ?>">&#8942;&#8942;</span>
+                                <label>
+                                    <input type="checkbox" class="vep-print-field-cb" value="<?php echo esc_attr( $key ); ?>" <?php checked( in_array( $key, $default_checked_fields, true ) ); ?>>
+                                    <?php echo esc_html( $label ); ?>
+                                </label>
+                            </li>
+                            <?php endforeach; ?>
+                        </ul>
+
+                        <label class="vep-print-checkbox-option">
+                            <input type="checkbox" id="vep-print-show-checkbox">
+                            <?php esc_html_e( 'Show checkbox (empty box for manual checking on paper)', 'volunteer-exchange-platform' ); ?>
+                        </label>
+                    </div>
+
+                    <div class="vep-print-section vep-print-settings">
+                        <div class="vep-print-setting-group">
+                            <label for="vep-print-layout"><?php esc_html_e( 'Layout', 'volunteer-exchange-platform' ); ?></label>
+                            <select id="vep-print-layout">
+                                <option value="liste" selected><?php esc_html_e( 'List', 'volunteer-exchange-platform' ); ?></option>
+                                <option value="box"><?php esc_html_e( 'Box', 'volunteer-exchange-platform' ); ?></option>
+                                <option value="grid"><?php esc_html_e( 'Grid', 'volunteer-exchange-platform' ); ?></option>
+                            </select>
+                        </div>
+
+                        <div class="vep-print-setting-group" id="vep-print-grid-cols-wrap" style="display:none;">
+                            <label for="vep-print-grid-cols"><?php esc_html_e( 'Columns per row', 'volunteer-exchange-platform' ); ?></label>
+                            <input type="number" id="vep-print-grid-cols" value="3" min="1" max="6" style="width:60px;">
+                        </div>
+
+                        <div class="vep-print-setting-group">
+                            <label for="vep-print-orientation"><?php esc_html_e( 'Orientation', 'volunteer-exchange-platform' ); ?></label>
+                            <select id="vep-print-orientation">
+                                <option value="portrait" selected><?php esc_html_e( 'Portrait', 'volunteer-exchange-platform' ); ?></option>
+                                <option value="landscape"><?php esc_html_e( 'Landscape', 'volunteer-exchange-platform' ); ?></option>
+                            </select>
+                        </div>
+
+                        <div class="vep-print-setting-group">
+                            <label for="vep-print-paper"><?php esc_html_e( 'Paper Format', 'volunteer-exchange-platform' ); ?></label>
+                            <select id="vep-print-paper">
+                                <option value="A5"><?php esc_html_e( 'A5', 'volunteer-exchange-platform' ); ?></option>
+                                <option value="A4" selected><?php esc_html_e( 'A4', 'volunteer-exchange-platform' ); ?></option>
+                                <option value="A3"><?php esc_html_e( 'A3', 'volunteer-exchange-platform' ); ?></option>
+                            </select>
+                        </div>
+
+                        <label class="vep-print-checkbox-option vep-print-checkbox-full-width">
+                            <input type="checkbox" id="vep-print-allow-cut">
+                            <?php esc_html_e( 'Allow boxes to break across pages (save paper)', 'volunteer-exchange-platform' ); ?>
+                        </label>
+                    </div>
+
+                </div><!-- .vep-modal-body -->
+
+                <div class="vep-modal-footer">
+                    <button type="button" id="vep-print-cancel" class="button"><?php esc_html_e( 'Cancel', 'volunteer-exchange-platform' ); ?></button>
+                    <button type="button" id="vep-print-submit" class="button button-primary"><?php esc_html_e( 'Print', 'volunteer-exchange-platform' ); ?></button>
+                </div>
+
+            </div><!-- .vep-modal-container -->
+        </div><!-- #vep-print-modal -->
         <?php
     }
     
@@ -874,6 +992,7 @@ class ParticipantsPage {
         }
 
         $result = false;
+        $message = '';
         
         if ($action === 'approve') {
             $result = $this->participant_service->approve_participant($participant_id);
@@ -928,6 +1047,7 @@ class ParticipantsPage {
         $action = $action_raw ? sanitize_key( $action_raw ) : '-1';
         if ( '-1' === $action ) {
             $action2_raw = filter_input( INPUT_GET, 'action2', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+        $message = '';
             $action2 = $action2_raw ? sanitize_key( $action2_raw ) : '-1';
             if ( '-1' === $action2 ) {
                 return;

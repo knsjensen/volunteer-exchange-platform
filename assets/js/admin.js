@@ -12,6 +12,8 @@
         initCopyActiveEmails();
         initAdminChoices();
         initDisplayNavBox();
+        initPrintModal();
+        initPerPageControls();
     });
 
     function initCopyActiveEmails() {
@@ -2183,6 +2185,173 @@
                     .catch(() => {});
             });
         }
+    }
+
+    /**
+     * Participant print modal.
+     *
+     * Opens a configuration modal when a .vep-print-btn row action is clicked.
+     * The modal lets the user choose fields (sortable), layout, orientation,
+     * paper size and whether to include a printable checkbox.
+     * Clicking "Print" opens the generated print page in a new tab.
+     */
+    function initPrintModal() {
+        const modal     = document.getElementById('vep-print-modal');
+        const closeBtn  = document.getElementById('vep-print-modal-close');
+        const cancelBtn = document.getElementById('vep-print-cancel');
+        const submitBtn = document.getElementById('vep-print-submit');
+        const openBtn   = document.getElementById('vep-print-selected-participants');
+        const layoutSel = document.getElementById('vep-print-layout');
+        const gridWrap  = document.getElementById('vep-print-grid-cols-wrap');
+        const gridCols  = document.getElementById('vep-print-grid-cols');
+        const fieldList = document.getElementById('vep-print-fields-list');
+
+        if (!modal || typeof vepAdmin === 'undefined') return;
+
+        // Activate jQuery UI Sortable on the field list.
+        if (typeof jQuery !== 'undefined' && jQuery.fn.sortable) {
+            jQuery(fieldList).sortable({
+                handle: '.vep-drag-handle',
+                axis: 'y',
+                tolerance: 'pointer',
+                placeholder: 'vep-sortable-placeholder'
+            });
+        }
+
+        function getSelectedParticipantIds() {
+            const checkboxes = document.querySelectorAll('input[name="participant[]"]:checked');
+            const ids = [];
+
+            checkboxes.forEach(function (checkbox) {
+                const id = parseInt(checkbox.value, 10);
+                if (id) {
+                    ids.push(id);
+                }
+            });
+
+            return ids;
+        }
+
+        // Open modal from the top-level print button.
+        if (openBtn) {
+            openBtn.addEventListener('click', function () {
+                const selectedIds = getSelectedParticipantIds();
+                if (!selectedIds.length) {
+                    window.alert(vepAdmin.i18n && vepAdmin.i18n.printNoSelection
+                        ? vepAdmin.i18n.printNoSelection
+                        : 'Select at least one participant in the table.');
+                    return;
+                }
+
+                if (layoutSel && gridWrap) {
+                    gridWrap.style.display = layoutSel.value === 'grid' ? 'flex' : 'none';
+                }
+                modal.style.display = 'flex';
+                modal.querySelector('.vep-modal-container').focus();
+            });
+        }
+
+        // Show/hide grid columns input based on layout selection.
+        if (layoutSel && gridWrap) {
+            layoutSel.addEventListener('change', function () {
+                gridWrap.style.display = this.value === 'grid' ? 'flex' : 'none';
+            });
+        }
+
+        // Close helpers.
+        function closeModal() {
+            modal.style.display = 'none';
+        }
+
+        if (closeBtn) closeBtn.addEventListener('click', closeModal);
+        if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
+
+        // Close on overlay click.
+        modal.addEventListener('click', function (e) {
+            if (e.target === modal) closeModal();
+        });
+
+        // Close on Escape.
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && modal.style.display !== 'none') closeModal();
+        });
+
+        // Build print URL and open in new tab.
+        if (submitBtn) {
+            submitBtn.addEventListener('click', function () {
+                const selectedIds = getSelectedParticipantIds();
+
+                if (!selectedIds.length) {
+                    window.alert(vepAdmin.i18n && vepAdmin.i18n.printNoSelection
+                        ? vepAdmin.i18n.printNoSelection
+                        : 'Select at least one participant in the table.');
+                    return;
+                }
+
+                // Collect checked fields in DOM order (respects sortable).
+                const checkedItems = fieldList.querySelectorAll('.vep-sortable-item');
+                const fields = [];
+                checkedItems.forEach(function (item) {
+                    const cb = item.querySelector('.vep-print-field-cb');
+                    if (cb && cb.checked) {
+                        fields.push(item.dataset.field);
+                    }
+                });
+
+                if (fields.length === 0) {
+                    window.alert(vepAdmin.i18n && vepAdmin.i18n.printNoFields
+                        ? vepAdmin.i18n.printNoFields
+                        : 'Vælg mindst ét felt.');
+                    return;
+                }
+
+                const layout      = document.getElementById('vep-print-layout').value;
+                const orientation = document.getElementById('vep-print-orientation').value;
+                const paper       = document.getElementById('vep-print-paper').value;
+                const cols        = (gridCols && layout === 'grid') ? (parseInt(gridCols.value, 10) || 3) : 3;
+                const showCb      = document.getElementById('vep-print-show-checkbox').checked ? '1' : '0';
+                const allowCut    = document.getElementById('vep-print-allow-cut').checked ? '1' : '0';
+
+                const params = new URLSearchParams({
+                    action:      'vep_print_participant',
+                    ids:         selectedIds.join(','),
+                    nonce:       vepAdmin.printNonce,
+                    fields:      fields.join(','),
+                    layout:      layout,
+                    orientation: orientation,
+                    paper:       paper,
+                    grid_cols:   cols,
+                    show_checkbox: showCb,
+                    allow_cut:   allowCut
+                });
+
+                window.open(vepAdmin.adminPostUrl + '?' + params.toString(), '_blank');
+                closeModal();
+            });
+        }
+    }
+
+    function initPerPageControls() {
+        const hidden = document.getElementById('vep-per-page-hidden');
+        const controls = document.querySelectorAll('.vep-per-page-select');
+
+        if (!hidden || !controls.length) return;
+
+        controls.forEach(function (control) {
+            control.addEventListener('change', function () {
+                hidden.value = this.value;
+                controls.forEach(function (otherControl) {
+                    if (otherControl !== control) {
+                        otherControl.value = control.value;
+                    }
+                });
+
+                const form = control.closest('form');
+                if (form) {
+                    form.submit();
+                }
+            });
+        });
     }
 
 })();

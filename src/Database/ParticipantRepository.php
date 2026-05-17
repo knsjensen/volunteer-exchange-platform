@@ -146,6 +146,33 @@ class ParticipantRepository extends AbstractRepository {
     }
 
     /**
+     * Get multiple participants by ID with joined details.
+     *
+     * @param int[] $participant_ids Participant IDs.
+     * @return array
+     */
+    public function get_by_ids_with_details( array $participant_ids ) {
+        $participant_ids = array_values( array_filter( array_map( 'absint', $participant_ids ) ) );
+        if ( empty( $participant_ids ) ) {
+            return array();
+        }
+
+        $types_table = $this->wpdb->prefix . 'vep_participant_types';
+        $events_table = $this->wpdb->prefix . 'vep_events';
+        $placeholders = implode( ',', array_fill( 0, count( $participant_ids ), '%d' ) );
+
+        return $this->get_results(
+            "SELECT p.*, pt.name as type_name, e.name as event_name, e.start_date as event_date
+             FROM {$this->table()} p
+             LEFT JOIN {$types_table} pt ON p.participant_type_id = pt.id
+             LEFT JOIN {$events_table} e ON p.event_id = e.id
+             WHERE p.id IN ({$placeholders})
+             ORDER BY FIELD(p.id, {$placeholders})",
+            array_merge( $participant_ids, $participant_ids )
+        );
+    }
+
+    /**
      * Get approved participants who should receive a reminder on a target event date.
      *
      * A participant is considered incomplete (eligible for reminder) when one or more

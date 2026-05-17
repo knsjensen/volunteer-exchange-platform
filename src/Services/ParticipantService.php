@@ -124,6 +124,26 @@ class ParticipantService extends AbstractService {
     }
 
     /**
+     * Get multiple participants by ID including related details.
+     *
+     * @param int[] $participant_ids Participant IDs.
+     * @return array
+     */
+    public function get_by_ids_with_details( array $participant_ids ) {
+        $participant_ids = array_values( array_filter( array_map( 'absint', $participant_ids ) ) );
+        if ( empty( $participant_ids ) ) {
+            return array();
+        }
+
+        return $this->run_guarded(
+            function () use ( $participant_ids ) {
+                return $this->repository->get_by_ids_with_details( $participant_ids );
+            },
+            array()
+        );
+    }
+
+    /**
      * Get approved participant by ID including related details.
      *
      * @param int $participant_id Participant ID.
