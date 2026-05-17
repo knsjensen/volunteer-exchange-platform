@@ -80,10 +80,9 @@ Opret aftaler mellem to deltagere:
 ## Installation
 
 1. Upload plugin mappen til `/wp-content/plugins/`
-2. (Udvikling) Kør `composer install` i plugin mappen for at generere `vendor/autoload.php`
-3. Aktiver pluginet via 'Plugins' menuen i WordPress
-4. Databasetabeller oprettes automatisk ved aktivering
-5. Gå til "Volunteer Exchange" i admin menuen for at komme i gang
+2. Aktiver pluginet via 'Plugins' menuen i WordPress
+3. Databasetabeller oprettes automatisk ved aktivering
+4. Gå til "Volunteer Exchange" i admin menuen for at komme i gang
 
 ## Brug
 
@@ -111,7 +110,7 @@ Opret aftaler mellem to deltagere:
 
 ### Arkitektur
 - **OOP struktur** med namespaces
-- **PSR-4 autoloading**
+- **Manuel `require_once` bootstrap loading**
 - **WP_List_Table** til admin oversigter
 - **AJAX handlers** med nonce verifikation
 - **Vanilla JavaScript** (ingen jQuery)
@@ -141,6 +140,10 @@ Opret aftaler mellem to deltagere:
 ```
 volunteer-exchange-platform/
 ├── volunteer-exchange-platform.php
+├── tools/
+│   ├── compile-mo.php
+│   ├── scan-po-terms.py
+│   └── seed-test-data.php
 ├── src/
 │   ├── Plugin/
 │   │   ├── Plugin.php
@@ -165,7 +168,7 @@ volunteer-exchange-platform/
 ## Requirements
 
 - WordPress 5.0+
-- PHP 7.2+
+- PHP 7.0+
 - MySQL 5.6+
 
 ## Changelog

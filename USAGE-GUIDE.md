@@ -270,12 +270,12 @@ CSS filer findes i: `assets/css/`
 - Refresh siden
 
 ### Choices.js virker ikke
-- Tjek at internet forbindelse er aktiv (CDN)
+- Tjek at pluginets lokale filer under `assets/vendor/choices-11.2.0/` findes
 - Tjek browser console for fejl
 - Tjek at shortcode `[vep_agreement_form]` er korrekt
 
 ### Bootstrap modal virker ikke
-- Tjek at internet forbindelse er aktiv (CDN)
+- Tjek at pluginets lokale Bootstrap filer under `assets/vendor/bootstrap-5.3.8-dist/` findes
 - Tjek browser console for fejl
 - Tjek at shortcode `[vep_participants_grid]` er korrekt
 

@@ -1617,23 +1617,23 @@ msgstr "Hvilken deltager er du?"
 msgid "Choose one to preselect as Participant 1 next time."
 msgstr "Vælg en for at forudvælge som Deltager 1 næste gang."
 
-#: src/Admin/EmailSettingsPage.php:114
+#: src/Admin/SettingsPage.php:114
 msgid "Email address that receives system notifications, e.g. new participant registrations."
 msgstr "E-mailadresse der modtager systemnotifikationer, f.eks. nye deltagerregistreringer."
 
-#: src/Admin/EmailSettingsPage.php:119
+#: src/Admin/SettingsPage.php:119
 msgid "Max participants per organization"
 msgstr "Maksimalt antal deltagere pr. organisation"
 
-#: src/Admin/EmailSettingsPage.php:131
+#: src/Admin/SettingsPage.php:131
 msgid "Maximum allowed value for Participants Expected on the update form."
 msgstr "Maksimal tilladt værdi for Forventede deltagere i opdateringsformularen."
 
-#: src/Admin/EmailSettingsPage.php:335
+#: src/Admin/SettingsPage.php:335
 msgid "— Select a key —"
 msgstr "— Vælg en nøgle —"
 
-#: src/Admin/EmailSettingsPage.php:340
+#: src/Admin/SettingsPage.php:340
 msgid "The internal template key used in code to queue this email."
 msgstr "Den interne templatesnøgle, som bruges i koden til at sætte denne e-mail i kø."
 
@@ -2009,3 +2009,4 @@ msgstr "Tilbage til statistik"
 #: src/Admin/EventDisplayPage.php
 msgid "No competitions available."
 msgstr "Ingen konkurrencer tilgængelige."
+

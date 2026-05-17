@@ -22,7 +22,3 @@ npm-debug.log*
 
 # Node modules (if using build tools)
 node_modules/
-
-# Composer
-/vendor/
-composer.lock

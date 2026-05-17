@@ -1,4 +1,4 @@
-﻿msgid ""
+msgid ""
 msgstr ""
 "Project-Id-Version: Volunteer Exchange Platform\n"
 "Report-Msgid-Bugs-To: \n"
@@ -13,72 +13,72 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
 
-#: includes/Admin/ParticipantsListTable.php
-#: includes/Shortcodes/AgreementsList.php
+#: src/Admin/ParticipantsListTable.php
+#: src/Shortcodes/AgreementsList.php
 msgid "#"
 msgstr ""
 
-#: includes/Shortcodes/ParticipantsGrid.php
+#: src/Shortcodes/ParticipantsGrid.php
 msgid "About:"
 msgstr ""
 
-#: includes/Admin/EventsListTable.php
-#: includes/Admin/EventsPage.php
+#: src/Admin/EventsListTable.php
+#: src/Admin/EventsPage.php
 msgid "Active"
 msgstr ""
 
-#: includes/Admin/EventDisplayPage.php
+#: src/Admin/EventDisplayPage.php
 msgid "Active Event:"
 msgstr ""
 
-#: includes/Admin/EventsPage.php
-#: includes/Admin/ParticipantsPage.php
-#: includes/Admin/ParticipantTypesPage.php
-#: includes/Admin/TagsPage.php
+#: src/Admin/EventsPage.php
+#: src/Admin/ParticipantsPage.php
+#: src/Admin/ParticipantTypesPage.php
+#: src/Admin/TagsPage.php
 msgid "Add New"
 msgstr ""
 
-#: includes/Admin/EventsPage.php
+#: src/Admin/EventsPage.php
 msgid "Add New Event"
 msgstr ""
 
-#: includes/Admin/ParticipantsPage.php
+#: src/Admin/ParticipantsPage.php
 msgid "Add New Participant"
 msgstr ""
 
-#: includes/Admin/ParticipantTypesPage.php
+#: src/Admin/ParticipantTypesPage.php
 msgid "Add New Participant Type"
 msgstr ""
 
-#: includes/Admin/TagsPage.php
+#: src/Admin/TagsPage.php
 msgid "Add New Tag"
 msgstr ""
 
-#: includes/Ajax/AgreementHandler.php
+#: src/Ajax/AgreementHandler.php
 msgid "Agreement created successfully!"
 msgstr ""
 
-#: includes/Shortcodes/AgreementForm.php
+#: src/Shortcodes/AgreementForm.php
 msgid "Agreement Description"
 msgstr ""
 
-#: includes/Admin/ParticipantsPage.php
+#: src/Admin/ParticipantsPage.php
 msgid "Agreements"
 msgstr ""
 
-#: includes/Admin/EventsPage.php
+#: src/Admin/EventsPage.php
 msgid "Agreements for this Event"
 msgstr ""
 
-#: includes/Admin/EventDisplayPage.php
+#: src/Admin/EventDisplayPage.php
 msgid "Agreements Made"
 msgstr ""
 
-#: includes/Admin/ParticipantsListTable.php
+#: src/Admin/ParticipantsListTable.php
 msgid "All"
 msgstr ""
 
-#: includes/Admin/ParticipantsListTable.php
+#: src/Admin/ParticipantsListTable.php
 msgid "All Events"
 msgstr ""
 
@@ -86,134 +86,134 @@ msgstr ""
 msgid "An error occurred. Please try again."
 msgstr ""
 
-#: includes/Admin/ParticipantsListTable.php
-msgid "âœ— Unapprove"
+#: src/Admin/ParticipantsListTable.php
+msgid "✗ Unapprove"
 msgstr ""
 
-#: includes/Admin/ParticipantsPage.php
-msgid "âœ— Unapprove Participant"
+#: src/Admin/ParticipantsPage.php
+msgid "✗ Unapprove Participant"
 msgstr ""
 
-#: includes/Admin/ParticipantsListTable.php
-msgid "âœ“ Approve"
+#: src/Admin/ParticipantsListTable.php
+msgid "✓ Approve"
 msgstr ""
 
-#: includes/Admin/ParticipantsPage.php
-msgid "âœ“ Approve Participant"
+#: src/Admin/ParticipantsPage.php
+msgid "✓ Approve Participant"
 msgstr ""
 
-#: includes/Admin/ParticipantsListTable.php
+#: src/Admin/ParticipantsListTable.php
 msgid "Approve"
 msgstr ""
 
-#: includes/Admin/ParticipantsPage.php
+#: src/Admin/ParticipantsPage.php
 msgid "Approve this participant"
 msgstr ""
 
-#: includes/Admin/ParticipantsListTable.php
-#: includes/Admin/ParticipantsPage.php
+#: src/Admin/ParticipantsListTable.php
+#: src/Admin/ParticipantsPage.php
 msgid "Approved"
 msgstr ""
 
-#: includes/Admin/EventsPage.php
+#: src/Admin/EventsPage.php
 msgid "Approved Participants"
 msgstr ""
 
-#: includes/Admin/ParticipantsListTable.php
+#: src/Admin/ParticipantsListTable.php
 msgid "Are you sure you want to delete this participant?"
 msgstr ""
 
-#: includes/Admin/ParticipantTypesListTable.php
-#: includes/Admin/TagsListTable.php
+#: src/Admin/ParticipantTypesListTable.php
+#: src/Admin/TagsListTable.php
 msgid "Are you sure?"
 msgstr ""
 
-#: includes/Shortcodes/AgreementForm.php
+#: src/Shortcodes/AgreementForm.php
 msgid "At least 2 approved participants are required to create agreements."
 msgstr ""
 
-#: includes/Admin/EventsPage.php
+#: src/Admin/EventsPage.php
 msgid "Back to Events"
 msgstr ""
 
-#: includes/Admin/ParticipantsPage.php
+#: src/Admin/ParticipantsPage.php
 msgid "Back to Participants"
 msgstr ""
 
-#: includes/Admin/EventsPage.php
-#: includes/Admin/ParticipantsPage.php
-#: includes/Admin/ParticipantTypesPage.php
-#: includes/Admin/TagsPage.php
+#: src/Admin/EventsPage.php
+#: src/Admin/ParticipantsPage.php
+#: src/Admin/ParticipantTypesPage.php
+#: src/Admin/TagsPage.php
 msgid "Cancel"
 msgstr ""
 
-#: includes/Admin/EventDisplayPage.php
+#: src/Admin/EventDisplayPage.php
 msgid "Click the button below to launch the fullscreen event display."
 msgstr ""
 
-#: includes/Shortcodes/ParticipantsGrid.php
+#: src/Shortcodes/ParticipantsGrid.php
 msgid "Close"
 msgstr ""
 
-#: includes/Admin/EventDisplayPage.php
+#: src/Admin/EventDisplayPage.php
 msgid "Close Display (ESC)"
 msgstr ""
 
-#: includes/Admin/ParticipantsPage.php
+#: src/Admin/ParticipantsPage.php
 msgid "Contact Email"
 msgstr ""
 
-#: includes/Admin/ParticipantsListTable.php
-#: includes/Admin/ParticipantsPage.php
+#: src/Admin/ParticipantsListTable.php
+#: src/Admin/ParticipantsPage.php
 msgid "Contact Person"
 msgstr ""
 
-#: includes/Admin/ParticipantsPage.php
+#: src/Admin/ParticipantsPage.php
 msgid "Contact Person Name"
 msgstr ""
 
-#: includes/Admin/ParticipantsPage.php
+#: src/Admin/ParticipantsPage.php
 msgid "Contact Phone"
 msgstr ""
 
-#: includes/Admin/EventDisplayPage.php
+#: src/Admin/EventDisplayPage.php
 msgid "Countdown Target Time"
 msgstr ""
 
-#: includes/Admin/ParticipantTypesPage.php
-#: includes/Admin/TagsPage.php
+#: src/Admin/ParticipantTypesPage.php
+#: src/Admin/TagsPage.php
 msgid "Create"
 msgstr ""
 
-#: includes/Shortcodes/AgreementForm.php
+#: src/Shortcodes/AgreementForm.php
 msgid "Create Agreement"
 msgstr ""
 
-#: includes/Admin/EventsPage.php
-#: includes/Admin/ParticipantsPage.php
+#: src/Admin/EventsPage.php
+#: src/Admin/ParticipantsPage.php
 msgid "Create Event"
 msgstr ""
 
-#: includes/Admin/EventsPage.php
+#: src/Admin/EventsPage.php
 msgid "Before you can create an event, you must create at least one Participant Type and at least one We Offer Tag."
 msgstr ""
 
-#: includes/Admin/EventsPage.php
+#: src/Admin/EventsPage.php
 msgid "Go to Participant Types"
 msgstr ""
 
-#: includes/Admin/EventsPage.php
+#: src/Admin/EventsPage.php
 msgid "Go to We Offer Tags"
 msgstr ""
 
-#: includes/Admin/ParticipantsPage.php
+#: src/Admin/ParticipantsPage.php
 msgid "Create Participant"
 msgstr ""
 
-#: includes/Admin/EventsListTable.php
-#: includes/Admin/EventsPage.php
-#: includes/Admin/ParticipantsListTable.php
-#: includes/Admin/ParticipantsPage.php
+#: src/Admin/EventsListTable.php
+#: src/Admin/EventsPage.php
+#: src/Admin/ParticipantsListTable.php
+#: src/Admin/ParticipantsPage.php
 msgid "Created"
 msgstr ""
 
@@ -221,222 +221,222 @@ msgstr ""
 msgid "Creating..."
 msgstr ""
 
-#: includes/Admin/EventsListTable.php
+#: src/Admin/EventsListTable.php
 msgid "Deactivate"
 msgstr ""
 
-#: includes/Admin/ParticipantsListTable.php
-#: includes/Admin/ParticipantTypesListTable.php
-#: includes/Admin/TagsListTable.php
+#: src/Admin/ParticipantsListTable.php
+#: src/Admin/ParticipantTypesListTable.php
+#: src/Admin/TagsListTable.php
 msgid "Delete"
 msgstr ""
 
-#: includes/Shortcodes/AgreementForm.php
+#: src/Shortcodes/AgreementForm.php
 msgid "Describe what the agreement is about and what each party will do."
 msgstr ""
 
-#: includes/Admin/ParticipantsPage.php
+#: src/Admin/ParticipantsPage.php
 msgid "Describe what this organization does."
 msgstr ""
 
-#: includes/Shortcodes/Registration.php
+#: src/Shortcodes/Registration.php
 msgid "Describe what your organization does and what makes you unique."
 msgstr ""
 
-#: includes/Admin/EventsPage.php
-#: includes/Admin/ParticipantsPage.php
-#: includes/Admin/ParticipantTypesListTable.php
-#: includes/Admin/ParticipantTypesPage.php
-#: includes/Admin/TagsListTable.php
-#: includes/Admin/TagsPage.php
-#: includes/Shortcodes/AgreementsList.php
+#: src/Admin/EventsPage.php
+#: src/Admin/ParticipantsPage.php
+#: src/Admin/ParticipantTypesListTable.php
+#: src/Admin/ParticipantTypesPage.php
+#: src/Admin/TagsListTable.php
+#: src/Admin/TagsPage.php
+#: src/Shortcodes/AgreementsList.php
 msgid "Description"
 msgstr ""
 
-#: includes/Admin/EventDisplayPage.php
+#: src/Admin/EventDisplayPage.php
 msgid "Display Control"
 msgstr ""
 
-#: includes/Admin/EventDisplayPage.php
+#: src/Admin/EventDisplayPage.php
 msgid "Display Settings"
 msgstr ""
 
-#: includes/Admin/EventDisplayPage.php
+#: src/Admin/EventDisplayPage.php
 msgid "Display Title"
 msgstr ""
 
-#: includes/Shortcodes/Registration.php
+#: src/Shortcodes/Registration.php
 msgid "e.g., 12"
 msgstr ""
 
-#: includes/Shortcodes/Registration.php
+#: src/Shortcodes/Registration.php
 msgid "e.g., Jane Doe, John Smith"
 msgstr ""
 
-#: includes/Admin/EventDisplayPage.php
+#: src/Admin/EventDisplayPage.php
 msgid "e.g., Welcome to Our Event"
 msgstr ""
 
-#: includes/Admin/EventsListTable.php
-#: includes/Admin/ParticipantsListTable.php
-#: includes/Admin/ParticipantTypesListTable.php
-#: includes/Admin/TagsListTable.php
+#: src/Admin/EventsListTable.php
+#: src/Admin/ParticipantsListTable.php
+#: src/Admin/ParticipantTypesListTable.php
+#: src/Admin/TagsListTable.php
 msgid "Edit"
 msgstr ""
 
-#: includes/Admin/EventsPage.php
+#: src/Admin/EventsPage.php
 msgid "Edit Event"
 msgstr ""
 
-#: includes/Admin/ParticipantsPage.php
+#: src/Admin/ParticipantsPage.php
 msgid "Edit Participant"
 msgstr ""
 
-#: includes/Admin/ParticipantTypesPage.php
+#: src/Admin/ParticipantTypesPage.php
 msgid "Edit Participant Type"
 msgstr ""
 
-#: includes/Admin/TagsPage.php
+#: src/Admin/TagsPage.php
 msgid "Edit Tag"
 msgstr ""
 
-#: includes/Admin/ParticipantsPage.php
-#: includes/Shortcodes/Registration.php
+#: src/Admin/ParticipantsPage.php
+#: src/Shortcodes/Registration.php
 msgid "Email"
 msgstr ""
 
-#: includes/Admin/EventsListTable.php
-#: includes/Admin/EventsPage.php
+#: src/Admin/EventsListTable.php
+#: src/Admin/EventsPage.php
 msgid "End Date"
 msgstr ""
 
-#: includes/Admin/EventDisplayPage.php
+#: src/Admin/EventDisplayPage.php
 msgid "Enter the countdown target date and time. Format: YYYY-MM-DD HH:MM:SS (e.g., 2026-02-15 18:00:00)"
 msgstr ""
 
-#: includes/Admin/EventDisplayPage.php
+#: src/Admin/EventDisplayPage.php
 msgid "Enter the title to display in the fullscreen view."
 msgstr ""
 
-#: includes/Ajax/AgreementHandler.php
+#: src/Ajax/AgreementHandler.php
 msgid "Error creating agreement. Please try again."
 msgstr ""
 
-#: includes/Ajax/ParticipantHandler.php
+#: src/Ajax/ParticipantHandler.php
 msgid "Error saving registration. Please try again."
 msgstr ""
 
-#: includes/Ajax/ParticipantHandler.php
+#: src/Ajax/ParticipantHandler.php
 msgid "Error uploading logo."
 msgstr ""
 
-#: includes/Admin/ParticipantsListTable.php
-#: includes/Admin/ParticipantsPage.php
+#: src/Admin/ParticipantsListTable.php
+#: src/Admin/ParticipantsPage.php
 msgid "Event"
 msgstr ""
 
-#: includes/Admin/EventsPage.php
+#: src/Admin/EventsPage.php
 msgid "Event created successfully and set as active."
 msgstr ""
 
-#: includes/Admin/EventsPage.php
+#: src/Admin/EventsPage.php
 msgid "Event deactivated."
 msgstr ""
 
-#: includes/Admin/EventsPage.php
+#: src/Admin/EventsPage.php
 msgid "Event Details"
 msgstr ""
 
-#: includes/Admin/EventDisplayPage.php
-#: includes/Admin/Menu.php
+#: src/Admin/EventDisplayPage.php
+#: src/Admin/Menu.php
 msgid "Event Display"
 msgstr ""
 
-#: includes/Admin/EventsPage.php
+#: src/Admin/EventsPage.php
 msgid "Event Name"
 msgstr ""
 
-#: includes/Admin/EventsPage.php
+#: src/Admin/EventsPage.php
 msgid "Event not found."
 msgstr ""
 
-#: includes/Admin/EventsPage.php
+#: src/Admin/EventsPage.php
 msgid "Event updated successfully."
 msgstr ""
 
-#: includes/Admin/EventsPage.php
-#: includes/Admin/Menu.php
+#: src/Admin/EventsPage.php
+#: src/Admin/Menu.php
 msgid "Events"
 msgstr ""
 
-#: includes/Admin/EventsPage.php
+#: src/Admin/EventsPage.php
 msgid "Expected Participants (Approved)"
 msgstr ""
 
-#: includes/Admin/ParticipantsListTable.php
+#: src/Admin/ParticipantsListTable.php
 msgid "Filter by event"
 msgstr ""
 
-#: includes/Admin/EventsPage.php
-#: includes/Admin/ParticipantsPage.php
+#: src/Admin/EventsPage.php
+#: src/Admin/ParticipantsPage.php
 msgid "ID"
 msgstr ""
 
-#: includes/Admin/EventsPage.php
+#: src/Admin/EventsPage.php
 msgid "Inactive"
 msgstr ""
 
-#: includes/Admin/EventsPage.php
-#: includes/Admin/ParticipantsPage.php
+#: src/Admin/EventsPage.php
+#: src/Admin/ParticipantsPage.php
 msgid "Initiator"
 msgstr ""
 
-#: includes/Admin/ParticipantsPage.php
+#: src/Admin/ParticipantsPage.php
 msgid "Logo"
 msgstr ""
 
-#: includes/Ajax/ParticipantHandler.php
+#: src/Ajax/ParticipantHandler.php
 msgid "Logo file size must be less than 2MB."
 msgstr ""
 
-#: includes/Ajax/ParticipantHandler.php
+#: src/Ajax/ParticipantHandler.php
 msgid "Logo must be JPG, PNG, or GIF format."
 msgstr ""
 
-#: includes/Admin/EventsListTable.php
-#: includes/Admin/ParticipantTypesListTable.php
-#: includes/Admin/ParticipantTypesPage.php
-#: includes/Admin/TagsListTable.php
-#: includes/Admin/TagsPage.php
+#: src/Admin/EventsListTable.php
+#: src/Admin/ParticipantTypesListTable.php
+#: src/Admin/ParticipantTypesPage.php
+#: src/Admin/TagsListTable.php
+#: src/Admin/TagsPage.php
 msgid "Name"
 msgstr ""
 
-#: includes/Admin/ParticipantsPage.php
+#: src/Admin/ParticipantsPage.php
 msgid "New participants are automatically added to the active event."
 msgstr ""
 
-#: includes/Shortcodes/AgreementForm.php
-#: includes/Shortcodes/AgreementsList.php
-#: includes/Shortcodes/ParticipantsGrid.php
-#: includes/Shortcodes/Registration.php
+#: src/Shortcodes/AgreementForm.php
+#: src/Shortcodes/AgreementsList.php
+#: src/Shortcodes/ParticipantsGrid.php
+#: src/Shortcodes/Registration.php
 msgid "No active event at the moment."
 msgstr ""
 
-#: includes/Admin/ParticipantsPage.php
+#: src/Admin/ParticipantsPage.php
 msgid "No active event found. Please create and activate an event before adding participants."
 msgstr ""
 
-#: includes/Admin/EventDisplayPage.php
+#: src/Admin/EventDisplayPage.php
 msgid "No active event found. Please create and activate an event first."
 msgstr ""
 
-#: includes/Admin/EventsPage.php
-#: includes/Admin/ParticipantsPage.php
-#: includes/Shortcodes/AgreementsList.php
+#: src/Admin/EventsPage.php
+#: src/Admin/ParticipantsPage.php
+#: src/Shortcodes/AgreementsList.php
 msgid "No agreements yet."
 msgstr ""
 
-#: includes/Admin/EventDisplayPage.php
+#: src/Admin/EventDisplayPage.php
 msgid "No agreements yet..."
 msgstr ""
 
@@ -444,7 +444,7 @@ msgstr ""
 msgid "No options available"
 msgstr ""
 
-#: includes/Shortcodes/ParticipantsGrid.php
+#: src/Shortcodes/ParticipantsGrid.php
 msgid "No participants yet."
 msgstr ""
 
@@ -452,91 +452,91 @@ msgstr ""
 msgid "No results found"
 msgstr ""
 
-#: includes/Admin/ParticipantsPage.php
+#: src/Admin/ParticipantsPage.php
 msgid "No tags"
 msgstr ""
 
-#: includes/Admin/ParticipantsListTable.php
+#: src/Admin/ParticipantsListTable.php
 msgid "Organization"
 msgstr ""
 
-#: includes/Admin/ParticipantsPage.php
-#: includes/Shortcodes/Registration.php
+#: src/Admin/ParticipantsPage.php
+#: src/Shortcodes/Registration.php
 msgid "Organization Description"
 msgstr ""
 
-#: includes/Shortcodes/Registration.php
+#: src/Shortcodes/Registration.php
 msgid "Organization Logo"
 msgstr ""
 
-#: includes/Admin/ParticipantsPage.php
-#: includes/Shortcodes/Registration.php
+#: src/Admin/ParticipantsPage.php
+#: src/Shortcodes/Registration.php
 msgid "Organization Name"
 msgstr ""
 
-#: includes/Shortcodes/Registration.php
+#: src/Shortcodes/Registration.php
 msgid "Organization Type"
 msgstr ""
 
-#: includes/Admin/ParticipantsPage.php
+#: src/Admin/ParticipantsPage.php
 msgid "Other Participant"
 msgstr ""
 
-#: includes/Shortcodes/ParticipantsGrid.php
+#: src/Shortcodes/ParticipantsGrid.php
 msgid "Participant #"
 msgstr ""
 
-#: includes/Admin/EventsPage.php
-#: includes/Shortcodes/AgreementForm.php
-#: includes/Shortcodes/AgreementsList.php
+#: src/Admin/EventsPage.php
+#: src/Shortcodes/AgreementForm.php
+#: src/Shortcodes/AgreementsList.php
 msgid "Participant 1"
 msgstr ""
 
-#: includes/Admin/EventsPage.php
-#: includes/Shortcodes/AgreementForm.php
-#: includes/Shortcodes/AgreementsList.php
+#: src/Admin/EventsPage.php
+#: src/Shortcodes/AgreementForm.php
+#: src/Shortcodes/AgreementsList.php
 msgid "Participant 2"
 msgstr ""
 
-#: includes/Admin/ParticipantsPage.php
+#: src/Admin/ParticipantsPage.php
 msgid "Participant approved."
 msgstr ""
 
-#: includes/Admin/ParticipantsPage.php
+#: src/Admin/ParticipantsPage.php
 msgid "Participant deleted."
 msgstr ""
 
-#: includes/Admin/ParticipantsPage.php
+#: src/Admin/ParticipantsPage.php
 msgid "Participant Details"
 msgstr ""
 
-#: includes/Admin/ParticipantsPage.php
-#: includes/Shortcodes/Registration.php
+#: src/Admin/ParticipantsPage.php
+#: src/Shortcodes/Registration.php
 msgid "Participant Names"
 msgstr ""
 
-#: includes/Admin/ParticipantsPage.php
+#: src/Admin/ParticipantsPage.php
 msgid "Participant not found."
 msgstr ""
 
-#: includes/Admin/ParticipantsPage.php
+#: src/Admin/ParticipantsPage.php
 msgid "Participant Number"
 msgstr ""
 
-#: includes/Admin/ParticipantsPage.php
+#: src/Admin/ParticipantsPage.php
 msgid "Participant saved successfully."
 msgstr ""
 
-#: includes/Admin/ParticipantsPage.php
+#: src/Admin/ParticipantsPage.php
 msgid "Participant Type"
 msgstr ""
 
-#: includes/Admin/Menu.php
-#: includes/Admin/ParticipantTypesPage.php
+#: src/Admin/Menu.php
+#: src/Admin/ParticipantTypesPage.php
 msgid "Participant Types"
 msgstr ""
 
-#: includes/Admin/ParticipantsPage.php
+#: src/Admin/ParticipantsPage.php
 msgid "Participant unapproved. Note: Participant number is retained."
 msgstr ""
 
@@ -569,7 +569,7 @@ msgid "Seconds"
 msgstr ""
 
 #: src/Plugin/WPBakeryIntegration.php
-msgid "Event nedtælling"
+msgid "Event nedt�lling"
 msgstr ""
 
 #: src/Plugin/WPBakeryIntegration.php
@@ -604,41 +604,41 @@ msgstr ""
 msgid "Text shown after the event has ended. Leave blank to use default."
 msgstr ""
 
-#: includes/Admin/Menu.php
-#: includes/Admin/ParticipantsListTable.php
-#: includes/Admin/ParticipantsPage.php
+#: src/Admin/Menu.php
+#: src/Admin/ParticipantsListTable.php
+#: src/Admin/ParticipantsPage.php
 msgid "Participants"
 msgstr ""
 
-#: includes/Admin/ParticipantsPage.php
-#: includes/Shortcodes/Registration.php
+#: src/Admin/ParticipantsPage.php
+#: src/Shortcodes/Registration.php
 msgid "Participants Expected"
 msgstr ""
 
-#: includes/Admin/ParticipantsListTable.php
-#: includes/Admin/ParticipantsPage.php
+#: src/Admin/ParticipantsListTable.php
+#: src/Admin/ParticipantsPage.php
 msgid "Pending Approval"
 msgstr ""
 
-#: includes/Admin/ParticipantsPage.php
-#: includes/Shortcodes/Registration.php
+#: src/Admin/ParticipantsPage.php
+#: src/Shortcodes/Registration.php
 msgid "Phone"
 msgstr ""
 
-#: includes/Ajax/AgreementHandler.php
-#: includes/Ajax/ParticipantHandler.php
+#: src/Ajax/AgreementHandler.php
+#: src/Ajax/ParticipantHandler.php
 msgid "Please fill in all required fields."
 msgstr ""
 
-#: includes/Ajax/ParticipantHandler.php
+#: src/Ajax/ParticipantHandler.php
 msgid "Please select at least one tag for what you offer."
 msgstr ""
 
-#: includes/Ajax/AgreementHandler.php
+#: src/Ajax/AgreementHandler.php
 msgid "Please select two different participants."
 msgstr ""
 
-#: includes/Ajax/AgreementHandler.php
+#: src/Ajax/AgreementHandler.php
 msgid "Please select who initiates the agreement."
 msgstr ""
 
@@ -650,23 +650,23 @@ msgstr ""
 msgid "Please select at least one option."
 msgstr ""
 
-#: includes/Shortcodes/Registration.php
+#: src/Shortcodes/Registration.php
 msgid "Register"
 msgstr ""
 
-#: includes/Shortcodes/Registration.php
+#: src/Shortcodes/Registration.php
 msgid "Next"
 msgstr ""
 
-#: includes/Shortcodes/Registration.php
+#: src/Shortcodes/Registration.php
 msgid "Back"
 msgstr ""
 
-#: includes/Ajax/ParticipantHandler.php
+#: src/Ajax/ParticipantHandler.php
 msgid "Registration submitted successfully! Your registration is pending approval."
 msgstr ""
 
-#: includes/Admin/EventDisplayPage.php
+#: src/Admin/EventDisplayPage.php
 msgid "Save Settings"
 msgstr ""
 
@@ -674,43 +674,43 @@ msgstr ""
 msgid "Search..."
 msgstr ""
 
-#: includes/Admin/EventsPage.php
-#: includes/Admin/ParticipantsPage.php
-#: includes/Admin/ParticipantTypesPage.php
-#: includes/Admin/TagsPage.php
-#: includes/Ajax/AgreementHandler.php
-#: includes/Ajax/ParticipantHandler.php
+#: src/Admin/EventsPage.php
+#: src/Admin/ParticipantsPage.php
+#: src/Admin/ParticipantTypesPage.php
+#: src/Admin/TagsPage.php
+#: src/Ajax/AgreementHandler.php
+#: src/Ajax/ParticipantHandler.php
 msgid "Security check failed."
 msgstr ""
 
-#: includes/Admin/ParticipantsPage.php
+#: src/Admin/ParticipantsPage.php
 msgid "Select Event"
 msgstr ""
 
-#: includes/Shortcodes/AgreementForm.php
+#: src/Shortcodes/AgreementForm.php
 msgid "Select participant..."
 msgstr ""
 
-#: includes/Admin/ParticipantsPage.php
-#: includes/Shortcodes/Registration.php
+#: src/Admin/ParticipantsPage.php
+#: src/Shortcodes/Registration.php
 msgid "Select Type"
 msgstr ""
 
-#: includes/Admin/EventDisplayPage.php
+#: src/Admin/EventDisplayPage.php
 msgid "Settings saved successfully."
 msgstr ""
 
-#: includes/Admin/EventsListTable.php
-#: includes/Admin/EventsPage.php
+#: src/Admin/EventsListTable.php
+#: src/Admin/EventsPage.php
 msgid "Start Date"
 msgstr ""
 
-#: includes/Admin/EventDisplayPage.php
+#: src/Admin/EventDisplayPage.php
 msgid "Start Event Display"
 msgstr ""
 
-#: includes/Admin/EventsPage.php
-#: includes/Admin/ParticipantsPage.php
+#: src/Admin/EventsPage.php
+#: src/Admin/ParticipantsPage.php
 msgid "Status"
 msgstr ""
 
@@ -718,134 +718,134 @@ msgstr ""
 msgid "Submitting..."
 msgstr ""
 
-#: includes/Shortcodes/Registration.php
+#: src/Shortcodes/Registration.php
 msgid "Supported formats: JPG, PNG, GIF. Max size: 2MB"
 msgstr ""
 
-#: includes/Admin/TagsPage.php
+#: src/Admin/TagsPage.php
 msgid "Tag created successfully."
 msgstr ""
 
-#: includes/Admin/TagsPage.php
+#: src/Admin/TagsPage.php
 msgid "Tag deleted."
 msgstr ""
 
-#: includes/Admin/TagsPage.php
+#: src/Admin/TagsPage.php
 msgid "Tag updated successfully."
 msgstr ""
 
-#: includes/Shortcodes/Registration.php
+#: src/Shortcodes/Registration.php
 msgid "Tell us about your organization..."
 msgstr ""
 
-#: includes/Admin/ParticipantsPage.php
-#: includes/Shortcodes/Registration.php
+#: src/Admin/ParticipantsPage.php
+#: src/Shortcodes/Registration.php
 msgid "The names of the participants expected to attend the event."
 msgstr ""
 
-#: includes/Admin/ParticipantsPage.php
-#: includes/Shortcodes/Registration.php
+#: src/Admin/ParticipantsPage.php
+#: src/Shortcodes/Registration.php
 msgid "The number of participants expected to attend the event."
 msgstr ""
 
-#: includes/Shortcodes/AgreementForm.php
+#: src/Shortcodes/AgreementForm.php
 msgid "This participant initiates"
 msgstr ""
 
-#: includes/Admin/EventDisplayPage.php
+#: src/Admin/EventDisplayPage.php
 msgid "This will open a fullscreen display with countdown timer and live agreement count. Press ESC to exit fullscreen."
 msgstr ""
 
-#: includes/Admin/EventDisplayPage.php
+#: src/Admin/EventDisplayPage.php
 msgid "Times up!"
 msgstr ""
 
-#: includes/Admin/EventDisplayPage.php
+#: src/Admin/EventDisplayPage.php
 msgid "Top Participants"
 msgstr ""
 
-#: includes/Admin/ParticipantsListTable.php
-#: includes/Admin/ParticipantsPage.php
+#: src/Admin/ParticipantsListTable.php
+#: src/Admin/ParticipantsPage.php
 msgid "Type"
 msgstr ""
 
-#: includes/Admin/ParticipantTypesPage.php
+#: src/Admin/ParticipantTypesPage.php
 msgid "Type created successfully."
 msgstr ""
 
-#: includes/Admin/ParticipantTypesPage.php
+#: src/Admin/ParticipantTypesPage.php
 msgid "Type deleted."
 msgstr ""
 
-#: includes/Admin/ParticipantTypesPage.php
+#: src/Admin/ParticipantTypesPage.php
 msgid "Type updated successfully."
 msgstr ""
 
-#: includes/Shortcodes/ParticipantsGrid.php
+#: src/Shortcodes/ParticipantsGrid.php
 msgid "Type:"
 msgstr ""
 
-#: includes/Admin/ParticipantTypesPage.php
-#: includes/Admin/TagsPage.php
+#: src/Admin/ParticipantTypesPage.php
+#: src/Admin/TagsPage.php
 msgid "Update"
 msgstr ""
 
-#: includes/Admin/EventsPage.php
+#: src/Admin/EventsPage.php
 msgid "Update Event"
 msgstr ""
 
-#: includes/Admin/ParticipantsPage.php
+#: src/Admin/ParticipantsPage.php
 msgid "Update Participant"
 msgstr ""
 
-#: includes/Admin/ParticipantsPage.php
+#: src/Admin/ParticipantsPage.php
 msgid "Upload a new logo image."
 msgstr ""
 
-#: includes/Admin/EventsListTable.php
-#: includes/Admin/ParticipantsListTable.php
+#: src/Admin/EventsListTable.php
+#: src/Admin/ParticipantsListTable.php
 msgid "View"
 msgstr ""
 
-#: includes/Shortcodes/ParticipantsGrid.php
+#: src/Shortcodes/ParticipantsGrid.php
 msgid "View Details"
 msgstr ""
 
-#: includes/Admin/Menu.php
+#: src/Admin/Menu.php
 msgid "Volunteer Exchange"
 msgstr ""
 
-#: includes/Admin/ParticipantsPage.php
+#: src/Admin/ParticipantsPage.php
 msgid "We Offer"
 msgstr ""
 
-#: includes/Admin/Menu.php
-#: includes/Admin/ParticipantsPage.php
-#: includes/Admin/TagsPage.php
+#: src/Admin/Menu.php
+#: src/Admin/ParticipantsPage.php
+#: src/Admin/TagsPage.php
 msgid "We Offer Tags"
 msgstr ""
 
-#: includes/Frontend/ParticipantPage.php
+#: src/Frontend/ParticipantPage.php
 msgctxt "URL slug"
 msgid "participant"
 msgstr ""
 
-#: includes/Shortcodes/Registration.php
+#: src/Shortcodes/Registration.php
 msgid "What We Offer"
 msgstr ""
 
-#: includes/Shortcodes/ParticipantsGrid.php
+#: src/Shortcodes/ParticipantsGrid.php
 msgid "What We Offer:"
 msgstr ""
 
-#: includes/Admin/EventsPage.php
-#: includes/Admin/ParticipantsPage.php
-#: includes/Admin/ParticipantTypesPage.php
-#: includes/Admin/TagsPage.php
+#: src/Admin/EventsPage.php
+#: src/Admin/ParticipantsPage.php
+#: src/Admin/ParticipantTypesPage.php
+#: src/Admin/TagsPage.php
 msgid "You do not have permission to perform this action."
 msgstr ""
 
-#: includes/Shortcodes/Registration.php
+#: src/Shortcodes/Registration.php
 msgid "Your Name"
 msgstr ""
 
@@ -1039,11 +1039,11 @@ msgid "Website:"
 msgstr ""
 
 #: src/Admin/ParticipantsPage.php:399
-msgid "✓ Approve Participant"
+msgid "? Approve Participant"
 msgstr ""
 
 #: src/Admin/ParticipantsPage.php:403
-msgid "✗ Unapprove Participant"
+msgid "? Unapprove Participant"
 msgstr ""
 
 #: src/Shortcodes/ParticipantsGrid.php:106
@@ -1309,23 +1309,23 @@ msgstr ""
 msgid "Choose one to preselect as Participant 1 next time."
 msgstr ""
 
-#: src/Admin/EmailSettingsPage.php:114
+#: src/Admin/SettingsPage.php:114
 msgid "Email address that receives system notifications, e.g. new participant registrations."
 msgstr ""
 
-#: src/Admin/EmailSettingsPage.php:119
+#: src/Admin/SettingsPage.php:119
 msgid "Max participants per organization"
 msgstr ""
 
-#: src/Admin/EmailSettingsPage.php:131
+#: src/Admin/SettingsPage.php:131
 msgid "Maximum allowed value for Participants Expected on the update form."
 msgstr ""
 
-#: src/Admin/EmailSettingsPage.php:335
-msgid "— Select a key —"
+#: src/Admin/SettingsPage.php:335
+msgid "� Select a key �"
 msgstr ""
 
-#: src/Admin/EmailSettingsPage.php:340
+#: src/Admin/SettingsPage.php:340
 msgid "The internal template key used in code to queue this email."
 msgstr ""
 
@@ -1372,3 +1372,4 @@ msgstr ""
 #: src/Admin/ParticipantsListTable.php
 msgid "Partially complete"
 msgstr ""
+
