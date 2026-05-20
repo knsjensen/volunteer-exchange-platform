@@ -32,11 +32,11 @@ class WPBakeryIntegration {
             return;
         }
 
-        $category = __( 'Frivilligbørs', 'volunteer-exchange-platform' );
+        $category = __( 'Volunteer Exchange', 'volunteer-exchange-platform' );
 
         call_user_func( 'vc_map',
             array(
-                'name' => __( 'Tilmeldingsformular', 'volunteer-exchange-platform' ),
+                'name' => __( 'Registration Form', 'volunteer-exchange-platform' ),
                 'base' => 'vep_registration',
                 'icon' => 'dashicons dashicons-feedback',
                 'category' => $category,
@@ -58,7 +58,7 @@ class WPBakeryIntegration {
 
         call_user_func( 'vc_map',
             array(
-                'name' => __( 'Deltager grid', 'volunteer-exchange-platform' ),
+                'name' => __( 'Participants Grid', 'volunteer-exchange-platform' ),
                 'base' => 'vep_participants_grid',
                 'icon' => 'dashicons dashicons-screenoptions',
                 'category' => $category,
@@ -69,7 +69,7 @@ class WPBakeryIntegration {
 
         call_user_func( 'vc_map',
             array(
-                'name' => __( 'Participants table', 'volunteer-exchange-platform' ),
+                'name' => __( 'Participants Table', 'volunteer-exchange-platform' ),
                 'base' => 'vep_participants_table',
                 'icon' => 'dashicons dashicons-editor-table',
                 'category' => $category,
@@ -89,7 +89,7 @@ class WPBakeryIntegration {
 
         call_user_func( 'vc_map',
             array(
-                'name' => __( 'Opret børsaftale formular', 'volunteer-exchange-platform' ),
+                'name' => __( 'Agreement Form', 'volunteer-exchange-platform' ),
                 'base' => 'vep_agreement_form',
                 'icon' => 'dashicons dashicons-feedback',
                 'category' => $category,
@@ -100,7 +100,7 @@ class WPBakeryIntegration {
 
         call_user_func( 'vc_map',
             array(
-                'name' => __( 'Børsaftale tabel', 'volunteer-exchange-platform' ),
+                'name' => __( 'Agreements Table', 'volunteer-exchange-platform' ),
                 'base' => 'vep_agreements_list',
                 'icon' => 'dashicons dashicons-editor-table',
                 'category' => $category,
@@ -111,7 +111,7 @@ class WPBakeryIntegration {
 
         call_user_func( 'vc_map',
             array(
-                'name' => __( 'Event nedtælling', 'volunteer-exchange-platform' ),
+                'name' => __( 'Event Countdown', 'volunteer-exchange-platform' ),
                 'base' => 'vep_event_countdown',
                 'icon' => 'dashicons dashicons-clock',
                 'category' => $category,

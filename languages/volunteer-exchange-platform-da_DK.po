@@ -408,17 +408,38 @@ msgstr "Søg i aftaler"
 msgid "Type to search all columns..."
 msgstr "Skriv for at søge i alle kolonner..."
 
-#: src/Plugin/WPBakeryIntegration.php:67
-msgid "Participants table"
+#: src/Plugin/WPBakeryIntegration.php
+#: src/Plugin/ElementorShortcodeWidgets.inc
+msgid "Participants Table"
 msgstr "Deltager tabel"
 
 #: src/Plugin/WPBakeryIntegration.php:71
 msgid "Simple table of participants sorted by participant number."
 msgstr "Enkel tabel med deltagere sorteret efter deltagernummer."
 
+#: src/Plugin/WPBakeryIntegration.php
+#: src/Plugin/ElementorShortcodeWidgets.inc
+msgid "Registration Form"
+msgstr "Tilmeldingsformular"
+
+#: src/Plugin/WPBakeryIntegration.php
+#: src/Plugin/ElementorShortcodeWidgets.inc
+msgid "Participants Grid"
+msgstr "Deltager grid"
+
 #: src/Plugin/WPBakeryIntegration.php:75
 msgid "Show details button"
 msgstr "Vis detaljeknap"
+
+#: src/Plugin/WPBakeryIntegration.php
+#: src/Plugin/ElementorShortcodeWidgets.inc
+msgid "Agreement Form"
+msgstr "Opret børsaftale formular"
+
+#: src/Plugin/WPBakeryIntegration.php
+#: src/Plugin/ElementorShortcodeWidgets.inc
+msgid "Agreements Table"
+msgstr "Børsaftale tabel"
 
 #: src/Plugin/WPBakeryIntegration.php:78
 msgid "Show button linking to participant details page."
@@ -607,7 +628,8 @@ msgid "Seconds"
 msgstr "Sekunder"
 
 #: src/Plugin/WPBakeryIntegration.php
-msgid "Event nedtælling"
+#: src/Plugin/ElementorShortcodeWidgets.inc
+msgid "Event Countdown"
 msgstr "Event nedtælling"
 
 #: src/Plugin/WPBakeryIntegration.php
@@ -1197,6 +1219,8 @@ msgid "View"
 msgstr "Vis"
 
 #: src/Admin/Menu.php
+#: src/Plugin/WPBakeryIntegration.php
+#: src/Plugin/ElementorIntegration.php
 msgid "Volunteer Exchange"
 msgstr "Frivilligbørs"
 

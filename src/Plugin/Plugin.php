@@ -91,6 +91,7 @@ class Plugin {
 
         $this->init_public( $services );
         $this->init_email();
+        new \VolunteerExchangePlatform\Plugin\ElementorIntegration();
         new WPBakeryIntegration();
         $this->init_ajax( $services );
         $this->register_hooks();

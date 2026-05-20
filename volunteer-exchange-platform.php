@@ -91,6 +91,7 @@ require_once VEP_PLUGIN_DIR . 'src/Frontend/UpdateParticipantPage.php';
 require_once VEP_PLUGIN_DIR . 'src/Plugin/Activator.php';
 require_once VEP_PLUGIN_DIR . 'src/Plugin/Deactivator.php';
 require_once VEP_PLUGIN_DIR . 'src/Plugin/Dependencies.php';
+require_once VEP_PLUGIN_DIR . 'src/Plugin/ElementorIntegration.php';
 require_once VEP_PLUGIN_DIR . 'src/Plugin/WPBakeryIntegration.php';
 require_once VEP_PLUGIN_DIR . 'src/Plugin/Plugin.php';
 

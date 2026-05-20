@@ -569,11 +569,32 @@ msgid "Seconds"
 msgstr ""
 
 #: src/Plugin/WPBakeryIntegration.php
-msgid "Event nedt�lling"
+msgid "Countdown to the active event start date."
 msgstr ""
 
 #: src/Plugin/WPBakeryIntegration.php
-msgid "Countdown to the active event start date."
+#: src/Plugin/ElementorShortcodeWidgets.inc
+msgid "Event Countdown"
+msgstr ""
+
+#: src/Plugin/WPBakeryIntegration.php
+#: src/Plugin/ElementorShortcodeWidgets.inc
+msgid "Registration Form"
+msgstr ""
+
+#: src/Plugin/WPBakeryIntegration.php
+#: src/Plugin/ElementorShortcodeWidgets.inc
+msgid "Participants Grid"
+msgstr ""
+
+#: src/Plugin/WPBakeryIntegration.php
+#: src/Plugin/ElementorShortcodeWidgets.inc
+msgid "Agreement Form"
+msgstr ""
+
+#: src/Plugin/WPBakeryIntegration.php
+#: src/Plugin/ElementorShortcodeWidgets.inc
+msgid "Agreements Table"
 msgstr ""
 
 #: src/Plugin/WPBakeryIntegration.php
@@ -812,6 +833,8 @@ msgid "View Details"
 msgstr ""
 
 #: src/Admin/Menu.php
+#: src/Plugin/WPBakeryIntegration.php
+#: src/Plugin/ElementorIntegration.php
 msgid "Volunteer Exchange"
 msgstr ""
 
@@ -1076,7 +1099,8 @@ msgid "Type to search all columns..."
 msgstr ""
 
 #: src/Plugin/WPBakeryIntegration.php:67
-msgid "Participants table"
+#: src/Plugin/ElementorShortcodeWidgets.inc
+msgid "Participants Table"
 msgstr ""
 
 #: src/Plugin/WPBakeryIntegration.php:71
