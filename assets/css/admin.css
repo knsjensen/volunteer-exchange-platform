@@ -11,6 +11,13 @@ table.wp-list-table td.column-is_approved {
     text-align: left;
 }
 
+table.wp-list-table th.column-expected_participants_count,
+table.wp-list-table td.column-expected_participants_count,
+table.wp-list-table th.column-agreements_count,
+table.wp-list-table td.column-agreements_count {
+    text-align: center;
+}
+
 .vep-admin-page {
     margin: 20px 0;
 }

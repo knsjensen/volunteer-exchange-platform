@@ -99,6 +99,7 @@ class ParticipantsListTable extends \WP_List_Table {
             'contact_person_name' => __('Contact Person', 'volunteer-exchange-platform'),
             'participant_type' => __('Type', 'volunteer-exchange-platform'),
             'event_name' => __('Event', 'volunteer-exchange-platform'),
+            'agreements_count' => __('Agreements Made', 'volunteer-exchange-platform'),
             'is_approved' => __('Approved', 'volunteer-exchange-platform'),
             'created_at' => __('Created', 'volunteer-exchange-platform')
         );
@@ -161,6 +162,7 @@ class ParticipantsListTable extends \WP_List_Table {
             'organization_name' => array('organization_name', false),
             'contact_person_name' => array('contact_person_name', false),
             'participant_type' => array('participant_type', false),
+            'agreements_count' => array('agreements_count', false),
             'is_approved' => array('is_approved', false),
             'created_at' => array('created_at', true)
         );
@@ -264,6 +266,8 @@ class ParticipantsListTable extends \WP_List_Table {
             case 'event_name':
             case 'contact_person_name':
                 return isset($item->$column_name) ? $item->$column_name : '';
+            case 'agreements_count':
+                return isset( $item->agreements_count ) ? (string) (int) $item->agreements_count : '0';
             case 'created_at':
                 return date_i18n(get_option('date_format'), strtotime($item->$column_name));
             case 'is_approved':

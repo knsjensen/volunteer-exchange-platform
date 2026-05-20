@@ -352,6 +352,7 @@ class ParticipantRepository extends AbstractRepository {
         $types_table = $this->wpdb->prefix . 'vep_participant_types';
         $events_table = $this->wpdb->prefix . 'vep_events';
         $participant_tags_table = $this->wpdb->prefix . 'vep_participant_tags';
+        $agreements_table = $this->wpdb->prefix . 'vep_agreements';
 
         $allowed_orderby = array(
             'participant_number' => 'p.participant_number',
@@ -359,6 +360,7 @@ class ParticipantRepository extends AbstractRepository {
             'organization_name' => 'p.organization_name',
             'contact_person_name' => 'p.contact_person_name',
             'participant_type'  => 'pt.name',
+            'agreements_count' => 'agreements_count',
             'is_approved'      => 'p.is_approved',
             'created_at'        => 'p.created_at',
             'p.created_at'      => 'p.created_at',
@@ -386,6 +388,7 @@ class ParticipantRepository extends AbstractRepository {
             "SELECT p.*,
                     pt.name as participant_type,
                     e.name as event_name,
+                    COALESCE(pagreements.agreement_count, 0) as agreements_count,
                     (
                         CASE WHEN (p.logo_url IS NOT NULL AND p.logo_url <> '') OR COALESCE(p.no_logo, 0) = 1 THEN 1 ELSE 0 END +
                         CASE WHEN TRIM(COALESCE(p.description, '')) <> '' THEN 1 ELSE 0 END +
@@ -401,6 +404,17 @@ class ParticipantRepository extends AbstractRepository {
                 FROM {$participant_tags_table}
                 GROUP BY participant_id
              ) ptags ON p.id = ptags.participant_id
+                 LEFT JOIN (
+                     SELECT participant_id, event_id, COUNT(DISTINCT agreement_id) as agreement_count
+                     FROM (
+                          SELECT participant1_id as participant_id, event_id, id as agreement_id
+                          FROM {$agreements_table}
+                          UNION ALL
+                          SELECT participant2_id as participant_id, event_id, id as agreement_id
+                          FROM {$agreements_table}
+                     ) agreement_participants
+                     GROUP BY participant_id, event_id
+                 ) pagreements ON p.id = pagreements.participant_id AND p.event_id = pagreements.event_id
              {$where_clause}
              ORDER BY {$orderby_sql} {$order_sql}
              LIMIT %d OFFSET %d",
