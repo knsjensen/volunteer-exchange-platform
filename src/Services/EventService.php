@@ -557,20 +557,33 @@ class EventService extends AbstractService {
                     return null;
                 }
 
-                $timezone         = wp_timezone();
-                $start_dt         = new \DateTimeImmutable( $event->start_date, $timezone );
-                $end_dt           = new \DateTimeImmutable( $event->end_date, $timezone );
-                $duration_seconds = max( 1, $end_dt->getTimestamp() - $start_dt->getTimestamp() );
-                $duration_minutes = max( 1, (int) ceil( $duration_seconds / 60 ) );
+                $timezone            = wp_timezone();
+                $start_dt            = new \DateTimeImmutable( $event->start_date, $timezone );
+                $end_dt              = new \DateTimeImmutable( $event->end_date, $timezone );
+                $pre_window_minutes  = 10;
+                $post_window_minutes = 30;
+                $window_start_dt     = $start_dt->modify( sprintf( '-%d minutes', $pre_window_minutes ) );
+                $window_end_dt       = $end_dt->modify( sprintf( '+%d minutes', $post_window_minutes ) );
+                $duration_seconds    = max( 1, $end_dt->getTimestamp() - $start_dt->getTimestamp() );
+                $duration_minutes    = max( 1, (int) ceil( $duration_seconds / 60 ) );
 
-                $rows       = $this->repository->get_agreements_over_time( $event_id, $event->start_date, $event->end_date );
+                $rows       = $this->repository->get_agreements_over_time(
+                    $event_id,
+                    $event->start_date,
+                    $window_start_dt->format( 'Y-m-d H:i:s' ),
+                    $window_end_dt->format( 'Y-m-d H:i:s' )
+                );
                 $per_minute = array();
 
                 foreach ( $rows as $row ) {
-                    $minute = max( 0, (int) $row->minute_offset );
-                    if ( $minute < $duration_minutes ) {
-                        $per_minute[ $minute ] = (int) $row->cnt;
+                    $minute = (int) $row->minute_offset;
+                    $minute = max( 0, min( $duration_minutes - 1, $minute ) );
+
+                    if ( ! isset( $per_minute[ $minute ] ) ) {
+                        $per_minute[ $minute ] = 0;
                     }
+
+                    $per_minute[ $minute ] += (int) $row->cnt;
                 }
 
                 $total       = array_sum( $per_minute );
@@ -578,7 +591,11 @@ class EventService extends AbstractService {
                 $leaderboard = $this->repository->get_event_leaderboard( $event_id, 1 );
                 $max_actor   = ! empty( $leaderboard ) ? (int) $leaderboard[0]->agreement_count : 0;
 
-                $first_seconds = $this->repository->get_first_agreement_offset_seconds( $event_id, $event->start_date );
+                $first_seconds = $this->repository->get_first_agreement_offset_seconds(
+                    $event_id,
+                    $event->start_date,
+                    $window_start_dt->format( 'Y-m-d H:i:s' )
+                );
 
                 return array(
                     'total'                   => $total,

@@ -307,6 +307,7 @@ class EventRepository extends AbstractRepository {
      */
     public function create_agreement( array $data ) {
         $agreements_table = $this->wpdb->prefix . 'vep_agreements';
+        $current_time     = current_time( 'mysql' );
 
         $insert_data = array(
             'event_id' => isset($data['event_id']) ? absint($data['event_id']) : 0,
@@ -315,12 +316,14 @@ class EventRepository extends AbstractRepository {
             'initiator_id' => isset($data['initiator_id']) ? absint($data['initiator_id']) : 0,
             'description' => isset($data['description']) ? sanitize_textarea_field($data['description']) : '',
             'status' => isset($data['status']) ? sanitize_text_field($data['status']) : 'active',
+            'created_at' => $current_time,
+            'updated_at' => $current_time,
         );
 
         $result = $this->wpdb->insert(
             $agreements_table,
             $insert_data,
-            array('%d', '%d', '%d', '%d', '%s', '%s')
+            array('%d', '%d', '%d', '%d', '%s', '%s', '%s', '%s')
         );
 
         return $result ? $this->wpdb->insert_id : false;
@@ -415,7 +418,7 @@ class EventRepository extends AbstractRepository {
      * @param string $end_date   Event end datetime (MySQL Y-m-d H:i:s).
      * @return array  Objects with minute_offset (int) and cnt (int).
      */
-    public function get_agreements_over_time( $event_id, $start_date, $end_date ) {
+    public function get_agreements_over_time( $event_id, $start_date, $window_start_date, $window_end_date ) {
         $agreements_table = $this->wpdb->prefix . 'vep_agreements';
 
         return $this->get_results(
@@ -427,18 +430,19 @@ class EventRepository extends AbstractRepository {
                AND a.created_at <= %s
              GROUP BY minute_offset
              ORDER BY minute_offset ASC",
-            array( $start_date, (int) $event_id, $start_date, $end_date )
+            array( $start_date, (int) $event_id, $window_start_date, $window_end_date )
         );
     }
 
     /**
      * Get seconds from event start to the first agreement.
      *
-     * @param int    $event_id   Event ID.
-     * @param string $start_date Event start datetime (MySQL format).
+     * @param int    $event_id          Event ID.
+     * @param string $start_date        Event start datetime (MySQL format).
+     * @param string $window_start_date Earliest datetime allowed for the lookup.
      * @return int|null Seconds offset, or null if no agreements exist.
      */
-    public function get_first_agreement_offset_seconds( $event_id, $start_date ) {
+    public function get_first_agreement_offset_seconds( $event_id, $start_date, $window_start_date ) {
         $agreements_table = $this->wpdb->prefix . 'vep_agreements';
 
         $row = $this->get_row(
@@ -446,7 +450,7 @@ class EventRepository extends AbstractRepository {
              FROM {$agreements_table} a
              WHERE a.event_id = %d
                AND a.created_at >= %s",
-            array( $start_date, (int) $event_id, $start_date )
+            array( $start_date, (int) $event_id, $window_start_date )
         );
 
         if ( ! $row || is_null( $row->first_offset ) ) {

@@ -231,12 +231,12 @@
                         if (!cmd.timestamp || cmd.timestamp === lastCommandTs) return;
                         lastCommandTs = cmd.timestamp;
                         if (cmd.action === 'showCountdown') {
-                            switchView('vep-countdown-view', 'vep-post-time-actions');
-                            if (postTimeActions && !(vepAdmin && vepAdmin.hideButtons)) postTimeActions.style.display = 'flex';
-                            updateCompetitionButtonVisibility();
-                            const el = document.getElementById('vep-display-time-up');
-                            if (el) el.style.display = 'none';
-                            reportDisplayState('countdown', {});
+                            const countdownTarget = startButton.dataset.eventEnd || startButton.dataset.countdown;
+                            if (countdownTarget) {
+                                startCountdown(countdownTarget, currentAutoSwitch);
+                                switchView('vep-countdown-view', 'vep-post-time-actions');
+                                reportDisplayState('countdown', {});
+                            }
                         } else if (cmd.action === 'showStatistics') {
                             showStatisticsView(eventId, false);
                         } else if (cmd.action === 'showCompetitions') {
@@ -348,7 +348,9 @@
             const nowTs = Math.floor(Date.now() / 1000);
             const endTs = Math.floor(new Date(countdownTime).getTime() / 1000);
             if (endTs > nowTs || !autoSwitchStats) {
-                reportDisplayState('countdown', {});
+                reportDisplayState('countdown', {
+                    competitions: winnersForDisplay.map((c, i) => ({ title: c.title || '', index: i }))
+                });
             }
         });
         
@@ -365,6 +367,13 @@
         if (showCompetitionsBtn) {
             showCompetitionsBtn.addEventListener('click', function() {
                 showCompetitionsView(startButton.dataset.eventId);
+            });
+        }
+
+        const showClosingFromCountdownBtn = document.getElementById('vep-show-closing-from-countdown');
+        if (showClosingFromCountdownBtn) {
+            showClosingFromCountdownBtn.addEventListener('click', function() {
+                showClosingView();
             });
         }
 
@@ -426,6 +435,13 @@
             });
         }
 
+        const showClosingFromCompetitionsBtn = document.getElementById('vep-show-closing-from-competitions');
+        if (showClosingFromCompetitionsBtn) {
+            showClosingFromCompetitionsBtn.addEventListener('click', function() {
+                showClosingView();
+            });
+        }
+
         const closingBackBtn = document.getElementById('vep-closing-back-to-competitions');
         if (closingBackBtn) {
             closingBackBtn.addEventListener('click', function() {
@@ -453,11 +469,13 @@
         if (backToCountdownBtn) {
             backToCountdownBtn.addEventListener('click', function() {
                 stopCompetitionsRefresh();
+                const countdownTarget = startButton.dataset.eventEnd || startButton.dataset.countdown;
+                if (!countdownTarget) {
+                    return;
+                }
+
+                startCountdown(countdownTarget, currentAutoSwitch);
                 switchView('vep-countdown-view', 'vep-post-time-actions');
-                if (postTimeActions && !(vepAdmin && vepAdmin.hideButtons)) postTimeActions.style.display = 'flex';
-                updateCompetitionButtonVisibility();
-                const timeUpEl = document.getElementById('vep-display-time-up');
-                if (timeUpEl) timeUpEl.style.display = 'none';
                 reportDisplayState('countdown', {});
             });
         }
@@ -581,6 +599,18 @@
             const timerElement = displayModal.querySelector('.vep-countdown-timer');
             const expiredElement = displayModal.querySelector('.vep-countdown-expired');
             let alreadyExpiredAtStart = false;
+
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+                countdownInterval = null;
+            }
+
+            if (postTimeRevealTimeout) {
+                clearTimeout(postTimeRevealTimeout);
+                postTimeRevealTimeout = null;
+            }
+
+            stopFireworks();
             
             // Reset display states
             timerElement.style.display = '';
@@ -588,6 +618,8 @@
             if (postTimeActions) {
                 postTimeActions.style.display = 'none';
             }
+            const timeUpEl = document.getElementById('vep-display-time-up');
+            if (timeUpEl) timeUpEl.style.display = 'none';
 
             // Detect immediately if the event is already over before we start.
             if (Math.floor(Date.now() / 1000) >= targetTimestamp) {
@@ -832,7 +864,10 @@
             // Switch to statistics view with action buttons (switchView handles hiding all other views)
             switchView('vep-statistics-view', 'vep-statistics-actions');
             updateCompetitionButtonVisibility();
-            reportDisplayState('statistics', { auto_switch: showTimeUp === true });
+            reportDisplayState('statistics', {
+                auto_switch: showTimeUp === true,
+                competitions: winnersForDisplay.map((c, i) => ({ title: c.title || '', index: i }))
+            });
 
             // Fetch statistics from server
             const formData = new FormData();
@@ -876,6 +911,8 @@
                 const s = stats.first_agreement_seconds;
                 if (s === null || s === undefined || s < 0) {
                     firstEl.textContent = '—';
+                } else if (s < 60) {
+                    firstEl.textContent = '< 1 min.';
                 } else if (s < 120) {
                     firstEl.textContent = s + ' sek.';
                 } else {
@@ -1196,8 +1233,14 @@
             const visible = hasWinners && compsEnabled;
             const showCompBtn = document.getElementById('vep-show-competitions');
             const showCompFromStatsBtn = document.getElementById('vep-show-competitions-from-statistics');
+            const showFirstWinnerBtn = document.getElementById('vep-show-first-winner');
+            const showClosingFromCountdownBtn = document.getElementById('vep-show-closing-from-countdown');
+            const showClosingFromCompetitionsBtn = document.getElementById('vep-show-closing-from-competitions');
             if (showCompBtn) showCompBtn.style.display = visible ? '' : 'none';
             if (showCompFromStatsBtn) showCompFromStatsBtn.style.display = visible ? '' : 'none';
+            if (showFirstWinnerBtn) showFirstWinnerBtn.style.display = hasWinners ? '' : 'none';
+            if (showClosingFromCountdownBtn) showClosingFromCountdownBtn.style.display = !visible ? '' : 'none';
+            if (showClosingFromCompetitionsBtn) showClosingFromCompetitionsBtn.style.display = !hasWinners ? '' : 'none';
             // Show Afslut on statistics view when competition buttons are hidden
             const closingFromStatsBtn = document.getElementById('vep-show-closing-from-statistics');
             if (closingFromStatsBtn) closingFromStatsBtn.style.display = !visible ? '' : 'none';
@@ -1219,6 +1262,17 @@
                 loadedCompetitions = data.data.competitions;
                 winnersForDisplay = (loadedCompetitions || []).filter(c => c.winner_name);
                 updateCompetitionButtonVisibility();
+                if (currentDisplayView === 'countdown') {
+                    reportDisplayState('countdown', {
+                        competitions: winnersForDisplay.map((c, i) => ({ title: c.title || '', index: i }))
+                    });
+                }
+                if (currentDisplayView === 'statistics') {
+                    reportDisplayState('statistics', {
+                        auto_switch: currentAutoSwitch,
+                        competitions: winnersForDisplay.map((c, i) => ({ title: c.title || '', index: i }))
+                    });
+                }
             })
             .catch(() => {});
         }
@@ -2059,6 +2113,10 @@
         function updateNavBox(state) {
             hideAllGroups();
 
+            const formatWinnerNavLabel = function(prefix, title) {
+                return title ? `${prefix} - ${title}` : prefix;
+            };
+
             const group = actionGroups[state.view];
             if (group) group.style.display = '';
 
@@ -2070,13 +2128,34 @@
 
             // Competition buttons: hide in nav box when showCompetitions setting is off
             const compsEnabled = vepAdmin ? !!vepAdmin.showCompetitions : true;
+            const hasCompetitionWinners = Array.isArray(state.competitions) && state.competitions.length > 0;
             navBox.querySelectorAll('.vep-nav-btn-competitions').forEach(btn => {
-                btn.style.display = compsEnabled ? '' : 'none';
+                const shouldShow = compsEnabled && (
+                    (state.view !== 'statistics' && state.view !== 'countdown') || hasCompetitionWinners
+                );
+                btn.style.display = shouldShow ? '' : 'none';
             });
+            const navClosingFromCountdownBtn = navBox.querySelector('.vep-nav-btn-closing-from-countdown');
+            if (navClosingFromCountdownBtn) {
+                navClosingFromCountdownBtn.style.display = (state.view === 'countdown' && (!compsEnabled || !hasCompetitionWinners)) ? '' : 'none';
+            }
+            const navShowFirstWinnerBtn = document.getElementById('vep-nav-show-first-winner');
+            if (navShowFirstWinnerBtn) {
+                navShowFirstWinnerBtn.style.display = (state.view === 'competitions' && compsEnabled && hasCompetitionWinners) ? '' : 'none';
+                const firstCompetitionTitle = hasCompetitionWinners && state.competitions[0] ? state.competitions[0].title : '';
+                navShowFirstWinnerBtn.textContent = formatWinnerNavLabel(
+                    (vepAdmin.i18n.winnerFirst || 'Første vinder'),
+                    firstCompetitionTitle || ''
+                );
+            }
+            const navClosingFromCompetitionsBtn = navBox.querySelector('.vep-nav-btn-closing-from-competitions');
+            if (navClosingFromCompetitionsBtn) {
+                navClosingFromCompetitionsBtn.style.display = (state.view === 'competitions' && !hasCompetitionWinners) ? '' : 'none';
+            }
             // Afslut button in statistics nav: show when competitions are hidden
             const navClosingBtn = navBox.querySelector('.vep-nav-btn-closing');
             if (navClosingBtn) {
-                navClosingBtn.style.display = (!compsEnabled && state.view === 'statistics') ? '' : 'none';
+                navClosingBtn.style.display = (state.view === 'statistics' && (!compsEnabled || !hasCompetitionWinners)) ? '' : 'none';
             }
 
             // Closing view: toggle back-to-competitions vs back-to-statistics
@@ -2106,6 +2185,8 @@
                 const prevBtn   = document.getElementById('vep-nav-winner-prev');
                 const nextBtn   = document.getElementById('vep-nav-winner-next');
                 const finishBtn = document.getElementById('vep-nav-winner-finish');
+                const competitions = Array.isArray(state.competitions) ? state.competitions : [];
+                const nextCompetition = idx < total - 1 ? competitions[idx + 1] : null;
 
                 if (prevBtn) {
                     prevBtn.style.display = idx > 0 ? '' : 'none';
@@ -2114,6 +2195,10 @@
                 if (nextBtn) {
                     nextBtn.style.display = idx < total - 1 ? '' : 'none';
                     nextBtn.dataset.winnerIndex = idx + 1;
+                    nextBtn.textContent = formatWinnerNavLabel(
+                        (vepAdmin.i18n.winnerNext || 'Næste vinder'),
+                        nextCompetition && nextCompetition.title ? nextCompetition.title : ''
+                    );
                 }
                 if (finishBtn) {
                     finishBtn.style.display = idx === total - 1 ? '' : 'none';
@@ -2123,7 +2208,27 @@
             // Status paragraph
             if (statusEl) {
                 const labels = { countdown: 'Nedtælling', statistics: 'Statistik', competitions: 'Konkurrencer', winner: 'Vinder', closing: 'Afslutning' };
-                statusEl.textContent = 'Aktiv visning: ' + (labels[state.view] || state.view);
+                statusEl.style.whiteSpace = 'pre-line';
+
+                if (state.view === 'winner') {
+                    const competitions = Array.isArray(state.competitions) ? state.competitions : [];
+                    const idx = parseInt(state.winner_index, 10) || 0;
+                    const currentCompetition = competitions[idx] || null;
+                    const statusLines = [
+                        'Aktiv visning: ' + formatWinnerNavLabel(
+                            (labels[state.view] || state.view),
+                            currentCompetition && currentCompetition.title ? currentCompetition.title : ''
+                        )
+                    ];
+
+                    if (currentCompetition && currentCompetition.winner_name) {
+                        statusLines.push(currentCompetition.winner_name);
+                    }
+
+                    statusEl.textContent = statusLines.join('\n');
+                } else {
+                    statusEl.textContent = 'Aktiv visning: ' + (labels[state.view] || state.view);
+                }
             }
         }
 

@@ -142,20 +142,7 @@ class EventDisplayHandler {
             return;
         }
 
-        $competitions = $this->competition_service->get_competitions_for_event( $event_id );
-
-        // Enrich each competition with a resolved winner_name field.
-        foreach ( $competitions as $competition ) {
-            $competition->winner_name = '';
-            if ( isset( $competition->winner_input_type ) && 'text' === $competition->winner_input_type && ! empty( $competition->winner_text ) ) {
-                $competition->winner_name = (string) $competition->winner_text;
-            } elseif ( ! empty( $competition->winner_id ) ) {
-                $participant = $this->participant_service->get_by_id( (int) $competition->winner_id );
-                if ( $participant && ! empty( $participant->organization_name ) ) {
-                    $competition->winner_name = (string) $participant->organization_name;
-                }
-            }
-        }
+        $competitions = $this->get_display_competitions( $event_id );
 
         wp_send_json_success( array(
             'competitions' => $competitions
@@ -257,7 +244,61 @@ class EventDisplayHandler {
             return;
         }
 
+        if ( isset( $state['view'] ) && in_array( $state['view'], array( 'countdown', 'statistics', 'competitions', 'winner' ), true ) ) {
+            $state['competitions'] = $this->get_display_competition_summaries( $event_id );
+            set_transient( 'vep_display_state_' . $event_id, $state, 30 );
+        }
+
         wp_send_json_success( array_merge( $state, array( 'active' => true ) ) );
+    }
+
+    /**
+     * Get event competitions enriched with display-ready winner names.
+     *
+     * @param int $event_id Event ID.
+     * @return array<int, object>
+     */
+    private function get_display_competitions( $event_id ) {
+        $competitions = $this->competition_service->get_competitions_for_event( $event_id );
+
+        foreach ( $competitions as $competition ) {
+            $competition->winner_name = '';
+            if ( isset( $competition->winner_input_type ) && 'text' === $competition->winner_input_type && ! empty( $competition->winner_text ) ) {
+                $competition->winner_name = (string) $competition->winner_text;
+            } elseif ( ! empty( $competition->winner_id ) ) {
+                $participant = $this->participant_service->get_by_id( (int) $competition->winner_id );
+                if ( $participant && ! empty( $participant->organization_name ) ) {
+                    $competition->winner_name = (string) $participant->organization_name;
+                }
+            }
+        }
+
+        return $competitions;
+    }
+
+    /**
+     * Get winner-backed competition summaries for remote display navigation.
+     *
+     * @param int $event_id Event ID.
+     * @return array<int, array<string, int|string>>
+     */
+    private function get_display_competition_summaries( $event_id ) {
+        $competitions = $this->get_display_competitions( $event_id );
+        $summaries    = array();
+
+        foreach ( $competitions as $competition ) {
+            if ( empty( $competition->winner_name ) ) {
+                continue;
+            }
+
+            $summaries[] = array(
+                'title'       => isset( $competition->title ) ? sanitize_text_field( (string) $competition->title ) : '',
+                'winner_name' => sanitize_text_field( (string) $competition->winner_name ),
+                'index'       => count( $summaries ),
+            );
+        }
+
+        return $summaries;
     }
 
     /**

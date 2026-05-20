@@ -703,6 +703,9 @@ class EventDisplayPage {
                         <button type="button" class="button button-primary vep-nav-btn vep-nav-btn-competitions" data-nav-action="showCompetitions">
                             <?php esc_html_e( 'Vis konkurrencer', 'volunteer-exchange-platform' ); ?>
                         </button>
+                        <button type="button" class="button button-primary vep-nav-btn vep-nav-btn-closing-from-countdown" data-nav-action="showClosing" style="display: none;">
+                            <?php esc_html_e( 'Afslut', 'volunteer-exchange-platform' ); ?>
+                        </button>
                     </div>
 
                     <!-- Statistics view buttons -->
@@ -724,8 +727,11 @@ class EventDisplayPage {
                         <button type="button" class="button button-primary vep-nav-btn" data-nav-action="showStatistics">
                             <?php esc_html_e( 'Vis statistik', 'volunteer-exchange-platform' ); ?>
                         </button>
-                        <button type="button" class="button button-primary vep-nav-btn" data-nav-action="showWinner" data-winner-index="0">
+                        <button type="button" id="vep-nav-show-first-winner" class="button button-primary vep-nav-btn" data-nav-action="showWinner" data-winner-index="0">
                             <?php esc_html_e( 'Vis første vinder', 'volunteer-exchange-platform' ); ?>
+                        </button>
+                        <button type="button" class="button button-primary vep-nav-btn vep-nav-btn-closing-from-competitions" data-nav-action="showClosing" style="display: none;">
+                            <?php esc_html_e( 'Afslut', 'volunteer-exchange-platform' ); ?>
                         </button>
                     </div>
 
@@ -883,6 +889,9 @@ class EventDisplayPage {
                         <button type="button" id="vep-show-competitions" class="button button-primary button-hero vep-post-time-action-button">
                             <?php esc_html_e( 'Show Competitions', 'volunteer-exchange-platform' ); ?>
                         </button>
+                        <button type="button" id="vep-show-closing-from-countdown" class="button button-primary button-hero vep-post-time-action-button" style="display: none;">
+                            <?php esc_html_e( 'Afslut', 'volunteer-exchange-platform' ); ?>
+                        </button>
                     </div>
 
                     <div id="vep-statistics-actions" class="vep-action-buttons" style="display: none;">
@@ -903,6 +912,9 @@ class EventDisplayPage {
                         </button>
                         <button type="button" id="vep-show-first-winner" class="button button-primary button-hero vep-post-time-action-button">
                             <?php esc_html_e( 'Vis første vinder', 'volunteer-exchange-platform' ); ?>
+                        </button>
+                        <button type="button" id="vep-show-closing-from-competitions" class="button button-primary button-hero vep-post-time-action-button" style="display: none;">
+                            <?php esc_html_e( 'Afslut', 'volunteer-exchange-platform' ); ?>
                         </button>
                     </div>
 
