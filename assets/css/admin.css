@@ -153,6 +153,47 @@ table.wp-list-table td.column-agreements_count {
     margin: 0;
 }
 
+.vep-collapsible-section {
+    margin: 20px 0;
+    border: 1px solid #dcdcde;
+    border-radius: 6px;
+    background: #fff;
+}
+
+.vep-collapsible-section summary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    list-style: none;
+    padding: 14px 16px;
+}
+
+.vep-collapsible-section summary::-webkit-details-marker {
+    display: none;
+}
+
+.vep-collapsible-section summary::before {
+    content: '\25B6';
+    font-size: 12px;
+    color: #50575e;
+    transition: transform 0.15s ease;
+}
+
+.vep-collapsible-section[open] summary::before {
+    transform: rotate(90deg);
+}
+
+.vep-collapsible-heading {
+    font-size: 1.3em;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+.vep-collapsible-content {
+    padding: 0 16px 16px;
+}
+
 /* Status indicators */
 .vep-status-active {
     color: #46b450;

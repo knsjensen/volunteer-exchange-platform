@@ -54,13 +54,11 @@ class TagsListTable extends \WP_List_Table {
      * @return string
      */
     private function get_row_action_url( $action, $tag_id ) {
-        $url = add_query_arg(
+        $url = TagsPage::get_admin_url(
             array(
-                'page' => 'volunteer-exchange-tags',
                 'action' => $action,
-                'id' => (int) $tag_id,
-            ),
-            admin_url( 'admin.php' )
+                'id'     => (int) $tag_id,
+            )
         );
 
         return wp_nonce_url( $url, 'vep_tag_' . $action . '_' . (int) $tag_id );
@@ -126,10 +124,8 @@ class TagsListTable extends \WP_List_Table {
     protected function column_name($item) {
         $actions = array(
             'edit' => sprintf(
-                '<a href="?page=%s&action=%s&id=%s">%s</a>',
-                'volunteer-exchange-tags',
-                'edit',
-                $item->id,
+                '<a href="%s">%s</a>',
+                esc_url( TagsPage::get_admin_url( array( 'action' => 'edit', 'id' => $item->id ) ) ),
                 __('Edit', 'volunteer-exchange-platform')
             ),
             'delete' => sprintf(

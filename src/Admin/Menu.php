@@ -25,7 +25,6 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class Menu {
     private $eventsPage;
-    private $participantsPage;
     private $participantTypesPage;
     private $tagsPage;
     private $eventDisplayPage;
@@ -36,7 +35,6 @@ class Menu {
         * Constructor.
         *
         * @param EventsPage|null           $events_page Events page handler.
-        * @param ParticipantsPage|null     $participants_page Participants page handler.
         * @param ParticipantTypesPage|null $participant_types_page Participant types page handler.
         * @param TagsPage|null             $tags_page Tags page handler.
         * @param EventDisplayPage|null     $event_display_page Event display page handler.
@@ -45,7 +43,6 @@ class Menu {
      */
     public function __construct(
         ?EventsPage $events_page = null,
-        ?ParticipantsPage $participants_page = null,
         ?ParticipantTypesPage $participant_types_page = null,
         ?TagsPage $tags_page = null,
             ?EventDisplayPage $event_display_page = null,
@@ -53,12 +50,11 @@ class Menu {
         ?SettingsPage $settings_page = null
     ) {
         $this->eventsPage = $events_page ?: new EventsPage();
-        $this->participantsPage = $participants_page ?: new ParticipantsPage();
         $this->participantTypesPage = $participant_types_page ?: new ParticipantTypesPage();
         $this->tagsPage = $tags_page ?: new TagsPage();
         $this->eventDisplayPage = $event_display_page ?: new EventDisplayPage();
             $this->competitionsPage = $competitions_page ?: new CompetitionsPage();
-        $this->settingsPage = $settings_page ?: new SettingsPage();
+        $this->settingsPage = $settings_page ?: new SettingsPage( $this->participantTypesPage, $this->tagsPage );
 
         add_action('admin_menu', array($this, 'add_menu_pages'));
     }
@@ -88,36 +84,6 @@ class Menu {
             'manage_options',
             'volunteer-exchange-events',
             array($this->eventsPage, 'render')
-        );
-
-        // Participants submenu
-        add_submenu_page(
-            'volunteer-exchange',
-            __('Participants', 'volunteer-exchange-platform'),
-            __('Participants', 'volunteer-exchange-platform'),
-            'manage_options',
-            'volunteer-exchange-participants',
-            array($this->participantsPage, 'render')
-        );
-
-        // Participant Types submenu
-        add_submenu_page(
-            'volunteer-exchange',
-            __('Participant Types', 'volunteer-exchange-platform'),
-            __('Participant Types', 'volunteer-exchange-platform'),
-            'manage_options',
-            'volunteer-exchange-participant-types',
-            array($this->participantTypesPage, 'render')
-        );
-
-        // Tags submenu
-        add_submenu_page(
-            'volunteer-exchange',
-            __('We Offer Tags', 'volunteer-exchange-platform'),
-            __('We Offer Tags', 'volunteer-exchange-platform'),
-            'manage_options',
-            'volunteer-exchange-tags',
-            array($this->tagsPage, 'render')
         );
 
         // Event Display submenu

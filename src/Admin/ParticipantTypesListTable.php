@@ -57,13 +57,11 @@ class ParticipantTypesListTable extends \WP_List_Table {
      * @return string
      */
     private function get_row_action_url( $action, $type_id ) {
-        $url = add_query_arg(
+        $url = ParticipantTypesPage::get_admin_url(
             array(
-                'page' => 'volunteer-exchange-participant-types',
                 'action' => $action,
-                'id' => (int) $type_id,
-            ),
-            admin_url( 'admin.php' )
+                'id'     => (int) $type_id,
+            )
         );
 
         return wp_nonce_url( $url, 'vep_participant_type_' . $action . '_' . (int) $type_id );
@@ -129,10 +127,8 @@ class ParticipantTypesListTable extends \WP_List_Table {
     protected function column_name($item) {
         $actions = array(
             'edit' => sprintf(
-                '<a href="?page=%s&action=%s&id=%s">%s</a>',
-                'volunteer-exchange-participant-types',
-                'edit',
-                $item->id,
+                '<a href="%s">%s</a>',
+                esc_url( ParticipantTypesPage::get_admin_url( array( 'action' => 'edit', 'id' => $item->id ) ) ),
                 __('Edit', 'volunteer-exchange-platform')
             ),
             'delete' => sprintf(

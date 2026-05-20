@@ -52,9 +52,10 @@ require_once VEP_PLUGIN_DIR . 'src/Services/ParticipantTypeService.php';
 require_once VEP_PLUGIN_DIR . 'src/Services/TagService.php';
 
 require_once VEP_PLUGIN_DIR . 'src/Admin/EventsListTable.php';
+require_once VEP_PLUGIN_DIR . 'src/Admin/EventAgreementsListTable.php';
+require_once VEP_PLUGIN_DIR . 'src/Admin/EventParticipantsListTable.php';
+require_once VEP_PLUGIN_DIR . 'src/Admin/ParticipantAgreementsListTable.php';
 require_once VEP_PLUGIN_DIR . 'src/Admin/EventsPage.php';
-require_once VEP_PLUGIN_DIR . 'src/Admin/ParticipantsListTable.php';
-require_once VEP_PLUGIN_DIR . 'src/Admin/ParticipantsPage.php';
 require_once VEP_PLUGIN_DIR . 'src/Admin/ParticipantPrintPage.php';
 require_once VEP_PLUGIN_DIR . 'src/Admin/ParticipantTypesListTable.php';
 require_once VEP_PLUGIN_DIR . 'src/Admin/ParticipantTypesPage.php';

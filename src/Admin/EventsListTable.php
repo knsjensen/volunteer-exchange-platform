@@ -136,6 +136,15 @@ class EventsListTable extends \WP_List_Table {
      * @return string
      */
     protected function column_name($item) {
+        $view_url = add_query_arg(
+            array(
+                'page'   => 'volunteer-exchange-events',
+                'action' => 'view',
+                'id'     => (int) $item->id,
+            ),
+            admin_url( 'admin.php' )
+        );
+
         $actions = array(
             'view' => sprintf(
                 '<a href="?page=%s&action=%s&id=%s">%s</a>',
@@ -167,7 +176,11 @@ class EventsListTable extends \WP_List_Table {
             );
         }
         
-        return sprintf('%1$s %2$s', $item->name, $this->row_actions($actions));
+        return sprintf(
+            '%1$s %2$s',
+            '<a class="row-title" href="' . esc_url( $view_url ) . '">' . esc_html( $item->name ) . '</a>',
+            $this->row_actions($actions)
+        );
     }
     
     /**

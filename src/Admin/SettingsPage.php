@@ -8,6 +8,8 @@
 
 namespace VolunteerExchangePlatform\Admin;
 
+use VolunteerExchangePlatform\Admin\ParticipantTypesPage;
+use VolunteerExchangePlatform\Admin\TagsPage;
 use VolunteerExchangePlatform\Email\Settings;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -15,8 +17,19 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 class SettingsPage {
+    /**
+     * @var ParticipantTypesPage
+     */
+    private ParticipantTypesPage $participant_types_page;
 
-    public function __construct() {
+    /**
+     * @var TagsPage
+     */
+    private TagsPage $tags_page;
+
+    public function __construct( ?ParticipantTypesPage $participant_types_page = null, ?TagsPage $tags_page = null ) {
+        $this->participant_types_page = $participant_types_page ?: new ParticipantTypesPage();
+        $this->tags_page = $tags_page ?: new TagsPage();
         add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
     }
 
@@ -55,7 +68,7 @@ class SettingsPage {
         if ( 'sent-emails' === $tab ) {
             $tab = 'transactional-emails';
         }
-        if ( ! in_array( $tab, array( 'settings', 'design', 'smtp2go', 'transactional-emails' ), true ) ) {
+        if ( ! in_array( $tab, array( 'settings', 'participant-types', 'tags', 'design', 'smtp2go', 'transactional-emails' ), true ) ) {
             $tab = 'settings';
         }
 
@@ -95,6 +108,10 @@ class SettingsPage {
 
             <?php if ( 'transactional-emails' === $tab ) : ?>
                 <?php $this->render_sent_emails_tab(); ?>
+            <?php elseif ( 'participant-types' === $tab ) : ?>
+                <?php $this->participant_types_page->render_settings_tab(); ?>
+            <?php elseif ( 'tags' === $tab ) : ?>
+                <?php $this->tags_page->render_settings_tab(); ?>
             <?php else : ?>
             <form method="post" action="">
                 <?php wp_nonce_field( 'vep_email_settings_save', 'vep_email_settings_nonce' ); ?>
@@ -318,6 +335,8 @@ class SettingsPage {
      */
     private function render_tabs( $active_tab ) {
         $settings_url = admin_url( 'admin.php?page=vep-email-settings&tab=settings' );
+        $participant_types_url = admin_url( 'admin.php?page=vep-email-settings&tab=participant-types' );
+        $tags_url = admin_url( 'admin.php?page=vep-email-settings&tab=tags' );
         $design_url = admin_url( 'admin.php?page=vep-email-settings&tab=design' );
         $smtp2go_url = admin_url( 'admin.php?page=vep-email-settings&tab=smtp2go' );
         $log_url = admin_url( 'admin.php?page=vep-email-settings&tab=transactional-emails' );
@@ -325,6 +344,12 @@ class SettingsPage {
         <h2 class="nav-tab-wrapper">
             <a href="<?php echo esc_url( $settings_url ); ?>" class="nav-tab <?php echo 'settings' === $active_tab ? 'nav-tab-active' : ''; ?>">
                 <?php esc_html_e( 'Settings', 'volunteer-exchange-platform' ); ?>
+            </a>
+            <a href="<?php echo esc_url( $participant_types_url ); ?>" class="nav-tab <?php echo 'participant-types' === $active_tab ? 'nav-tab-active' : ''; ?>">
+                <?php esc_html_e( 'Participant Types', 'volunteer-exchange-platform' ); ?>
+            </a>
+            <a href="<?php echo esc_url( $tags_url ); ?>" class="nav-tab <?php echo 'tags' === $active_tab ? 'nav-tab-active' : ''; ?>">
+                <?php esc_html_e( 'We Offer Tags', 'volunteer-exchange-platform' ); ?>
             </a>
             <a href="<?php echo esc_url( $design_url ); ?>" class="nav-tab <?php echo 'design' === $active_tab ? 'nav-tab-active' : ''; ?>">
                 <?php esc_html_e( 'Design', 'volunteer-exchange-platform' ); ?>

@@ -106,13 +106,57 @@ msgstr ""
 msgid "Approve"
 msgstr ""
 
+#: src/Admin/EventParticipantsListTable.php
+msgid "Apply"
+msgstr ""
+
 #: src/Admin/ParticipantsPage.php
 msgid "Approve this participant"
+msgstr ""
+
+#: src/Admin/EventParticipantsListTable.php
+msgid "Bulk actions"
 msgstr ""
 
 #: src/Admin/ParticipantsListTable.php
 #: src/Admin/ParticipantsPage.php
 msgid "Approved"
+msgstr ""
+
+#: src/Admin/EventParticipantsListTable.php
+msgid "Select bulk action"
+msgstr ""
+
+#: src/Admin/EventsPage.php
+#, php-format
+msgid "%d participant approved."
+msgid_plural "%d participants approved."
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/Admin/EventsPage.php
+msgid "1 participant approved."
+msgstr ""
+
+#: src/Admin/EventsPage.php
+#, php-format
+msgid "%d participants approved."
+msgstr ""
+
+#: src/Admin/EventsPage.php
+#, php-format
+msgid "%d participant deleted."
+msgid_plural "%d participants deleted."
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/Admin/EventsPage.php
+msgid "1 participant deleted."
+msgstr ""
+
+#: src/Admin/EventsPage.php
+#, php-format
+msgid "%d participants deleted."
 msgstr ""
 
 #: src/Admin/EventsPage.php
@@ -527,6 +571,14 @@ msgstr ""
 msgid "Participant saved successfully."
 msgstr ""
 
+#: src/Admin/EventsPage.php
+msgid "Participant created successfully."
+msgstr ""
+
+#: src/Admin/EventsPage.php
+msgid "Could not save participant."
+msgstr ""
+
 #: src/Admin/ParticipantsPage.php
 msgid "Participant Type"
 msgstr ""
@@ -735,6 +787,30 @@ msgstr ""
 msgid "Status"
 msgstr ""
 
+#: src/Admin/EventAgreementsListTable.php
+msgid "Awaiting"
+msgstr ""
+
+#: src/Admin/EventAgreementsListTable.php
+msgid "Completed"
+msgstr ""
+
+#: src/Admin/EventAgreementsListTable.php
+msgid "Cancelled"
+msgstr ""
+
+#: src/Admin/EventAgreementsListTable.php
+msgid "No agreements match your filters."
+msgstr ""
+
+#: src/Admin/EventsPage.php
+msgid "View Agreement"
+msgstr ""
+
+#: src/Admin/EventsPage.php
+msgid "Updated"
+msgstr ""
+
 #: volunteer-exchange-platform.php
 msgid "Submitting..."
 msgstr ""
@@ -892,6 +968,11 @@ msgstr ""
 msgid "Are you sure you want to delete this tag?"
 msgstr ""
 
+#: src/Admin/EventsPage.php
+#: src/Admin/ParticipantsPage.php
+msgid "Are you sure you want to send this reminder?"
+msgstr ""
+
 #: src/Admin/ParticipantTypesPage.php:155
 #: src/Admin/TagsPage.php:155
 msgid "Clear"
@@ -899,6 +980,14 @@ msgstr ""
 
 #: src/Frontend/ParticipantPage.php:179
 msgid "Contact"
+msgstr ""
+
+#: src/Admin/EventsPage.php
+msgid "Create Agreement"
+msgstr ""
+
+#: src/Admin/EventsPage.php
+msgid "Create & New Agreement"
 msgstr ""
 
 #: src/Admin/ParticipantsPage.php:637
@@ -931,8 +1020,32 @@ msgstr ""
 msgid "Email:"
 msgstr ""
 
+#: src/Admin/EventsPage.php
+msgid "Add New Agreement"
+msgstr ""
+
+#: src/Admin/EventsPage.php
+msgid "Description"
+msgstr ""
+
+#: src/Admin/EventsPage.php
+msgid "Add the description for this agreement."
+msgstr ""
+
+#: src/Admin/EventsPage.php
+msgid "Agreement created successfully."
+msgstr ""
+
+#: src/Admin/EventsPage.php
+msgid "Select participant"
+msgstr ""
+
 #: src/Ajax/ParticipantHandler.php:223
 msgid "Error updating participant tags. Please try again."
+msgstr ""
+
+#: src/Admin/EventsPage.php
+msgid "Could not create agreement."
 msgstr ""
 
 #: src/Ajax/ParticipantHandler.php:218
@@ -1065,6 +1178,23 @@ msgstr ""
 msgid "? Approve Participant"
 msgstr ""
 
+#: src/Admin/EventParticipantsListTable.php
+msgid "Copy selected emails"
+msgstr ""
+
+#: src/Plugin/Plugin.php
+#, php-format
+msgid "Copied %d selected participant emails to clipboard."
+msgstr ""
+
+#: src/Plugin/Plugin.php
+msgid "Could not copy selected participant emails. Please try again."
+msgstr ""
+
+#: src/Plugin/Plugin.php
+msgid "No selected participant emails found."
+msgstr ""
+
 #: src/Admin/ParticipantsPage.php:403
 msgid "? Unapprove Participant"
 msgstr ""
@@ -1095,7 +1225,7 @@ msgid "Search agreements"
 msgstr ""
 
 #: src/Shortcodes/AgreementsList.php:63
-msgid "Type to search all columns..."
+msgid "Type search words here..."
 msgstr ""
 
 #: src/Plugin/WPBakeryIntegration.php:67

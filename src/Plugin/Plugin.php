@@ -12,7 +12,6 @@ use VolunteerExchangePlatform\Admin\CompetitionsPage;
 use VolunteerExchangePlatform\Admin\EventDisplayPage;
 use VolunteerExchangePlatform\Admin\EventsPage;
 use VolunteerExchangePlatform\Admin\Menu;
-use VolunteerExchangePlatform\Admin\ParticipantsPage;
 use VolunteerExchangePlatform\Admin\ParticipantPrintPage;
 use VolunteerExchangePlatform\Admin\ParticipantTypesPage;
 use VolunteerExchangePlatform\Admin\SettingsPage;
@@ -142,7 +141,6 @@ class Plugin {
 
     private function init_admin( array $services ) {
         $events_page = new EventsPage( $services['event'], $services['participant'], $services['participant_type'], $services['tag'], $services['competition'] );
-        $participants_page = new ParticipantsPage( $services['participant'], $services['event'], $services['participant_type'], $services['tag'] );
         $participant_types_page = new ParticipantTypesPage( $services['participant_type'] );
         $tags_page = new TagsPage( $services['tag'] );
         $event_display_page = new EventDisplayPage( $services['event'] );
@@ -152,7 +150,6 @@ class Plugin {
 
         new Menu(
             $events_page,
-            $participants_page,
             $participant_types_page,
             $tags_page,
             $event_display_page,
@@ -198,7 +195,11 @@ class Plugin {
      * @return void
      */
     public function admin_enqueue_scripts( $hook ) {
-        if ( strpos( $hook, 'volunteer-exchange' ) === false && strpos( $hook, 'vep-event-display' ) === false ) {
+        if (
+            strpos( $hook, 'volunteer-exchange' ) === false &&
+            strpos( $hook, 'vep-event-display' ) === false &&
+            strpos( $hook, 'vep-email-settings' ) === false
+        ) {
             return;
         }
 
@@ -257,9 +258,9 @@ class Plugin {
                     'winnerSaved'             => __( 'Winner set successfully', 'volunteer-exchange-platform' ),
                     'winnerReset'             => __( 'Winner reset successfully', 'volunteer-exchange-platform' ),
                     'resetAllWinnersConfirm'  => __( 'Are you sure you want to reset all winners? This cannot be undone.', 'volunteer-exchange-platform' ),
-                    'copyActiveEmailsSuccess'  => __( 'Copied %d active participant emails to clipboard.', 'volunteer-exchange-platform' ),
-                    'copyActiveEmailsFailed'   => __( 'Could not copy active participant emails. Please try again.', 'volunteer-exchange-platform' ),
-                    'noActiveEmailsFound'      => __( 'No active participant emails found.', 'volunteer-exchange-platform' ),
+                    'copySelectedEmailsSuccess' => __( 'Copied %d selected participant emails to clipboard.', 'volunteer-exchange-platform' ),
+                    'copySelectedEmailsFailed'  => __( 'Could not copy selected participant emails. Please try again.', 'volunteer-exchange-platform' ),
+                    'noSelectedEmailsFound'     => __( 'No selected participant emails found.', 'volunteer-exchange-platform' ),
                     'statsChartLabel'          => __( 'Agreements per minute', 'volunteer-exchange-platform' ),
                     'statsLoadingError'        => __( 'Could not load statistics.', 'volunteer-exchange-platform' ),
                     'winnerBackFirst'          => __( 'Tilbage til konkurrence oversigt', 'volunteer-exchange-platform' ),

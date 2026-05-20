@@ -25,6 +25,9 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @package VolunteerExchangePlatform\Admin
  */
 class TagsPage {
+    public const SETTINGS_PAGE_SLUG = 'vep-email-settings';
+    public const SETTINGS_TAB = 'tags';
+
     /**
      * @var TagService
      */
@@ -50,6 +53,56 @@ class TagsPage {
      * @return void
      */
     public function render() {
+        $this->render_current_view( false );
+    }
+
+    /**
+     * Render the page inside the Settings tabs.
+     *
+     * @return void
+     */
+    public function render_settings_tab() {
+        $this->render_current_view( true );
+    }
+
+    /**
+     * Determine whether current request targets the settings tab.
+     *
+     * @return bool
+     */
+    public static function is_settings_tab_request() {
+        $page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : '';
+        $tab  = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : '';
+
+        return self::SETTINGS_PAGE_SLUG === $page && self::SETTINGS_TAB === $tab;
+    }
+
+    /**
+     * Build the canonical admin URL for this settings tab.
+     *
+     * @param array $args Optional query args.
+     * @return string
+     */
+    public static function get_admin_url( array $args = array() ) {
+        return add_query_arg(
+            array_merge(
+                array(
+                    'page' => self::SETTINGS_PAGE_SLUG,
+                    'tab'  => self::SETTINGS_TAB,
+                ),
+                $args
+            ),
+            admin_url( 'admin.php' )
+        );
+    }
+
+    /**
+     * Render current view in either standalone or embedded settings context.
+     *
+     * @param bool $embedded Whether rendering inside settings tabs.
+     * @return void
+     */
+    private function render_current_view( $embedded ) {
         $action_raw = filter_input( INPUT_GET, 'action', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
         $tag_id_raw = filter_input( INPUT_GET, 'id', FILTER_VALIDATE_INT );
         $action  = $action_raw ? sanitize_key( $action_raw ) : 'list';
@@ -58,10 +111,10 @@ class TagsPage {
         switch ($action) {
             case 'add':
             case 'edit':
-                $this->render_form($tag_id);
+                $this->render_form($tag_id, $embedded);
                 break;
             default:
-                $this->render_list();
+                $this->render_list( $embedded );
                 break;
         }
     }
@@ -73,16 +126,16 @@ class TagsPage {
      *
      * @return void
      */
-    private function render_list() {
+    private function render_list( $embedded = false ) {
         $list_table = new \VolunteerExchangePlatform\Admin\TagsListTable($this->service);
         $list_table->prepare_items();
         $message = filter_input( INPUT_GET, 'message', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
         $notice_raw = filter_input( INPUT_GET, 'notice', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
         $notice_type = $notice_raw ? sanitize_key( $notice_raw ) : 'success';
         ?>
-        <div class="wrap">
-            <h1 class="wp-heading-inline"><?php esc_html_e('We Offer Tags', 'volunteer-exchange-platform'); ?></h1>
-            <a href="<?php echo esc_url(admin_url('admin.php?page=volunteer-exchange-tags&action=add')); ?>" class="page-title-action">
+        <div class="<?php echo $embedded ? 'vep-settings-tab-panel' : 'wrap'; ?>">
+            <<?php echo $embedded ? 'h2' : 'h1'; ?> class="wp-heading-inline"><?php esc_html_e('We Offer Tags', 'volunteer-exchange-platform'); ?></<?php echo $embedded ? 'h2' : 'h1'; ?>>
+            <a href="<?php echo esc_url( self::get_admin_url( array( 'action' => 'add' ) ) ); ?>" class="page-title-action">
                 <?php esc_html_e('Add New', 'volunteer-exchange-platform'); ?>
             </a>
             <hr class="wp-header-end">
@@ -104,7 +157,7 @@ class TagsPage {
      * @param int $tag_id The tag ID (0 for new tag)
      * @return void
      */
-    private function render_form($tag_id = 0) {
+    private function render_form($tag_id = 0, $embedded = false) {
         $tag = null;
         if ($tag_id > 0) {
             $tag = $this->service->get_by_id($tag_id);
@@ -112,8 +165,8 @@ class TagsPage {
 
         $title = $tag ? __('Edit Tag', 'volunteer-exchange-platform') : __('Add New Tag', 'volunteer-exchange-platform');
         ?>
-        <div class="wrap">
-            <h1><?php echo esc_html($title); ?></h1>
+        <div class="<?php echo $embedded ? 'vep-settings-tab-panel' : 'wrap'; ?>">
+            <<?php echo $embedded ? 'h2' : 'h1'; ?>><?php echo esc_html($title); ?></<?php echo $embedded ? 'h2' : 'h1'; ?>>
             
             <form method="post" action="" class="vep-tag-form">
                 <?php wp_nonce_field('vep_tag_form', 'vep_tag_nonce'); ?>
@@ -178,7 +231,7 @@ class TagsPage {
                 
                 <p class="submit">
                     <input type="submit" name="submit" class="button button-primary" value="<?php echo esc_attr($tag ? __('Update', 'volunteer-exchange-platform') : __('Create', 'volunteer-exchange-platform')); ?>">
-                    <a href="<?php echo esc_url(admin_url('admin.php?page=volunteer-exchange-tags')); ?>" class="button">
+                    <a href="<?php echo esc_url( self::get_admin_url() ); ?>" class="button">
                         <?php esc_html_e('Cancel', 'volunteer-exchange-platform'); ?>
                     </a>
                 </p>
@@ -196,8 +249,7 @@ class TagsPage {
      */
     public function handle_form_submission() {
         // Only process on our page
-        $page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : '';
-        if ( 'volunteer-exchange-tags' !== $page ) {
+        if ( ! self::is_settings_tab_request() ) {
             return;
         }
 
@@ -230,7 +282,7 @@ class TagsPage {
             $message = __('Tag created successfully.', 'volunteer-exchange-platform');
         }
 
-        wp_safe_redirect(esc_url_raw(admin_url('admin.php?page=volunteer-exchange-tags&message=' . urlencode($message))));
+        wp_safe_redirect( esc_url_raw( self::get_admin_url( array( 'message' => $message ) ) ) );
         exit;
     }
 
@@ -243,8 +295,7 @@ class TagsPage {
      */
     public function handle_delete() {
         // Only process on our page
-        $page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : '';
-        if ( 'volunteer-exchange-tags' !== $page ) {
+        if ( ! self::is_settings_tab_request() ) {
             return;
         }
 
@@ -262,13 +313,13 @@ class TagsPage {
         $nonce_action = 'vep_tag_delete_' . $tag_id;
         if ( ! isset( $_GET['_wpnonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ), $nonce_action ) ) {
             $message = __('Security check failed.', 'volunteer-exchange-platform');
-            wp_safe_redirect(esc_url_raw(admin_url('admin.php?page=volunteer-exchange-tags&notice=error&message=' . urlencode($message))));
+            wp_safe_redirect( esc_url_raw( self::get_admin_url( array( 'notice' => 'error', 'message' => $message ) ) ) );
             exit;
         }
 
         $this->service->delete_tag($tag_id);
 
-        wp_safe_redirect(esc_url_raw(admin_url('admin.php?page=volunteer-exchange-tags&notice=success&message=' . urlencode(__('Tag deleted.', 'volunteer-exchange-platform')))));
+        wp_safe_redirect( esc_url_raw( self::get_admin_url( array( 'notice' => 'success', 'message' => __( 'Tag deleted.', 'volunteer-exchange-platform' ) ) ) ) );
         exit;
     }
 }

@@ -264,10 +264,10 @@ class ParticipantRepository extends AbstractRepository {
      */
     public function get_for_event_select( $event_id ) {
         return $this->get_results(
-            "SELECT id, organization_name
+            "SELECT id, participant_number, organization_name
              FROM {$this->table()}
              WHERE event_id = %d
-             ORDER BY organization_name",
+             ORDER BY participant_number ASC, organization_name ASC",
             array( $event_id )
         );
     }
@@ -323,6 +323,14 @@ class ParticipantRepository extends AbstractRepository {
         return $this->get_results(
             "SELECT a.*,
                     CASE
+                        WHEN a.participant1_id = %d THEN p2.id
+                        ELSE p1.id
+                    END as other_participant_id,
+                    CASE
+                        WHEN a.participant1_id = %d THEN p2.participant_number
+                        ELSE p1.participant_number
+                    END as other_participant_number,
+                    CASE
                         WHEN a.participant1_id = %d THEN p2.organization_name
                         ELSE p1.organization_name
                     END as other_participant_name,
@@ -333,7 +341,7 @@ class ParticipantRepository extends AbstractRepository {
              LEFT JOIN {$this->table()} pi ON a.initiator_id = pi.id
              WHERE a.participant1_id = %d OR a.participant2_id = %d
              ORDER BY a.created_at DESC",
-            array( $participant_id, $participant_id, $participant_id )
+            array( $participant_id, $participant_id, $participant_id, $participant_id, $participant_id )
         );
     }
 
@@ -476,6 +484,22 @@ class ParticipantRepository extends AbstractRepository {
      */
     public function update_participant( $participant_id, $data ) {
         return $this->update( $data, array( 'id' => $participant_id ), array(), array( '%d' ) );
+    }
+
+    /**
+     * Persist a participant update key.
+     *
+     * @param int    $participant_id Participant ID.
+     * @param string $randon_key Participant update key.
+     * @return int|false
+     */
+    public function set_randon_key( $participant_id, $randon_key ) {
+        return $this->update(
+            array( 'randon_key' => $randon_key ),
+            array( 'id' => $participant_id ),
+            array( '%s' ),
+            array( '%d' )
+        );
     }
 
     /**

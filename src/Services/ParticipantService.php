@@ -460,6 +460,33 @@ class ParticipantService extends AbstractService {
     }
 
     /**
+     * Ensure a participant has a persisted update key.
+     *
+     * @param int $participant_id Participant ID.
+     * @return string
+     */
+    public function ensure_randon_key( $participant_id ) {
+        if ( ! $this->is_valid_id( $participant_id ) ) {
+            return '';
+        }
+
+        $participant = $this->get_by_id( $participant_id );
+        if ( $participant && ! empty( $participant->randon_key ) ) {
+            return sanitize_text_field( (string) $participant->randon_key );
+        }
+
+        $randon_key = $this->generate_randon_key();
+        $updated = $this->run_guarded(
+            function () use ( $participant_id, $randon_key ) {
+                return $this->repository->set_randon_key( (int) $participant_id, $randon_key );
+            },
+            false
+        );
+
+        return false !== $updated ? $randon_key : '';
+    }
+
+    /**
      * Update participant.
      *
      * @param int   $participant_id Participant ID.

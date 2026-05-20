@@ -359,6 +359,30 @@ msgstr "Alle begivenheder"
 msgid "Rows per page"
 msgstr "Rækker pr. side"
 
+#: src/Admin/EventAgreementsListTable.php
+msgid "Awaiting"
+msgstr "Afventer"
+
+#: src/Admin/EventAgreementsListTable.php
+msgid "Completed"
+msgstr "Udført"
+
+#: src/Admin/EventAgreementsListTable.php
+msgid "Cancelled"
+msgstr "Annulleret"
+
+#: src/Admin/EventAgreementsListTable.php
+msgid "No agreements match your filters."
+msgstr "Ingen aftaler matcher dine filtre."
+
+#: src/Admin/EventsPage.php
+msgid "View Agreement"
+msgstr "Vis aftale"
+
+#: src/Admin/EventsPage.php
+msgid "Updated"
+msgstr "Opdateret"
+
 #: src/Admin/ParticipantsListTable.php
 msgid "Print selected"
 msgstr "Print valgte"
@@ -405,8 +429,8 @@ msgid "Search agreements"
 msgstr "Søg i aftaler"
 
 #: src/Shortcodes/AgreementsList.php:63
-msgid "Type to search all columns..."
-msgstr "Skriv for at søge i alle kolonner..."
+msgid "Type search words here..."
+msgstr "Skriv søgeord her..."
 
 #: src/Plugin/WPBakeryIntegration.php
 #: src/Plugin/ElementorShortcodeWidgets.inc
@@ -708,14 +732,58 @@ msgstr "✓ Godkend deltager"
 msgid "Approve"
 msgstr "Godkend"
 
+#: src/Admin/EventParticipantsListTable.php
+msgid "Apply"
+msgstr "Anvend"
+
 #: src/Admin/ParticipantsPage.php
 msgid "Approve this participant"
 msgstr "Godkend denne deltager"
+
+#: src/Admin/EventParticipantsListTable.php
+msgid "Bulk actions"
+msgstr "Massehandlinger"
 
 #: src/Admin/ParticipantsListTable.php
 #: src/Admin/ParticipantsPage.php
 msgid "Approved"
 msgstr "Godkendt"
+
+#: src/Admin/EventParticipantsListTable.php
+msgid "Select bulk action"
+msgstr "Vælg massehandling"
+
+#: src/Admin/EventsPage.php
+#, php-format
+msgid "%d participant approved."
+msgid_plural "%d participants approved."
+msgstr[0] "%d deltager godkendt."
+msgstr[1] "%d deltagere godkendt."
+
+#: src/Admin/EventsPage.php
+msgid "1 participant approved."
+msgstr "1 deltager godkendt."
+
+#: src/Admin/EventsPage.php
+#, php-format
+msgid "%d participants approved."
+msgstr "%d deltagere godkendt."
+
+#: src/Admin/EventsPage.php
+#, php-format
+msgid "%d participant deleted."
+msgid_plural "%d participants deleted."
+msgstr[0] "%d deltager slettet."
+msgstr[1] "%d deltagere slettet."
+
+#: src/Admin/EventsPage.php
+msgid "1 participant deleted."
+msgstr "1 deltager slettet."
+
+#: src/Admin/EventsPage.php
+#, php-format
+msgid "%d participants deleted."
+msgstr "%d deltagere slettet."
 
 #: src/Admin/EventsPage.php
 msgid "Approved Participants"
@@ -1010,6 +1078,14 @@ msgstr "Deltagernummer"
 #: src/Admin/ParticipantsPage.php
 msgid "Participant saved successfully."
 msgstr "Deltageren blev gemt."
+
+#: src/Admin/EventsPage.php
+msgid "Participant created successfully."
+msgstr "Deltageren blev oprettet."
+
+#: src/Admin/EventsPage.php
+msgid "Could not save participant."
+msgstr "Deltageren kunne ikke gemmes."
 
 #: src/Admin/ParticipantsPage.php
 msgid "Participant Type"
@@ -1340,14 +1416,48 @@ msgstr "Er du sikker på, at du vil slette denne deltagertype?"
 msgid "Are you sure you want to delete this tag?"
 msgstr "Er du sikker på, at du vil slette dette tag?"
 
+#: src/Admin/EventsPage.php
+#: src/Admin/ParticipantsPage.php
+msgid "Are you sure you want to send this reminder?"
+msgstr "Er du sikker på, at du vil sende denne påmindelse?"
+
 #: src/Admin/ParticipantTypesPage.php:155
 #: src/Admin/TagsPage.php:155
 msgid "Clear"
 msgstr "Ryd"
 
+#: src/Admin/EventParticipantsListTable.php
+msgid "Copy selected emails"
+msgstr "Kopier valgte e-mails"
+
+#: src/Plugin/Plugin.php
+#, php-format
+msgid "Copied %d selected participant emails to clipboard."
+msgstr "Kopierede %d valgte deltageres e-mails til udklipsholderen."
+
+#: src/Plugin/Plugin.php
+msgid "Could not copy selected participant emails. Please try again."
+msgstr "Kunne ikke kopiere de valgte deltageres e-mails. Prøv igen."
+
+#: src/Admin/EventsPage.php
+msgid "Could not create agreement."
+msgstr "Kunne ikke oprette aftale."
+
+#: src/Plugin/Plugin.php
+msgid "No selected participant emails found."
+msgstr "Ingen e-mails blev fundet for de valgte deltagere."
+
 #: src/Frontend/ParticipantPage.php:179
 msgid "Contact"
 msgstr "Kontakt"
+
+#: src/Admin/EventsPage.php
+msgid "Create Agreement"
+msgstr "Opret aftale"
+
+#: src/Admin/EventsPage.php
+msgid "Create & New Agreement"
+msgstr "Opret & ny aftale"
 
 #: src/Admin/ParticipantsPage.php:637
 msgid "Could not approve participant."
@@ -1378,6 +1488,26 @@ msgstr "E-mail"
 #: src/Frontend/ParticipantPage.php:183
 msgid "Email:"
 msgstr "E-mail:"
+
+#: src/Admin/EventsPage.php
+msgid "Add New Agreement"
+msgstr "Tilføj ny aftale"
+
+#: src/Admin/EventsPage.php
+msgid "Description"
+msgstr "Beskrivelse"
+
+#: src/Admin/EventsPage.php
+msgid "Add the description for this agreement."
+msgstr "Tilføj beskrivelsen til denne aftale."
+
+#: src/Admin/EventsPage.php
+msgid "Agreement created successfully."
+msgstr "Aftale oprettet."
+
+#: src/Admin/EventsPage.php
+msgid "Select participant"
+msgstr "Vælg deltager"
 
 #: src/Ajax/ParticipantHandler.php:223
 msgid "Error updating participant tags. Please try again."

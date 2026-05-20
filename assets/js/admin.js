@@ -17,12 +17,11 @@
     });
 
     function initCopyActiveEmails() {
-        const button = document.getElementById('vep-copy-active-emails');
+        const button = document.getElementById('vep-copy-selected-emails');
         if (!button || typeof vepAdmin === 'undefined') {
             return;
         }
 
-        const ajaxUrl = vepAdmin.ajaxUrl;
         const i18n = vepAdmin.i18n || {};
 
         const copyText = (text) => {
@@ -55,41 +54,31 @@
         };
 
         button.addEventListener('click', () => {
-            const eventId = button.dataset.eventId;
-            const nonce = button.dataset.nonce;
-
-            if (!eventId || !nonce) {
-                window.alert(i18n.copyActiveEmailsFailed || 'An error occurred. Please try again.');
+            const selectedCheckboxes = document.querySelectorAll('#vep-event-participants-form input[name="participant[]"]:checked');
+            if (!selectedCheckboxes.length) {
+                window.alert(i18n.printNoSelection || 'Select at least one participant in the table.');
                 return;
             }
 
             button.disabled = true;
 
-            const formData = new FormData();
-            formData.append('action', 'vep_get_active_participant_emails');
-            formData.append('event_id', eventId);
-            formData.append('nonce', nonce);
+            const emails = Array.from(selectedCheckboxes)
+                .map((checkbox) => (checkbox.dataset.contactEmail || '').trim().toLowerCase())
+                .filter((email, index, list) => email && list.indexOf(email) === index);
 
-            fetch(ajaxUrl, {
-                method: 'POST',
-                body: formData,
-                credentials: 'same-origin'
-            })
-                .then((response) => response.json())
-                .then((data) => {
-                    if (!data.success || !data.data || !data.data.emails_text) {
-                        throw new Error((data.data && data.data.message) || (i18n.noActiveEmailsFound || 'No active participant emails found.'));
+            Promise.resolve()
+                .then(() => {
+                    if (!emails.length) {
+                        throw new Error(i18n.noSelectedEmailsFound || 'No selected participant emails found.');
                     }
 
-                    return copyText(data.data.emails_text)
-                        .then(() => {
-                            const messageTemplate = i18n.copyActiveEmailsSuccess || 'Copied %d active participant emails to clipboard.';
-                            const count = (data.data && data.data.count) ? String(data.data.count) : '0';
-                            window.alert(messageTemplate.replace('%d', count));
-                        });
+                    return copyText(emails.join('; ')).then(() => {
+                        const messageTemplate = i18n.copySelectedEmailsSuccess || 'Copied %d selected participant emails to clipboard.';
+                        window.alert(messageTemplate.replace('%d', String(emails.length)));
+                    });
                 })
                 .catch((error) => {
-                    window.alert(error.message || i18n.copyActiveEmailsFailed || 'An error occurred. Please try again.');
+                    window.alert(error.message || i18n.copySelectedEmailsFailed || 'An error occurred. Please try again.');
                 })
                 .finally(() => {
                     button.disabled = false;
@@ -2446,24 +2435,31 @@
     }
 
     function initPerPageControls() {
-        const hidden = document.getElementById('vep-per-page-hidden');
         const controls = document.querySelectorAll('.vep-per-page-select');
 
-        if (!hidden || !controls.length) return;
+        if (!controls.length) return;
 
         controls.forEach(function (control) {
             control.addEventListener('change', function () {
+                const form = control.closest('form');
+                if (!form) {
+                    return;
+                }
+
+                const hidden = form.querySelector('input[data-per-page-hidden="1"]');
+                if (!hidden) {
+                    return;
+                }
+
                 hidden.value = this.value;
-                controls.forEach(function (otherControl) {
+
+                form.querySelectorAll('.vep-per-page-select').forEach(function (otherControl) {
                     if (otherControl !== control) {
                         otherControl.value = control.value;
                     }
                 });
 
-                const form = control.closest('form');
-                if (form) {
-                    form.submit();
-                }
+                form.submit();
             });
         });
     }
