@@ -20,6 +20,8 @@
         initAgreementsTableFilter();
         initParticipantsGridFilter();
         initChoices();
+        initUnsubscribePage();
+        initUpdateAgreementsPage();
     });
 
     function initEventCountdowns() {
@@ -1156,4 +1158,168 @@
             element.choicesInstance = choices;
         });
     }
+
+    // ── Unsubscribe Page ─────────────────────────────────────────────────────
+    function initUnsubscribePage() {
+        var resubBtn  = document.getElementById('vep-resubscribe-btn');
+        var unsubBtn  = document.getElementById('vep-unsubscribe-btn');
+        if (!resubBtn && !unsubBtn) { return; }
+
+        var msgEl    = document.getElementById('vep-unsubscribe-ajax-message');
+        var statusEl = document.getElementById('vep-unsubscribe-message');
+        var activeEl = resubBtn || unsubBtn;
+        var key      = activeEl.getAttribute('data-randon-key');
+        var type     = activeEl.getAttribute('data-unsubscribe-type') || 'deltager-paamindelse';
+
+        function toggleUnsubscribe(unsubscribe) {
+            var activeBtn = unsubscribe ? unsubBtn : resubBtn;
+            if (activeBtn) { activeBtn.disabled = true; }
+
+            var data = new URLSearchParams();
+            data.append('action',      'vep_frontend_toggle_unsubscribe');
+            data.append('randon_key',  key);
+            data.append('unsubscribe', unsubscribe ? '1' : '0');
+            data.append('type',        type);
+            data.append('_wpnonce',    vepFrontend.nonce);
+
+            fetch(vepFrontend.ajaxUrl, { method: 'POST', body: data, credentials: 'same-origin' })
+                .then(function (r) { return r.json(); })
+                .then(function (res) {
+                    if (activeBtn) { activeBtn.disabled = false; }
+                    if (res && res.success) {
+                        if (statusEl) {
+                            statusEl.textContent = res.data.message;
+                            statusEl.className = 'vep-unsubscribe-status-message ' + (unsubscribe ? 'vep-unsubscribed' : 'vep-subscribed');
+                        }
+                        if (resubBtn) { resubBtn.style.display = unsubscribe ? '' : 'none'; }
+                        if (unsubBtn) { unsubBtn.style.display = unsubscribe ? 'none' : ''; }
+                    } else {
+                        showFeedback(msgEl, (res && res.data) ? res.data : t('genericError', 'An error occurred.'), 'error');
+                    }
+                })
+                .catch(function () {
+                    if (activeBtn) { activeBtn.disabled = false; }
+                    showFeedback(msgEl, t('genericError', 'An error occurred.'), 'error');
+                });
+        }
+
+        if (resubBtn) { resubBtn.addEventListener('click', function () { toggleUnsubscribe(false); }); }
+        if (unsubBtn) { unsubBtn.addEventListener('click', function () { toggleUnsubscribe(true); }); }
+    }
+
+    // ── Update Agreements Page ────────────────────────────────────────────────
+    function initUpdateAgreementsPage() {
+        var page = document.querySelector('.vep-agreements-page');
+        if (!page) { return; }
+
+        var randonKey = page.getAttribute('data-randon-key') || '';
+
+        // Status dropdowns — auto-save on change.
+        page.querySelectorAll('.vep-agreement-status-select').forEach(function (select) {
+            select.addEventListener('change', function () {
+                var agreementId = select.getAttribute('data-agreement-id');
+                var card = select.closest('.vep-agreement-card');
+                var indicator = card ? card.querySelector('.vep-agreement-save-indicator') : null;
+
+                if (indicator) {
+                    indicator.textContent = t('saving', 'Saving…');
+                    indicator.className = 'vep-agreement-save-indicator saving';
+                }
+
+                var data = new URLSearchParams();
+                data.append('action',       'vep_frontend_update_agreement_status');
+                data.append('randon_key',   randonKey);
+                data.append('agreement_id', agreementId);
+                data.append('status',       select.value);
+                data.append('_wpnonce',     vepFrontend.nonce);
+
+                select.disabled = true;
+
+                fetch(vepFrontend.ajaxUrl, { method: 'POST', body: data, credentials: 'same-origin' })
+                    .then(function (r) { return r.json(); })
+                    .then(function (res) {
+                        select.disabled = false;
+                        if (indicator) {
+                            if (res && res.success) {
+                                indicator.textContent = t('saved', 'Saved ✓');
+                                indicator.className = 'vep-agreement-save-indicator saved';
+                                setTimeout(function () { indicator.textContent = ''; indicator.className = 'vep-agreement-save-indicator'; }, 2500);
+                            } else {
+                                indicator.textContent = t('saveError', 'Error');
+                                indicator.className = 'vep-agreement-save-indicator error';
+                            }
+                        }
+                    })
+                    .catch(function () {
+                        select.disabled = false;
+                        if (indicator) {
+                            indicator.textContent = t('saveError', 'Error');
+                            indicator.className = 'vep-agreement-save-indicator error';
+                        }
+                    });
+            });
+        });
+
+        // Unsubscribe button.
+        var unsubBtn = document.getElementById('vep-agreements-unsubscribe-btn');
+        if (unsubBtn) {
+            unsubBtn.addEventListener('click', function () {
+                handleUnsubscribeToggle(randonKey, 1, page);
+            });
+        }
+
+        // Re-subscribe button.
+        var resubBtn = document.getElementById('vep-agreements-resubscribe-btn');
+        if (resubBtn) {
+            resubBtn.addEventListener('click', function () {
+                handleUnsubscribeToggle(randonKey, 0, page);
+            });
+        }
+    }
+
+    function handleUnsubscribeToggle(randonKey, unsubscribe, page) {
+        var msgEl    = page ? page.querySelector('#vep-agreements-unsub-message') : null;
+        var subState = document.getElementById('vep-agreements-sub-state');   // subscribed view
+        var unsubState = document.getElementById('vep-agreements-unsub-state'); // unsubscribed view
+        var unsubBtn = document.getElementById('vep-agreements-unsubscribe-btn');
+        var resubBtn = document.getElementById('vep-agreements-resubscribe-btn');
+
+        var data = new URLSearchParams();
+        data.append('action',      'vep_frontend_toggle_unsubscribe');
+        data.append('randon_key',  randonKey);
+        data.append('unsubscribe', String(unsubscribe));
+        data.append('_wpnonce',    vepFrontend.nonce);
+
+        if (unsubBtn) { unsubBtn.disabled = true; }
+        if (resubBtn) { resubBtn.disabled = true; }
+
+        fetch(vepFrontend.ajaxUrl, { method: 'POST', body: data, credentials: 'same-origin' })
+            .then(function (r) { return r.json(); })
+            .then(function (res) {
+                if (unsubBtn) { unsubBtn.disabled = false; }
+                if (resubBtn) { resubBtn.disabled = false; }
+                if (res && res.success) {
+                    // 1 = just unsubscribed → show unsub-state, hide sub-state
+                    if (subState)   { subState.style.display   = unsubscribe ? 'none' : ''; }
+                    if (unsubState) { unsubState.style.display = unsubscribe ? '' : 'none'; }
+                    showFeedback(msgEl, res.data.message, 'success');
+                } else {
+                    showFeedback(msgEl, (res && res.data) ? res.data : t('genericError', 'An error occurred.'), 'error');
+                }
+            })
+            .catch(function () {
+                if (unsubBtn) { unsubBtn.disabled = false; }
+                if (resubBtn) { resubBtn.disabled = false; }
+                showFeedback(msgEl, t('genericError', 'An error occurred.'), 'error');
+            });
+    }
+
+    function showFeedback(el, message, type) {
+        if (!el) { return; }
+        el.textContent = message;
+        el.className = 'vep-ajax-feedback vep-' + (type === 'error' ? 'error' : 'success');
+        el.style.display = 'block';
+        setTimeout(function () { el.style.display = 'none'; }, 4000);
+    }
+
 })();

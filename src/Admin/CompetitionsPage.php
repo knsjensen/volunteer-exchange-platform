@@ -132,7 +132,13 @@ class CompetitionsPage {
             <hr class="wp-header-end">
 
             <?php if ( '' !== $message ) : ?>
-                <div class="notice notice-<?php echo esc_attr( in_array( $notice, array( 'success', 'error', 'warning', 'info' ), true ) ? $notice : 'success' ); ?> is-dismissible"><p><?php echo esc_html( $message ); ?></p></div>
+                <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                    if (window.vepToast) {
+                        window.vepToast(<?php echo wp_json_encode( $message ); ?>, <?php echo wp_json_encode( in_array( $notice, array( 'success', 'error', 'warning', 'info' ), true ) ? $notice : 'success' ); ?>);
+                    }
+                });
+                </script>
             <?php endif; ?>
 
             <!-- Active Competitions -->
@@ -446,7 +452,7 @@ class CompetitionsPage {
         $competition = $competition_repo->get_by_id( $competition_id );
 
         if ( ! $competition ) {
-            echo '<div class="notice notice-error"><p>' . esc_html__( 'Competition not found.', 'volunteer-exchange-platform' ) . '</p></div>';
+            echo '<script>document.addEventListener("DOMContentLoaded",function(){window.vepToast&&window.vepToast(' . wp_json_encode( __( 'Competition not found.', 'volunteer-exchange-platform' ) ) . ',"error");});</script>';
             return;
         }
 

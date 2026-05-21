@@ -9,6 +9,7 @@
 
 namespace VolunteerExchangePlatform\Admin;
 
+use VolunteerExchangePlatform\Services\AgreementStatus;
 use VolunteerExchangePlatform\Services\ParticipantService;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -56,7 +57,7 @@ class ParticipantAgreementsListTable extends \WP_List_Table {
             array(
                 'singular' => 'agreement',
                 'plural'   => 'agreements',
-                'ajax'     => false,
+                'ajax'     => true,
             )
         );
     }
@@ -210,26 +211,28 @@ class ParticipantAgreementsListTable extends \WP_List_Table {
 
         $actions = array(
             'view' => sprintf(
-                '<a href="%s">%s</a>',
+                '<a href="%s" data-agreement-view-modal="%d">%s</a>',
                 esc_url( $this->get_agreement_url( 'view-agreement', $agreement_id ) ),
+                $agreement_id,
                 __( 'View', 'volunteer-exchange-platform' )
             ),
             'edit' => sprintf(
-                '<a href="%s">%s</a>',
+                '<a href="%s" data-agreement-edit-modal="%d">%s</a>',
                 esc_url( $this->get_agreement_url( 'edit-agreement', $agreement_id ) ),
+                $agreement_id,
                 __( 'Edit', 'volunteer-exchange-platform' )
             ),
             'delete' => sprintf(
-                '<a href="%s" onclick="return confirm(\'%s\')">%s</a>',
+                '<a href="%s" data-agreement-action="delete" data-confirm-msg="%s">%s</a>',
                 esc_url( $this->get_delete_url( $agreement_id ) ),
-                esc_js( __( 'Are you sure you want to delete this agreement?', 'volunteer-exchange-platform' ) ),
+                esc_attr( __( 'Are you sure you want to delete this agreement?', 'volunteer-exchange-platform' ) ),
                 __( 'Delete', 'volunteer-exchange-platform' )
             ),
         );
 
         return sprintf(
             '%1$s %2$s',
-            '<a class="row-title" href="' . esc_url( $this->get_agreement_url( 'view-agreement', $agreement_id ) ) . '">' . esc_html( (string) $agreement_id ) . '</a>',
+            '<a class="row-title" href="' . esc_url( $this->get_agreement_url( 'view-agreement', $agreement_id ) ) . '" data-agreement-view-modal="' . esc_attr( (string) $agreement_id ) . '">' . esc_html( (string) $agreement_id ) . '</a>',
             $this->row_actions( $actions )
         );
     }
@@ -254,7 +257,8 @@ class ParticipantAgreementsListTable extends \WP_List_Table {
                 return esc_html( wp_trim_words( (string) ( $item->description ?? '' ), 10 ) );
             case 'created_at':
                 $timestamp = strtotime( (string) ( $item->created_at ?? '' ) );
-                return $timestamp ? esc_html( date_i18n( get_option( 'date_format' ), $timestamp ) ) : '';
+                // Vis både dato og tidspunkt
+                return $timestamp ? esc_html( date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $timestamp ) ) : '';
             default:
                 return isset( $item->$column_name ) ? esc_html( (string) $item->$column_name ) : '';
         }
@@ -330,12 +334,7 @@ class ParticipantAgreementsListTable extends \WP_List_Table {
      * @return array<string, string>
      */
     private function get_status_options() {
-        return array(
-            'all'       => __( 'All', 'volunteer-exchange-platform' ),
-            'active'    => __( 'Awaiting', 'volunteer-exchange-platform' ),
-            'completed' => __( 'Completed', 'volunteer-exchange-platform' ),
-            'cancelled' => __( 'Cancelled', 'volunteer-exchange-platform' ),
-        );
+        return AgreementStatus::labels_with_all();
     }
 
     /**

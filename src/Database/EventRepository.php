@@ -613,4 +613,101 @@ class EventRepository extends AbstractRepository {
             array( $event_id, $event_id, $event_id, $event_id, $event_id )
         );
     }
+
+    /**
+     * Set agreement_overview_sent flag on an event.
+     *
+     * @param int $event_id Event ID.
+     * @param int $value    1 to mark sent, 0 to clear.
+     * @return bool
+     */
+    public function set_agreement_overview_sent( $event_id, $value ) {
+        $result = $this->wpdb->update(
+            $this->table(),
+            array( 'agreement_overview_sent' => (int) $value ),
+            array( 'id' => (int) $event_id ),
+            array( '%d' ),
+            array( '%d' )
+        );
+        return false !== $result;
+    }
+
+    /**
+     * Get all approved, active participants who have at least one agreement on this event.
+     * Returns participant rows augmented with their agreements as a nested array under ->agreements.
+     *
+     * @param int $event_id Event ID.
+     * @return array Array of participant objects, each with ->agreements array.
+     */
+    public function get_participants_with_agreements_for_overview( $event_id ) {
+        $participants_table = $this->wpdb->prefix . 'vep_participants';
+        $agreements_table   = $this->wpdb->prefix . 'vep_agreements';
+
+        // Get eligible participants.
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Interpolated table names are controlled from $wpdb->prefix.
+        $participants = $this->wpdb->get_results( $this->wpdb->prepare(
+            "SELECT DISTINCT p.*
+             FROM {$participants_table} p
+             INNER JOIN {$agreements_table} a
+               ON (a.participant1_id = p.id OR a.participant2_id = p.id)
+               AND a.event_id = %d
+             WHERE p.event_id = %d
+               AND p.is_approved = 1
+             ORDER BY p.organization_name ASC",
+            (int) $event_id,
+            (int) $event_id
+        ) );
+
+        if ( empty( $participants ) ) {
+            return array();
+        }
+
+        foreach ( $participants as $participant ) {
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Interpolated table names are controlled from $wpdb->prefix.
+            $participant->agreements = $this->wpdb->get_results( $this->wpdb->prepare(
+                "SELECT a.*,
+                        CASE WHEN a.participant1_id = %d THEN p2.organization_name ELSE p1.organization_name END AS partner_name
+                 FROM {$agreements_table} a
+                 LEFT JOIN {$participants_table} p1 ON a.participant1_id = p1.id
+                 LEFT JOIN {$participants_table} p2 ON a.participant2_id = p2.id
+                 WHERE a.event_id = %d
+                   AND (a.participant1_id = %d OR a.participant2_id = %d)
+                 ORDER BY a.created_at ASC",
+                (int) $participant->id,
+                (int) $event_id,
+                (int) $participant->id,
+                (int) $participant->id
+            ) );
+        }
+
+        return $participants;
+    }
+
+    /**
+     * Get agreements for a single participant on a specific event.
+     *
+     * @param int $participant_id Participant ID.
+     * @param int $event_id       Event ID.
+     * @return array
+     */
+    public function get_agreements_for_participant_on_event( $participant_id, $event_id ) {
+        $agreements_table   = $this->wpdb->prefix . 'vep_agreements';
+        $participants_table = $this->wpdb->prefix . 'vep_participants';
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Interpolated table names are controlled from $wpdb->prefix.
+        return $this->wpdb->get_results( $this->wpdb->prepare(
+            "SELECT a.*,
+                    CASE WHEN a.participant1_id = %d THEN p2.organization_name ELSE p1.organization_name END AS partner_name
+             FROM {$agreements_table} a
+             LEFT JOIN {$participants_table} p1 ON a.participant1_id = p1.id
+             LEFT JOIN {$participants_table} p2 ON a.participant2_id = p2.id
+             WHERE a.event_id = %d
+               AND (a.participant1_id = %d OR a.participant2_id = %d)
+             ORDER BY a.created_at ASC",
+            (int) $participant_id,
+            (int) $event_id,
+            (int) $participant_id,
+            (int) $participant_id
+        ) );
+    }
 }

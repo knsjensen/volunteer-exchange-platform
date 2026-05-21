@@ -43,6 +43,18 @@ msgstr "Opretter..."
 msgid "An error occurred. Please try again."
 msgstr "Der opstod en fejl. Prøv igen."
 
+#: src/Plugin/Plugin.php
+msgid "Saving…"
+msgstr "Gemmer…"
+
+#: src/Plugin/Plugin.php
+msgid "Saved ✓"
+msgstr "Gemt ✓"
+
+#: src/Plugin/Plugin.php
+msgid "Error"
+msgstr "Fejl"
+
 #: src/Shortcodes/Registration.php
 msgid "No active event at the moment."
 msgstr "Der er ingen aktiv begivenhed i øjeblikket."
@@ -359,17 +371,33 @@ msgstr "Alle begivenheder"
 msgid "Rows per page"
 msgstr "Rækker pr. side"
 
-#: src/Admin/EventAgreementsListTable.php
-msgid "Awaiting"
-msgstr "Afventer"
+#: src/Services/AgreementStatus.php
+msgid "Agreed"
+msgstr "Indgået"
 
-#: src/Admin/EventAgreementsListTable.php
+#: src/Services/AgreementStatus.php
+msgid "Started"
+msgstr "Påbegyndt"
+
+#: src/Admin/EventAgreementsListTable.php src/Services/AgreementStatus.php
 msgid "Completed"
 msgstr "Udført"
 
-#: src/Admin/EventAgreementsListTable.php
+#: src/Admin/EventAgreementsListTable.php src/Services/AgreementStatus.php
 msgid "Cancelled"
 msgstr "Annulleret"
+
+#: src/Services/AgreementStatus.php
+msgid "Needs help (FCO contacts)"
+msgstr "Mangler hjælp (FCO kontakter)"
+
+#: src/Services/ParticipantService.php
+msgid "You"
+msgstr "Jer"
+
+#: src/Services/ParticipantService.php
+msgid "Them"
+msgstr "Dem"
 
 #: src/Admin/EventAgreementsListTable.php
 msgid "No agreements match your filters."
@@ -1056,12 +1084,26 @@ msgid "Other Participant"
 msgstr "Anden deltager"
 
 #: src/Admin/ParticipantsPage.php
+#: src/Ajax/EventParticipantsTableHandler.php
 msgid "Participant approved."
 msgstr "Deltageren blev godkendt."
 
+#: src/Ajax/EventParticipantsTableHandler.php
+msgid "Approval removed."
+msgstr "Godkendelse fjernet."
+
 #: src/Admin/ParticipantsPage.php
+#: src/Ajax/EventParticipantsTableHandler.php
 msgid "Participant deleted."
 msgstr "Deltageren blev slettet."
+
+#: src/Ajax/EventParticipantsTableHandler.php
+msgid "Reminder queued."
+msgstr "Påmindelse sat i kø."
+
+#: src/Plugin/Plugin.php
+msgid "Are you sure you want to delete the selected participants?"
+msgstr "Er du sikker på, at du vil slette de valgte deltagere?"
 
 #: src/Admin/ParticipantsPage.php
 msgid "Participant Details"
@@ -1314,6 +1356,87 @@ msgstr "Handlinger"
 #: src/Admin/EventsPage.php
 msgid "Agreement not found."
 msgstr "Aftale blev ikke fundet."
+
+#: src/Admin/EventsPage.php
+msgid "Agreement"
+msgstr "Aftale"
+
+#: src/Admin/EventsPage.php
+msgid "Send Agreement Overview"
+msgstr "Send aftaleoversigt"
+
+#: src/Frontend/UnsubscribePage.php
+msgid "Reminder preferences"
+msgstr "Påmindelsespræferencer"
+
+#: src/Frontend/UnsubscribePage.php
+msgid "You are now unsubscribed from future reminders."
+msgstr "Du er nu afmeldt fra fremtidige påmindelser."
+
+#: src/Frontend/UnsubscribePage.php
+msgid "You are subscribed to reminders."
+msgstr "Du er tilmeldt påmindelser."
+
+#: src/Frontend/UnsubscribePage.php
+msgid "Re-subscribe to reminders"
+msgstr "Tilmeld igen"
+
+#: src/Frontend/UnsubscribePage.php
+msgid "Unsubscribe from reminders"
+msgstr "Afmeld påmindelser"
+
+#: src/Ajax/FrontendAgreementsHandler.php
+msgid "You have been unsubscribed from future reminders."
+msgstr "Du er nu afmeldt fra fremtidige påmindelser."
+
+#: src/Ajax/FrontendAgreementsHandler.php
+msgid "You have been re-subscribed to reminders."
+msgstr "Du er nu tilmeldt påmindelser igen."
+
+#: src/Ajax/FrontendAgreementsHandler.php
+msgid "Could not update preference."
+msgstr "Præferencen kunne ikke opdateres."
+
+#: src/Ajax/FrontendAgreementsHandler.php
+msgid "Could not update agreement status."
+msgstr "Aftalestatus kunne ikke opdateres."
+
+#: src/Ajax/FrontendAgreementsHandler.php
+msgid "Status saved."
+msgstr "Status gemt."
+
+#: src/Frontend/UpdateAgreementsPage.php
+msgid "My exchange agreements"
+msgstr "Mine børsaftaler"
+
+#: src/Frontend/UpdateAgreementsPage.php
+#, php-format
+msgid "My exchange agreements from %s"
+msgstr "Mine børsaftaler fra %s"
+
+#: src/Frontend/UpdateAgreementsPage.php
+msgid "No agreements found."
+msgstr "Ingen aftaler fundet."
+
+#: src/Frontend/UpdateAgreementsPage.php
+msgid "Unsubscribe from reminder emails"
+msgstr "Afmeld påmindelses-e-mails"
+
+#: src/Frontend/UpdateAgreementsPage.php
+msgid "Unsubscribe"
+msgstr "Afmeld"
+
+#: src/Frontend/UpdateAgreementsPage.php
+msgid "You are unsubscribed from reminder emails."
+msgstr "Du er afmeldt påmindelses-e-mails."
+
+#: src/Frontend/UpdateAgreementsPage.php
+msgid "Re-subscribe"
+msgstr "Tilmeld igen"
+
+#: src/Admin/EventsPage.php
+msgid "Send an agreement overview of concluded agreements to the actor."
+msgstr "Send en aftaleoversigt over indgåede aftaler til aktøren."
 
 #: src/Admin/ParticipantsPage.php
 #: src/Admin/EventsPage.php
@@ -2164,3 +2287,163 @@ msgstr "Tilbage til statistik"
 msgid "No competitions available."
 msgstr "Ingen konkurrencer tilgængelige."
 
+#: src/Admin/EventsPage.php src/Plugin/Plugin.php
+msgid "Saving…"
+msgstr "Gemmer…"
+
+#: src/Admin/EventsPage.php src/Plugin/Plugin.php
+msgid "Agreement updated."
+msgstr "Aftale opdateret."
+
+#: src/Admin/EventsPage.php src/Plugin/Plugin.php
+msgid "Agreement created."
+msgstr "Aftale oprettet."
+
+#: src/Admin/EventsPage.php src/Plugin/Plugin.php
+msgid "Participant updated."
+msgstr "Deltager opdateret."
+
+#: src/Admin/EventsPage.php src/Plugin/Plugin.php
+msgid "Participant created."
+msgstr "Deltager oprettet."
+
+#: src/Plugin/Plugin.php
+msgid "Select Participant 1"
+msgstr "Vælg Deltager 1"
+
+#: src/Plugin/Plugin.php
+msgid "Select Participant 2"
+msgstr "Vælg Deltager 2"
+
+#: src/Plugin/Plugin.php
+msgid "Participants must be different"
+msgstr "Deltagerne skal være forskellige"
+
+#: src/Plugin/Plugin.php
+msgid "Enter a description"
+msgstr "Indtast en beskrivelse"
+
+#: src/Admin/EventsPage.php
+msgid "Create & New"
+msgstr "Gem & ny"
+
+#: src/Admin/EventsPage.php
+msgid "Could not update agreement."
+msgstr "Kunne ikke opdatere aftale."
+
+#: src/Admin/EventsPage.php
+msgid "Could not update participant."
+msgstr "Kunne ikke opdatere deltager."
+
+#: src/Admin/EventsPage.php
+msgid "Could not create participant."
+msgstr "Kunne ikke oprette deltager."
+
+#: src/Admin/EventsPage.php
+msgid "Agreement Overview Sent"
+msgstr "Aftaleoversigt sendt"
+
+#: src/Admin/EventsPage.php
+msgid "Agreement Overview"
+msgstr "Aftaleoversigt"
+
+#: src/Admin/EventsPage.php
+msgid "Send Agreement Overview"
+msgstr "Send aftaleoversigt"
+
+#: src/Ajax/AgreementOverviewHandler.php
+msgid "Agreement overview has already been sent for this event."
+msgstr "Aftaleoversigt er allerede sendt for dette arrangement."
+
+#: src/Ajax/AgreementOverviewHandler.php
+msgid "SMTP2GO API key is not configured. Please check Email Settings."
+msgstr "SMTP2GO API-nøgle er ikke konfigureret. Tjek venligst e-mailindstillingerne."
+
+#: src/Ajax/AgreementOverviewHandler.php
+msgid "No email template profile is configured for \"indgaaede_aftale_oversigt\". Please add it in Email Settings."
+msgstr "Ingen e-mailskabelon er konfigureret for \"indgaaede_aftale_oversigt\". Tilføj den venligst i e-mailindstillingerne."
+
+#: src/Ajax/AgreementOverviewHandler.php
+msgid "Agreement overview queued for %d participant(s)."
+msgstr "Aftaleoversigt er sat i kø for %d deltager(e)."
+
+#: src/Ajax/AgreementOverviewHandler.php
+msgid "No agreements found for this participant."
+msgstr "Ingen aftaler fundet for denne deltager."
+
+#: src/Ajax/AgreementOverviewHandler.php
+msgid "Agreement overview queued for sending."
+msgstr "Aftaleoversigt er sat i kø til afsendelse."
+
+#: src/Ajax/AgreementOverviewHandler.php
+msgid "Could not queue agreement overview email. Check that the participant has a valid email address."
+msgstr "Kunne ikke sætte aftaleoversigt i kø. Kontrollér at deltageren har en gyldig e-mailadresse."
+
+#: src/Plugin/Plugin.php
+msgid "Send agreement overview to all eligible participants?"
+msgstr "Send aftaleoversigt til alle berettigede deltagere?"
+
+#: src/Plugin/Plugin.php
+msgid "Sending…"
+msgstr "Sender…"
+
+
+#: src/Plugin/Plugin.php
+msgid "Agreement Overview Sent"
+msgstr "Aftaleoversigt sendt"
+
+#: src/Frontend/UnsubscribePage.php
+msgid "Reminder preferences"
+msgstr "Påmindelsesindstillinger"
+
+#: src/Frontend/UnsubscribePage.php
+msgid "You are now unsubscribed from future reminders."
+msgstr "Du er nu afmeldt fremtidige påmindelser."
+
+#: src/Frontend/UnsubscribePage.php
+msgid "You are subscribed to reminders."
+msgstr "Du er tilmeldt påmindelser."
+
+#: src/Frontend/UnsubscribePage.php
+msgid "Re-subscribe to reminders"
+msgstr "Tilmeld påmindelser igen"
+
+#: src/Frontend/UnsubscribePage.php
+msgid "Unsubscribe from reminders"
+msgstr "Afmeld påmindelser"
+
+#: src/Frontend/UnsubscribePage.php
+msgid "Agreement email preferences"
+msgstr "Indstillinger for aftale-e-mails"
+
+#: src/Frontend/UnsubscribePage.php
+msgid "You are now unsubscribed from agreement overview emails."
+msgstr "Du er nu afmeldt aftale-oversigtsmails."
+
+#: src/Frontend/UnsubscribePage.php
+msgid "You are subscribed to agreement overview emails."
+msgstr "Du er tilmeldt aftale-oversigtsmails."
+
+#: src/Frontend/UnsubscribePage.php
+msgid "Re-subscribe to agreement overview emails"
+msgstr "Tilmeld aftale-oversigtsmails igen"
+
+#: src/Frontend/UnsubscribePage.php
+msgid "Unsubscribe from agreement overview emails"
+msgstr "Afmeld aftale-oversigtsmails"
+
+#: src/Ajax/FrontendAgreementsHandler.php
+msgid "You have been unsubscribed from agreement overview emails."
+msgstr "Du er afmeldt aftale-oversigtsmails."
+
+#: src/Ajax/FrontendAgreementsHandler.php
+msgid "You have been re-subscribed to agreement overview emails."
+msgstr "Du er igen tilmeldt aftale-oversigtsmails."
+
+#: src/Ajax/FrontendAgreementsHandler.php
+msgid "You have been unsubscribed from future reminders."
+msgstr "Du er afmeldt fremtidige påmindelser."
+
+#: src/Ajax/FrontendAgreementsHandler.php
+msgid "You have been re-subscribed to reminders."
+msgstr "Du er igen tilmeldt påmindelser."

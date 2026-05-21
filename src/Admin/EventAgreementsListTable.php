@@ -9,6 +9,7 @@
 
 namespace VolunteerExchangePlatform\Admin;
 
+use VolunteerExchangePlatform\Services\AgreementStatus;
 use VolunteerExchangePlatform\Services\EventService;
 
 // Exit if accessed directly
@@ -58,7 +59,7 @@ class EventAgreementsListTable extends \WP_List_Table {
             array(
                 'singular' => 'agreement',
                 'plural'   => 'agreements',
-                'ajax'     => false,
+                'ajax'     => true,
             )
         );
     }
@@ -75,6 +76,7 @@ class EventAgreementsListTable extends \WP_List_Table {
             'participant_2'  => __( 'Participant 2', 'volunteer-exchange-platform' ),
             'initiator'      => __( 'Initiator', 'volunteer-exchange-platform' ),
             'description'    => __( 'Description', 'volunteer-exchange-platform' ),
+            'status'         => __( 'Status', 'volunteer-exchange-platform' ),
             'created_at'     => __( 'Created', 'volunteer-exchange-platform' ),
         );
     }
@@ -90,6 +92,7 @@ class EventAgreementsListTable extends \WP_List_Table {
             'participant_1' => array( 'participant_1', false ),
             'participant_2' => array( 'participant_2', false ),
             'initiator'     => array( 'initiator', false ),
+            'status'        => array( 'status', false ),
             'created_at'    => array( 'created_at', false ),
         );
     }
@@ -117,10 +120,12 @@ class EventAgreementsListTable extends \WP_List_Table {
         $current_page = $this->get_pagenum();
         $search_term = $this->get_search_term();
         $status_filter = $this->get_status_filter();
-        $orderby_raw = filter_input( INPUT_GET, 'orderby', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
-        $order_raw = filter_input( INPUT_GET, 'order', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
-        $per_page_raw = filter_input( INPUT_GET, 'per_page', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
-        $orderby = $orderby_raw ? sanitize_key( $orderby_raw ) : 'id';
+        // Read directly from $_GET so that runtime injections (e.g. from the AJAX handler)
+        // are visible — filter_input(INPUT_GET) reads the original request and ignores them.
+        $orderby_raw  = isset( $_GET['orderby'] )  ? wp_unslash( $_GET['orderby'] )  : null;
+        $order_raw    = isset( $_GET['order'] )    ? wp_unslash( $_GET['order'] )    : null;
+        $per_page_raw = isset( $_GET['per_page'] ) ? wp_unslash( $_GET['per_page'] ) : null;
+        $orderby = $orderby_raw ? sanitize_key( (string) $orderby_raw ) : 'id';
         $order = 'asc' === strtolower( (string) $order_raw ) ? 'asc' : 'desc';
         $per_page_value = $per_page_raw ? sanitize_key( $per_page_raw ) : '25';
 
@@ -252,9 +257,16 @@ class EventAgreementsListTable extends \WP_List_Table {
             case 'description':
                 return esc_html( wp_trim_words( (string) ( $item->description ?? '' ), 10 ) );
 
+            case 'status':
+                $status = (string) ( $item->status ?? '' );
+                $labels = $this->get_status_options();
+                unset( $labels['all'] );
+                return esc_html( $labels[ $status ] ?? $status );
+
             case 'created_at':
                 $timestamp = strtotime( (string) ( $item->created_at ?? '' ) );
-                return $timestamp ? esc_html( date_i18n( get_option( 'date_format' ), $timestamp ) ) : '';
+                // Vis både dato og tidspunkt
+                return $timestamp ? esc_html( date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $timestamp ) ) : '';
 
             default:
                 return isset( $item->$column_name ) ? esc_html( (string) $item->$column_name ) : '';
@@ -272,26 +284,28 @@ class EventAgreementsListTable extends \WP_List_Table {
 
         $actions = array(
             'view' => sprintf(
-                '<a href="%s">%s</a>',
+                '<a href="%s" data-agreement-view-modal="%d">%s</a>',
                 esc_url( $this->get_view_url( $agreement_id ) ),
+                $agreement_id,
                 __( 'View', 'volunteer-exchange-platform' )
             ),
             'edit' => sprintf(
-                '<a href="%s">%s</a>',
+                '<a href="%s" data-agreement-edit-modal="%d">%s</a>',
                 esc_url( $this->get_edit_url( $agreement_id ) ),
+                $agreement_id,
                 __( 'Edit', 'volunteer-exchange-platform' )
             ),
             'delete' => sprintf(
-                '<a href="%s" onclick="return confirm(\'%s\')">%s</a>',
+                '<a href="%s" data-agreement-action="delete" data-confirm-msg="%s">%s</a>',
                 esc_url( $this->get_delete_url( $agreement_id ) ),
-                esc_js( __( 'Are you sure you want to delete this agreement?', 'volunteer-exchange-platform' ) ),
+                esc_attr( __( 'Are you sure you want to delete this agreement?', 'volunteer-exchange-platform' ) ),
                 __( 'Delete', 'volunteer-exchange-platform' )
             ),
         );
 
         return sprintf(
             '%1$s %2$s',
-            '<a class="row-title" href="' . esc_url( $this->get_view_url( $agreement_id ) ) . '">' . esc_html( (string) $agreement_id ) . '</a>',
+            '<a class="row-title" href="' . esc_url( $this->get_view_url( $agreement_id ) ) . '" data-agreement-view-modal="' . esc_attr( (string) $agreement_id ) . '">' . esc_html( (string) $agreement_id ) . '</a>',
             $this->row_actions( $actions )
         );
     }
@@ -332,7 +346,7 @@ class EventAgreementsListTable extends \WP_List_Table {
      * @return string
      */
     private function get_status_filter() {
-        $status_raw = filter_input( INPUT_GET, 'agreement_status', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+        $status_raw = isset( $_GET['agreement_status'] ) ? wp_unslash( $_GET['agreement_status'] ) : null;
         $status = $status_raw ? sanitize_key( $status_raw ) : 'all';
         $allowed_statuses = array_keys( $this->get_status_options() );
 
@@ -406,7 +420,7 @@ class EventAgreementsListTable extends \WP_List_Table {
      * @return array
      */
     private function sort_items( array $items, $orderby, $order ) {
-        $allowed_sort_fields = array( 'id', 'participant_1', 'participant_2', 'initiator', 'created_at' );
+        $allowed_sort_fields = array( 'id', 'participant_1', 'participant_2', 'initiator', 'status', 'created_at' );
         if ( ! in_array( $orderby, $allowed_sort_fields, true ) ) {
             $orderby = 'id';
         }
@@ -425,6 +439,10 @@ class EventAgreementsListTable extends \WP_List_Table {
 
                     case 'initiator':
                         $comparison = strnatcasecmp( (string) ( $left->initiator_name ?? '' ), (string) ( $right->initiator_name ?? '' ) );
+                        break;
+
+                    case 'status':
+                        $comparison = strcmp( (string) ( $left->status ?? '' ), (string) ( $right->status ?? '' ) );
                         break;
 
                     case 'created_at':
@@ -493,12 +511,7 @@ class EventAgreementsListTable extends \WP_List_Table {
      * @return array<string, string>
      */
     private function get_status_options() {
-        return array(
-            'all'       => __( 'All', 'volunteer-exchange-platform' ),
-            'active'    => __( 'Awaiting', 'volunteer-exchange-platform' ),
-            'completed' => __( 'Completed', 'volunteer-exchange-platform' ),
-            'cancelled' => __( 'Cancelled', 'volunteer-exchange-platform' ),
-        );
+        return AgreementStatus::labels_with_all();
     }
 
     /**
@@ -537,9 +550,9 @@ class EventAgreementsListTable extends \WP_List_Table {
 
         $status = $this->get_status_filter();
         $search = $this->get_search_term();
-        $orderby_raw = filter_input( INPUT_GET, 'orderby', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
-        $order_raw = filter_input( INPUT_GET, 'order', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
-        $paged_raw = filter_input( INPUT_GET, 'paged', FILTER_VALIDATE_INT );
+        $orderby_raw = isset( $_GET['orderby'] ) ? wp_unslash( $_GET['orderby'] ) : null;
+        $order_raw   = isset( $_GET['order'] )   ? wp_unslash( $_GET['order'] )   : null;
+        $paged_raw   = isset( $_GET['paged'] )   ? absint( wp_unslash( $_GET['paged'] ) ) : null;
 
         if ( 'all' !== $status ) {
             $args['agreement_status'] = $status;

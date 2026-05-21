@@ -97,13 +97,19 @@ class SettingsPage {
             <?php $this->render_tabs( $tab ); ?>
 
             <?php if ( $saved ) : ?>
-                <div class="notice notice-success is-dismissible">
-                    <p><?php esc_html_e( 'Settings saved.', 'volunteer-exchange-platform' ); ?></p>
-                </div>
+                <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                    if (window.vepToast) { window.vepToast(<?php echo wp_json_encode( __( 'Settings saved.', 'volunteer-exchange-platform' ) ); ?>); }
+                });
+                </script>
             <?php endif; ?>
 
             <?php foreach ( $errors as $error ) : ?>
-                <div class="notice notice-error"><p><?php echo esc_html( $error ); ?></p></div>
+                <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                    if (window.vepToast) { window.vepToast(<?php echo wp_json_encode( $error ); ?>, 'error'); }
+                });
+                </script>
             <?php endforeach; ?>
 
             <?php if ( 'transactional-emails' === $tab ) : ?>
@@ -384,6 +390,66 @@ class SettingsPage {
             <?php $list_table->views(); ?>
             <?php $list_table->display(); ?>
         </form>
+
+        <div id="vep-payload-modal" class="vep-modal-overlay" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="vep-payload-modal-title">
+            <div class="vep-modal-container" style="max-width:780px;">
+                <div class="vep-modal-header">
+                    <h2 id="vep-payload-modal-title"><?php esc_html_e( 'Email Payload', 'volunteer-exchange-platform' ); ?></h2>
+                    <button type="button" id="vep-payload-modal-close" class="vep-modal-close" aria-label="<?php esc_attr_e( 'Close', 'volunteer-exchange-platform' ); ?>">&times;</button>
+                </div>
+                <div class="vep-modal-body">
+                    <pre id="vep-payload-modal-content" class="vep-payload-pre"></pre>
+                </div>
+                <div class="vep-modal-footer">
+                    <button type="button" id="vep-payload-modal-copy" class="button"><?php esc_html_e( 'Copy', 'volunteer-exchange-platform' ); ?></button>
+                    <button type="button" id="vep-payload-modal-close-footer" class="button button-primary"><?php esc_html_e( 'Close', 'volunteer-exchange-platform' ); ?></button>
+                </div>
+            </div>
+        </div>
+
+        <script>
+        (function () {
+            'use strict';
+            var modal   = document.getElementById('vep-payload-modal');
+            var content = document.getElementById('vep-payload-modal-content');
+
+            function openModal(payloadText) {
+                content.textContent = payloadText;
+                modal.style.display = 'flex';
+                modal.focus();
+            }
+
+            function closeModal() {
+                modal.style.display = 'none';
+            }
+
+            document.addEventListener('click', function (e) {
+                var btn = e.target.closest('.vep-payload-view-btn');
+                if (btn) {
+                    openModal(btn.getAttribute('data-payload') || '');
+                }
+            });
+
+            document.getElementById('vep-payload-modal-close').addEventListener('click', closeModal);
+            document.getElementById('vep-payload-modal-close-footer').addEventListener('click', closeModal);
+
+            modal.addEventListener('click', function (e) {
+                if (e.target === modal) closeModal();
+            });
+
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape' && modal.style.display !== 'none') closeModal();
+            });
+
+            document.getElementById('vep-payload-modal-copy').addEventListener('click', function () {
+                if (navigator.clipboard) {
+                    navigator.clipboard.writeText(content.textContent).then(function () {
+                        if (window.vepToast) window.vepToast(<?php echo wp_json_encode( __( 'Copied to clipboard.', 'volunteer-exchange-platform' ) ); ?>);
+                    });
+                }
+            });
+        }());
+        </script>
         <?php
     }
 
@@ -416,6 +482,7 @@ class SettingsPage {
                             'participant_approved'          => __( 'participant_approved', 'volunteer-exchange-platform' ),
                             'update_participant'            => __( 'update_participant', 'volunteer-exchange-platform' ),
                             'new_participant_registration'  => __( 'new_participant_registration', 'volunteer-exchange-platform' ),
+                            'indgaaede_aftale_oversigt'     => __( 'indgaaede_aftale_oversigt', 'volunteer-exchange-platform' ),
                         );
                         ?>
                         <select name="profile_key[<?php echo esc_attr( $index ); ?>]" class="regular-text">

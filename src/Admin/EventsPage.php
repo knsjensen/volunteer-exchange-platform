@@ -15,6 +15,7 @@ use VolunteerExchangePlatform\Admin\ParticipantAgreementsListTable;
 use VolunteerExchangePlatform\Services\CompetitionService;
 use VolunteerExchangePlatform\Services\EventService;
 use VolunteerExchangePlatform\Services\ParticipantService;
+use VolunteerExchangePlatform\Services\AgreementStatus;
 use VolunteerExchangePlatform\Services\ParticipantTypeService;
 use VolunteerExchangePlatform\Services\TagService;
 
@@ -77,6 +78,10 @@ class EventsPage {
         add_action('admin_init', array($this, 'handle_quick_action'));
         add_action('admin_init', array($this, 'handle_bulk_action'));
         add_action( 'wp_ajax_vep_get_active_participant_emails', array( $this, 'handle_get_active_participant_emails' ) );
+        add_action( 'wp_ajax_vep_admin_get_agreement_data',   array( $this, 'handle_ajax_get_agreement_data' ) );
+        add_action( 'wp_ajax_vep_admin_save_agreement',        array( $this, 'handle_ajax_save_agreement' ) );
+        add_action( 'wp_ajax_vep_admin_get_participant_data',  array( $this, 'handle_ajax_get_participant_data' ) );
+        add_action( 'wp_ajax_vep_admin_save_participant',      array( $this, 'handle_ajax_save_participant' ) );
     }
 
     /**
@@ -150,9 +155,13 @@ class EventsPage {
             $notice_type = $flash_notice['notice'];
         }
         ?>
-        <div class="notice notice-<?php echo esc_attr( in_array( $notice_type, array( 'success', 'warning', 'error', 'info' ), true ) ? $notice_type : 'success' ); ?> is-dismissible">
-            <p><?php echo esc_html( urldecode( (string) $message ) ); ?></p>
-        </div>
+        <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            if (window.vepToast) {
+                window.vepToast(<?php echo wp_json_encode( urldecode( (string) $message ) ); ?>, <?php echo wp_json_encode( in_array( $notice_type, array( 'success', 'warning', 'error', 'info' ), true ) ? $notice_type : 'success' ); ?>);
+            }
+        });
+        </script>
         <?php
     }
 
@@ -414,13 +423,27 @@ class EventsPage {
         $expected_count_rows = $stats['expected_count_rows'];
         $participants_list_table = new EventParticipantsListTable( $event_id, $this->participant_service, $this->event_service );
         $participants_list_table->prepare_items();
+        $modal_participants = $this->participant_service->get_for_event_select( $event_id );
+        $modal_types        = $this->type_service->get_all_for_select();
+        $modal_tags         = $this->tag_service->get_all_for_select();
         ?>
         <div class="wrap">
             <h1><?php echo esc_html($event->name); ?></h1>
             <p><a href="<?php echo esc_url(admin_url('admin.php?page=volunteer-exchange-events')); ?>">&larr; <?php esc_html_e('Back to Events', 'volunteer-exchange-platform'); ?></a></p>
             
-            <h2><?php esc_html_e('Event Details', 'volunteer-exchange-platform'); ?></h2>
             <table class="form-table">
+                <tr>
+                    <th><?php esc_html_e('Start Date', 'volunteer-exchange-platform'); ?></th>
+                    <td><?php echo esc_html(date_i18n(get_option('date_format') . ' ' . get_option('time_format'), strtotime($event->start_date))); ?></td>
+                </tr>
+                <tr>
+                    <th><?php esc_html_e('End Date', 'volunteer-exchange-platform'); ?></th>
+                    <td><?php echo esc_html(date_i18n(get_option('date_format') . ' ' . get_option('time_format'), strtotime($event->end_date))); ?></td>
+                </tr>
+                <tr>
+                    <th><?php esc_html_e('Status', 'volunteer-exchange-platform'); ?></th>
+                    <td><?php echo $event->is_active ? '<span style="color: green;">' . esc_html__('Active', 'volunteer-exchange-platform') . '</span>' : esc_html__('Inactive', 'volunteer-exchange-platform'); ?></td>
+                </tr>
                 <tr>
                     <th><?php esc_html_e('Description', 'volunteer-exchange-platform'); ?></th>
                     <td><?php echo esc_html($event->description ?? ''); ?></td>
@@ -437,17 +460,26 @@ class EventsPage {
                         ?>
                     </td>
                 </tr>
+                <?php $event_is_past = $event->end_date && strtotime( $event->end_date ) < current_time( 'timestamp' ); ?>
+                <?php $overview_already_sent = ! empty( $event->agreement_overview_sent ); ?>
                 <tr>
-                    <th><?php esc_html_e('Start Date', 'volunteer-exchange-platform'); ?></th>
-                    <td><?php echo esc_html(date_i18n(get_option('date_format') . ' ' . get_option('time_format'), strtotime($event->start_date))); ?></td>
-                </tr>
-                <tr>
-                    <th><?php esc_html_e('End Date', 'volunteer-exchange-platform'); ?></th>
-                    <td><?php echo esc_html(date_i18n(get_option('date_format') . ' ' . get_option('time_format'), strtotime($event->end_date))); ?></td>
-                </tr>
-                <tr>
-                    <th><?php esc_html_e('Status', 'volunteer-exchange-platform'); ?></th>
-                    <td><?php echo $event->is_active ? '<span style="color: green;">' . esc_html__('Active', 'volunteer-exchange-platform') . '</span>' : esc_html__('Inactive', 'volunteer-exchange-platform'); ?></td>
+                    <th><?php esc_html_e( 'Actions', 'volunteer-exchange-platform' ); ?></th>
+                    <td>
+                        <button
+                            type="button"
+                            id="vep-send-agreement-overview"
+                            class="button button-primary"
+                            data-event-id="<?php echo esc_attr( (string) $event_id ); ?>"
+                            title="<?php esc_attr_e( 'Send an agreement overview of concluded agreements to the actor.', 'volunteer-exchange-platform' ); ?>"
+                            <?php echo ( $event_is_past && ! $overview_already_sent ) ? '' : 'disabled'; ?>
+                        >
+                            <?php if ( $overview_already_sent ) : ?>
+                                <?php esc_html_e( 'Agreement Overview Sent', 'volunteer-exchange-platform' ); ?>
+                            <?php else : ?>
+                                <?php esc_html_e( 'Send Agreement Overview', 'volunteer-exchange-platform' ); ?>
+                            <?php endif; ?>
+                        </button>
+                    </td>
                 </tr>
             </table>
 
@@ -456,21 +488,23 @@ class EventsPage {
             <details class="vep-collapsible-section" open>
                 <summary>
                     <span class="vep-collapsible-heading"><?php esc_html_e( 'Participants', 'volunteer-exchange-platform' ); ?></span>
-                    <a
-                        href="<?php echo esc_url( admin_url( 'admin.php?page=volunteer-exchange-events&action=add-participant&return_id=' . $event_id ) ); ?>"
+                    <button
+                        type="button"
                         class="page-title-action"
+                        id="vep-open-add-participant-modal"
                         onclick="event.stopPropagation();"
-                    ><?php esc_html_e( 'Add New', 'volunteer-exchange-platform' ); ?></a>
+                    ><?php esc_html_e( 'Add New', 'volunteer-exchange-platform' ); ?></button>
                 </summary>
                 <div class="vep-collapsible-content">
-                    <?php $participants_list_table->views(); ?>
-                    <form method="get" id="vep-event-participants-form" action="<?php echo esc_url( admin_url( 'admin.php' ) ); ?>">
-                        <input type="hidden" name="page" value="volunteer-exchange-events">
-                        <input type="hidden" name="action" value="view">
-                        <input type="hidden" name="id" value="<?php echo esc_attr( (string) $event_id ); ?>">
-                        <input type="hidden" name="per_page" id="vep-per-page-hidden" data-per-page-hidden="1" value="<?php echo esc_attr( filter_input( INPUT_GET, 'per_page', FILTER_SANITIZE_FULL_SPECIAL_CHARS ) ? sanitize_key( (string) filter_input( INPUT_GET, 'per_page', FILTER_SANITIZE_FULL_SPECIAL_CHARS ) ) : '25' ); ?>">
-                        <?php $participants_list_table->display(); ?>
-                    </form>
+                    <div id="vep-event-participants-section">
+                        <?php $participants_list_table->views(); ?>
+                        <form method="get" id="vep-event-participants-form" action="<?php echo esc_url( admin_url( 'admin.php' ) ); ?>">
+                            <input type="hidden" name="page" value="volunteer-exchange-events">
+                            <input type="hidden" name="action" value="view">
+                            <input type="hidden" name="id" value="<?php echo esc_attr( (string) $event_id ); ?>">
+                            <?php $participants_list_table->display(); ?>
+                        </form>
+                    </div>
                 </div>
             </details>
 
@@ -479,23 +513,28 @@ class EventsPage {
             <details class="vep-collapsible-section" open>
                 <summary>
                     <span class="vep-collapsible-heading"><?php esc_html_e('Agreements for this Event', 'volunteer-exchange-platform'); ?></span>
-                    <a
-                        href="<?php echo esc_url( admin_url( 'admin.php?page=volunteer-exchange-events&action=add-agreement&return_id=' . $event_id ) ); ?>"
+                    <button
+                        type="button"
                         class="page-title-action"
+                        id="vep-open-add-agreement-modal"
                         onclick="event.stopPropagation();"
-                    ><?php esc_html_e( 'Add New', 'volunteer-exchange-platform' ); ?></a>
+                    ><?php esc_html_e( 'Add New', 'volunteer-exchange-platform' ); ?></button>
                 </summary>
                 <div class="vep-collapsible-content">
-                    <?php $agreements_list_table->views(); ?>
-                    <form method="get" id="vep-event-agreements-form">
-                        <input type="hidden" name="page" value="volunteer-exchange-events">
-                        <input type="hidden" name="action" value="view">
-                        <input type="hidden" name="id" value="<?php echo esc_attr( (string) $event_id ); ?>">
-                        <input type="hidden" name="per_page" id="vep-agreements-per-page-hidden" data-per-page-hidden="1" value="<?php echo esc_attr( filter_input( INPUT_GET, 'per_page', FILTER_SANITIZE_FULL_SPECIAL_CHARS ) ? sanitize_key( (string) filter_input( INPUT_GET, 'per_page', FILTER_SANITIZE_FULL_SPECIAL_CHARS ) ) : '25' ); ?>">
-                        <?php $agreements_list_table->display(); ?>
-                    </form>
+                    <div id="vep-event-agreements-section">
+                        <?php $agreements_list_table->views(); ?>
+                        <form method="get" id="vep-event-agreements-form">
+                            <input type="hidden" name="page" value="volunteer-exchange-events">
+                            <input type="hidden" name="action" value="view">
+                            <input type="hidden" name="id" value="<?php echo esc_attr( (string) $event_id ); ?>">
+                            <?php $agreements_list_table->display(); ?>
+                        </form>
+                    </div>
                 </div>
             </details>
+            <?php $this->render_agreement_modal( $event_id, $modal_participants ); ?>
+            <?php $this->render_agreement_view_modal(); ?>
+            <?php $this->render_participant_modal( $event_id, $modal_types, $modal_tags ); ?>
         </div>
         <?php
     }
@@ -607,6 +646,276 @@ class EventsPage {
     }
 
     /**
+     * Render the agreement create/edit modal HTML.
+     *
+     * @param int   $event_id     The event ID.
+     * @param array $participants List of participant objects for select options.
+     * @return void
+     */
+    private function render_agreement_modal( $event_id, $participants ) {
+        ?>
+        <div id="vep-agreement-modal-overlay" class="vep-modal-overlay" style="display:none;">
+            <div class="vep-modal-container" role="dialog" aria-modal="true" aria-labelledby="vep-agreement-modal-title">
+                <div class="vep-modal-header">
+                    <h2 id="vep-agreement-modal-title"><?php esc_html_e( 'Add New Agreement', 'volunteer-exchange-platform' ); ?></h2>
+                    <button type="button" class="vep-modal-close" id="vep-agreement-modal-close" aria-label="<?php esc_attr_e( 'Close', 'volunteer-exchange-platform' ); ?>">&times;</button>
+                </div>
+                <div class="vep-modal-body">
+                    <div id="vep-agreement-modal-loading" class="vep-modal-loading" style="display:none;"><span class="vep-spinner"></span></div>
+                    <form id="vep-agreement-modal-form">
+                        <?php wp_nonce_field( 'vep_admin_save_agreement', '_agreement_modal_nonce' ); ?>
+                        <input type="hidden" name="event_id" id="vep-agreement-modal-event-id" value="<?php echo esc_attr( (string) $event_id ); ?>">
+                        <input type="hidden" name="agreement_id" id="vep-agreement-modal-agreement-id" value="0">
+
+                        <div id="vep-agreement-modal-new-fields">
+                            <table class="form-table">
+                                <tr>
+                                    <th><label for="vep-modal-p1-id"><?php esc_html_e( 'Participant 1', 'volunteer-exchange-platform' ); ?></label></th>
+                                    <td>
+                                        <select id="vep-modal-p1-id" name="participant1_id">
+                                            <option value=""><?php esc_html_e( 'Select participant', 'volunteer-exchange-platform' ); ?></option>
+                                            <?php foreach ( $participants as $p ) : ?>
+                                                <option value="<?php echo esc_attr( (string) (int) $p->id ); ?>"><?php echo esc_html( ( ! empty( $p->participant_number ) ? '#' . (int) $p->participant_number . ' - ' : '' ) . ( $p->organization_name ?? '' ) ); ?></option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th><label for="vep-modal-p2-id"><?php esc_html_e( 'Participant 2', 'volunteer-exchange-platform' ); ?></label></th>
+                                    <td>
+                                        <select id="vep-modal-p2-id" name="participant2_id">
+                                            <option value=""><?php esc_html_e( 'Select participant', 'volunteer-exchange-platform' ); ?></option>
+                                            <?php foreach ( $participants as $p ) : ?>
+                                                <option value="<?php echo esc_attr( (string) (int) $p->id ); ?>"><?php echo esc_html( ( ! empty( $p->participant_number ) ? '#' . (int) $p->participant_number . ' - ' : '' ) . ( $p->organization_name ?? '' ) ); ?></option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th><?php esc_html_e( 'Initiator', 'volunteer-exchange-platform' ); ?></th>
+                                    <td>
+                                        <fieldset>
+                                            <label><input type="radio" name="initiator_side" value="participant1" checked> <?php esc_html_e( 'Participant 1', 'volunteer-exchange-platform' ); ?></label><br>
+                                            <label><input type="radio" name="initiator_side" value="participant2"> <?php esc_html_e( 'Participant 2', 'volunteer-exchange-platform' ); ?></label>
+                                        </fieldset>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <div id="vep-agreement-modal-edit-fields" style="display:none;">
+                            <table class="form-table">
+                                <tr>
+                                    <th><?php esc_html_e( 'Participant 1', 'volunteer-exchange-platform' ); ?></th>
+                                    <td><span id="vep-agreement-modal-p1-name"></span></td>
+                                </tr>
+                                <tr>
+                                    <th><?php esc_html_e( 'Participant 2', 'volunteer-exchange-platform' ); ?></th>
+                                    <td><span id="vep-agreement-modal-p2-name"></span></td>
+                                </tr>
+                                <tr>
+                                    <th><label for="vep-modal-initiator-id"><?php esc_html_e( 'Initiator', 'volunteer-exchange-platform' ); ?></label></th>
+                                    <td>
+                                        <select id="vep-modal-initiator-id" name="initiator_id">
+                                            <option id="vep-modal-initiator-opt1" value=""></option>
+                                            <option id="vep-modal-initiator-opt2" value=""></option>
+                                        </select>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th><label for="vep-modal-agreement-status"><?php esc_html_e( 'Status', 'volunteer-exchange-platform' ); ?></label></th>
+                                    <td>
+                                        <select id="vep-modal-agreement-status" name="status">
+                                            <?php foreach ( AgreementStatus::labels() as $key => $label ) : ?>
+                                                <option value="<?php echo esc_attr( $key ); ?>" <?php selected( $key, AgreementStatus::AGREED ); ?>><?php echo esc_html( $label ); ?></option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <table class="form-table">
+                            <tr>
+                                <th><label for="vep-modal-agreement-desc"><?php esc_html_e( 'Description', 'volunteer-exchange-platform' ); ?></label></th>
+                                <td>
+                                    <textarea id="vep-modal-agreement-desc" name="description" rows="4" class="large-text" required></textarea>
+                                </td>
+                            </tr>
+                        </table>
+                    </form>
+                </div>
+                <div class="vep-modal-footer">
+                    <button type="button" id="vep-agreement-modal-cancel" class="button"><?php esc_html_e( 'Cancel', 'volunteer-exchange-platform' ); ?></button>
+                    <button type="button" id="vep-agreement-modal-save-new" class="button button-primary"><?php esc_html_e( 'Create & New', 'volunteer-exchange-platform' ); ?></button>
+                    <button type="button" id="vep-agreement-modal-save" class="button button-primary"><?php esc_html_e( 'Save', 'volunteer-exchange-platform' ); ?></button>
+                </div>
+            </div>
+        </div>
+        <?php
+    }
+
+    /**
+     * Render the agreement read-only view modal HTML.
+     *
+     * @return void
+     */
+    private function render_agreement_view_modal() {
+        ?>
+        <div id="vep-agreement-view-modal-overlay" class="vep-modal-overlay" style="display:none;">
+            <div class="vep-modal-container" role="dialog" aria-modal="true" aria-labelledby="vep-agreement-view-modal-title">
+                <div class="vep-modal-header">
+                    <h2 id="vep-agreement-view-modal-title"><?php esc_html_e( 'Agreement', 'volunteer-exchange-platform' ); ?></h2>
+                    <button type="button" class="vep-modal-close" id="vep-agreement-view-modal-close" aria-label="<?php esc_attr_e( 'Close', 'volunteer-exchange-platform' ); ?>">&times;</button>
+                </div>
+                <div class="vep-modal-body">
+                    <div id="vep-agreement-view-modal-loading" class="vep-modal-loading"><span class="vep-spinner"></span></div>
+                    <div id="vep-agreement-view-modal-content" style="display:none;">
+                        <table class="form-table">
+                            <tr>
+                                <th><?php esc_html_e( 'Participant 1', 'volunteer-exchange-platform' ); ?></th>
+                                <td><span id="vep-agreement-view-p1-name"></span></td>
+                            </tr>
+                            <tr>
+                                <th><?php esc_html_e( 'Participant 2', 'volunteer-exchange-platform' ); ?></th>
+                                <td><span id="vep-agreement-view-p2-name"></span></td>
+                            </tr>
+                            <tr>
+                                <th><?php esc_html_e( 'Initiator', 'volunteer-exchange-platform' ); ?></th>
+                                <td><span id="vep-agreement-view-initiator-name"></span></td>
+                            </tr>
+                            <tr>
+                                <th><?php esc_html_e( 'Description', 'volunteer-exchange-platform' ); ?></th>
+                                <td><span id="vep-agreement-view-description"></span></td>
+                            </tr>
+                            <tr>
+                                <th><?php esc_html_e( 'Status', 'volunteer-exchange-platform' ); ?></th>
+                                <td><span id="vep-agreement-view-status"></span></td>
+                            </tr>
+                            <tr>
+                                <th><?php esc_html_e( 'Created', 'volunteer-exchange-platform' ); ?></th>
+                                <td><span id="vep-agreement-view-created-at"></span></td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                <div class="vep-modal-footer">
+                    <button type="button" id="vep-agreement-view-modal-close-btn" class="button"><?php esc_html_e( 'Close', 'volunteer-exchange-platform' ); ?></button>
+                    <button type="button" id="vep-agreement-view-modal-edit-btn" class="button button-primary" data-agreement-id="0"><?php esc_html_e( 'Edit', 'volunteer-exchange-platform' ); ?></button>
+                </div>
+            </div>
+        </div>
+        <?php
+    }
+
+    /**
+     * Render the participant create/edit modal HTML.
+     *
+     * @param int   $event_id The event ID.
+     * @param array $types    Participant types for the type select.
+     * @param array $tags     Tags for the tag checkboxes.
+     * @return void
+     */
+    private function render_participant_modal( $event_id, $types, $tags ) {
+        ?>
+        <div id="vep-participant-modal-overlay" class="vep-modal-overlay" style="display:none;">
+            <div class="vep-modal-container vep-modal-container--wide" role="dialog" aria-modal="true" aria-labelledby="vep-participant-modal-title">
+                <div class="vep-modal-header">
+                    <h2 id="vep-participant-modal-title"><?php esc_html_e( 'Add New Participant', 'volunteer-exchange-platform' ); ?></h2>
+                    <button type="button" class="vep-modal-close" id="vep-participant-modal-close" aria-label="<?php esc_attr_e( 'Close', 'volunteer-exchange-platform' ); ?>">&times;</button>
+                </div>
+                <div class="vep-modal-body">
+                    <div id="vep-participant-modal-loading" class="vep-modal-loading" style="display:none;"><span class="vep-spinner"></span></div>
+                    <form id="vep-participant-modal-form" enctype="multipart/form-data">
+                        <?php wp_nonce_field( 'vep_admin_save_participant', '_participant_modal_nonce' ); ?>
+                        <input type="hidden" name="event_id" id="vep-participant-modal-event-id" value="<?php echo esc_attr( (string) $event_id ); ?>">
+                        <input type="hidden" name="participant_id" id="vep-participant-modal-participant-id" value="0">
+
+                        <div id="vep-participant-modal-logo-preview" style="display:none; margin-bottom:12px;">
+                            <img id="vep-participant-modal-logo-img" src="" alt="" style="max-width:150px; height:auto; display:block;">
+                        </div>
+
+                        <table class="form-table">
+                            <tr>
+                                <th><label for="vep-modal-org-name"><?php esc_html_e( 'Organization Name', 'volunteer-exchange-platform' ); ?></label></th>
+                                <td><input type="text" id="vep-modal-org-name" name="organization_name" class="regular-text" required></td>
+                            </tr>
+                            <tr>
+                                <th><label for="vep-modal-description"><?php esc_html_e( 'Organization Description', 'volunteer-exchange-platform' ); ?></label></th>
+                                <td><textarea id="vep-modal-description" name="description" rows="4" class="large-text"></textarea></td>
+                            </tr>
+                            <tr>
+                                <th><label for="vep-modal-expected-count"><?php esc_html_e( 'Participants Expected', 'volunteer-exchange-platform' ); ?></label></th>
+                                <td><input type="number" id="vep-modal-expected-count" name="expected_participants_count" class="small-text" min="0" step="1" value=""></td>
+                            </tr>
+                            <tr>
+                                <th><label for="vep-modal-expected-names"><?php esc_html_e( 'Participant Names', 'volunteer-exchange-platform' ); ?></label></th>
+                                <td><textarea id="vep-modal-expected-names" name="expected_participants_names" rows="3" class="large-text"></textarea></td>
+                            </tr>
+                            <tr>
+                                <th><label for="vep-modal-type-id"><?php esc_html_e( 'Participant Type', 'volunteer-exchange-platform' ); ?></label></th>
+                                <td>
+                                    <select id="vep-modal-type-id" name="participant_type_id" required>
+                                        <option value=""><?php esc_html_e( 'Select Type', 'volunteer-exchange-platform' ); ?></option>
+                                        <?php foreach ( $types as $type ) : ?>
+                                            <option value="<?php echo esc_attr( (string) (int) $type->id ); ?>"><?php echo esc_html( $type->name ); ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th><label for="vep-modal-contact-person"><?php esc_html_e( 'Contact Person Name', 'volunteer-exchange-platform' ); ?></label></th>
+                                <td><input type="text" id="vep-modal-contact-person" name="contact_person_name" class="regular-text" required></td>
+                            </tr>
+                            <tr>
+                                <th><label for="vep-modal-contact-email"><?php esc_html_e( 'Contact Email', 'volunteer-exchange-platform' ); ?></label></th>
+                                <td><input type="email" id="vep-modal-contact-email" name="contact_email" class="regular-text"></td>
+                            </tr>
+                            <tr>
+                                <th><label for="vep-modal-contact-phone"><?php esc_html_e( 'Contact Phone', 'volunteer-exchange-platform' ); ?></label></th>
+                                <td><input type="tel" id="vep-modal-contact-phone" name="contact_phone" class="regular-text"></td>
+                            </tr>
+                            <tr>
+                                <th><label for="vep-modal-link"><?php esc_html_e( 'Link to homepage', 'volunteer-exchange-platform' ); ?></label></th>
+                                <td><input type="url" id="vep-modal-link" name="link" class="regular-text" placeholder="https://"></td>
+                            </tr>
+                            <tr>
+                                <th><label for="vep-modal-logo"><?php esc_html_e( 'Logo', 'volunteer-exchange-platform' ); ?></label></th>
+                                <td><input type="file" id="vep-modal-logo" name="logo" accept="image/*"></td>
+                            </tr>
+                            <tr>
+                                <th><label><?php esc_html_e( 'We Offer Tags', 'volunteer-exchange-platform' ); ?></label></th>
+                                <td>
+                                    <?php foreach ( $tags as $tag ) : ?>
+                                        <label style="display:block; margin-bottom:4px;">
+                                            <input type="checkbox" class="vep-modal-tag-cb" name="tags[]" value="<?php echo esc_attr( (string) (int) $tag->id ); ?>">
+                                            <?php echo esc_html( $tag->name ); ?>
+                                        </label>
+                                    <?php endforeach; ?>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th><label for="vep-modal-is-approved"><?php esc_html_e( 'Approved', 'volunteer-exchange-platform' ); ?></label></th>
+                                <td>
+                                    <label>
+                                        <input type="checkbox" id="vep-modal-is-approved" name="is_approved" value="1">
+                                        <?php esc_html_e( 'Approve this participant', 'volunteer-exchange-platform' ); ?>
+                                    </label>
+                                </td>
+                            </tr>
+                        </table>
+                    </form>
+                </div>
+                <div class="vep-modal-footer">
+                    <button type="button" id="vep-participant-modal-cancel" class="button"><?php esc_html_e( 'Cancel', 'volunteer-exchange-platform' ); ?></button>
+                    <button type="button" id="vep-participant-modal-save" class="button button-primary"><?php esc_html_e( 'Save', 'volunteer-exchange-platform' ); ?></button>
+                </div>
+            </div>
+        </div>
+        <?php
+    }
+
+    /**
      * Render participant details for the current event context.
      *
      * @param int $participant_id Participant ID.
@@ -625,7 +934,10 @@ class EventsPage {
         }
 
         $tags = $this->participant_service->get_tags_for_participant( $participant_id );
-        $show_reminder_button = $this->participant_service->should_send_update_reminder( $participant_id );
+        $participant_event    = $return_id > 0 ? $this->event_service->get_by_id( $return_id ) : null;
+        $participant_event_is_past = $participant_event && ! empty( $participant_event->end_date )
+            && strtotime( $participant_event->end_date ) < current_time( 'timestamp' );
+        $show_reminder_button = ! $participant_event_is_past && $this->participant_service->should_send_update_reminder( $participant_id );
         $tag_ids = $this->participant_service->get_tag_ids( $participant_id );
         $missing_update_fields = $this->participant_service->get_update_reminder_missing_fields( $participant, $tag_ids );
         $agreements_list_table = new ParticipantAgreementsListTable( $participant_id, $return_id, $this->participant_service );
@@ -717,6 +1029,33 @@ class EventsPage {
                     </td>
                 </tr>
                 <?php endif; ?>
+                <?php
+                    // Show "Send Single Agreement Overview" button if event overview has been sent and participant has agreements.
+                    $participant_event_id    = $return_id > 0 ? $return_id : 0;
+                    $event_for_overview      = $participant_event;
+                    $overview_was_sent       = $event_for_overview && ! empty( $event_for_overview->agreement_overview_sent );
+                    $participant_agreements  = ( $overview_was_sent && $participant_event_id > 0 )
+                        ? $this->event_service->get_agreements_for_participant_on_event( $participant_id, $participant_event_id )
+                        : array();
+                    $show_single_overview    = $overview_was_sent && ! empty( $participant_agreements );
+                ?>
+                <?php if ( $show_single_overview ) : ?>
+                <tr>
+                    <th><?php esc_html_e( 'Agreement Overview', 'volunteer-exchange-platform' ); ?></th>
+                    <td>
+                        <button
+                            type="button"
+                            id="vep-send-single-agreement-overview"
+                            class="button button-secondary"
+                            data-participant-id="<?php echo esc_attr( (string) $participant_id ); ?>"
+                            data-event-id="<?php echo esc_attr( (string) $participant_event_id ); ?>"
+                        >
+                            <?php esc_html_e( 'Send Agreement Overview', 'volunteer-exchange-platform' ); ?>
+                        </button>
+                        <span class="vep-ajax-feedback" style="display:none; margin-left:8px;"></span>
+                    </td>
+                </tr>
+                <?php endif; ?>
                 <?php if ( ! empty( $participant->is_approved ) ) : ?>
                 <tr>
                     <th><?php esc_html_e( 'Edit Link', 'volunteer-exchange-platform' ); ?></th>
@@ -773,14 +1112,21 @@ class EventsPage {
             </p>
 
             <h2><?php esc_html_e( 'Agreements', 'volunteer-exchange-platform' ); ?></h2>
-            <?php $agreements_list_table->views(); ?>
-            <form method="get" id="vep-participant-agreements-form" action="<?php echo esc_url( admin_url( 'admin.php' ) ); ?>">
-                <input type="hidden" name="page" value="volunteer-exchange-events">
-                <input type="hidden" name="action" value="view-participant">
-                <input type="hidden" name="id" value="<?php echo esc_attr( (string) $participant_id ); ?>">
-                <input type="hidden" name="return_id" value="<?php echo esc_attr( (string) $return_id ); ?>">
-                <?php $agreements_list_table->display(); ?>
-            </form>
+            <div id="vep-participant-agreements-section">
+                <?php $agreements_list_table->views(); ?>
+                <form method="get" id="vep-participant-agreements-form" action="<?php echo esc_url( admin_url( 'admin.php' ) ); ?>">
+                    <input type="hidden" name="page"      value="volunteer-exchange-events">
+                    <input type="hidden" name="action"    value="view-participant">
+                    <input type="hidden" name="id"        value="<?php echo esc_attr( (string) $participant_id ); ?>">
+                    <input type="hidden" name="return_id" value="<?php echo esc_attr( (string) $return_id ); ?>">
+                    <?php $agreements_list_table->display(); ?>
+                </form>
+            </div>
+            <?php
+            $modal_participants = $return_id > 0 ? $this->participant_service->get_for_event_select( $return_id ) : array();
+            $this->render_agreement_modal( $return_id, $modal_participants );
+            $this->render_agreement_view_modal();
+            ?>
         </div>
         <?php
     }
@@ -1051,6 +1397,7 @@ class EventsPage {
 
         $participants = $return_id > 0 ? $this->participant_service->get_for_event_select( $return_id ) : array();
         $description = $agreement->description ?? '';
+        $current_status = $agreement->status ?? AgreementStatus::AGREED;
         $selected_initiator_side = 'participant1';
 
         if ( $agreement && isset( $agreement->initiator_id, $agreement->participant2_id ) && (int) $agreement->initiator_id === (int) $agreement->participant2_id ) {
@@ -1133,6 +1480,16 @@ class EventsPage {
                         <td><?php echo esc_html(date_i18n(get_option('date_format') . ' ' . get_option('time_format'), strtotime($agreement->created_at))); ?></td>
                     </tr>
                     <?php endif; ?>
+                    <tr>
+                        <th><label for="agreement_status"><?php esc_html_e( 'Status', 'volunteer-exchange-platform' ); ?></label></th>
+                        <td>
+                            <select name="agreement_status" id="agreement_status">
+                                <?php foreach ( AgreementStatus::labels() as $key => $label ) : ?>
+                                    <option value="<?php echo esc_attr( $key ); ?>" <?php selected( $current_status, $key ); ?>><?php echo esc_html( $label ); ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </td>
+                    </tr>
                     <tr>
                         <th><label for="description"><?php esc_html_e('Description', 'volunteer-exchange-platform'); ?></label></th>
                         <td>
@@ -1263,9 +1620,15 @@ class EventsPage {
             $agreement_id = isset( $_POST['agreement_id'] ) ? absint( wp_unslash( $_POST['agreement_id'] ) ) : 0;
             $return_id = isset( $_POST['return_id'] ) ? absint( wp_unslash( $_POST['return_id'] ) ) : 0;
             $return_participant_id = isset( $_POST['return_participant_id'] ) ? absint( wp_unslash( $_POST['return_participant_id'] ) ) : 0;
+            $raw_status = isset( $_POST['agreement_status'] ) ? sanitize_key( wp_unslash( $_POST['agreement_status'] ) ) : AgreementStatus::AGREED;
+            $agreement_status = in_array( $raw_status, AgreementStatus::all(), true ) ? $raw_status : AgreementStatus::AGREED;
+
             if ( $agreement_id > 0 ) {
                 $description = isset( $_POST['description'] ) ? sanitize_textarea_field( wp_unslash( $_POST['description'] ) ) : '';
-                $update_data = array( 'description' => $description );
+                $update_data = array(
+                    'description' => $description,
+                    'status'      => $agreement_status,
+                );
                 if ( isset( $_POST['initiator_id'] ) ) {
                     $initiator_id = absint( wp_unslash( $_POST['initiator_id'] ) );
                     if ( $initiator_id > 0 ) {
@@ -1315,6 +1678,7 @@ class EventsPage {
                     'participant2_id' => $participant2_id,
                     'initiator_id'    => $initiator_id,
                     'description'     => $description,
+                    'status'          => $agreement_status,
                 )
             );
 
@@ -1689,5 +2053,229 @@ class EventsPage {
                 'count' => count( $emails ),
             )
         );
+    }
+
+    /**
+     * AJAX: Get agreement data for the edit modal.
+     *
+     * @return void
+     */
+    public function handle_ajax_get_agreement_data() {
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( array( 'message' => esc_html__( 'Unauthorized', 'volunteer-exchange-platform' ) ) );
+        }
+
+        $nonce = isset( $_POST['nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['nonce'] ) ) : '';
+        if ( ! wp_verify_nonce( $nonce, 'vep_admin_nonce' ) ) {
+            wp_send_json_error( array( 'message' => esc_html__( 'Security check failed', 'volunteer-exchange-platform' ) ) );
+        }
+
+        $id = isset( $_POST['id'] ) ? (int) $_POST['id'] : 0;
+        if ( $id <= 0 ) {
+            wp_send_json_error( array( 'message' => esc_html__( 'Invalid ID', 'volunteer-exchange-platform' ) ) );
+        }
+
+        $agreement = $this->event_service->get_agreement_by_id( $id );
+        if ( ! $agreement ) {
+            wp_send_json_error( array( 'message' => esc_html__( 'Agreement not found', 'volunteer-exchange-platform' ) ) );
+        }
+
+        $status = (string) ( $agreement->status ?? '' );
+        $status_labels = array(
+            'active'    => __( 'Awaiting', 'volunteer-exchange-platform' ),
+            'completed' => __( 'Completed', 'volunteer-exchange-platform' ),
+            'cancelled' => __( 'Cancelled', 'volunteer-exchange-platform' ),
+        );
+        $created_at_raw = (string) ( $agreement->created_at ?? '' );
+        $timestamp = $created_at_raw ? strtotime( $created_at_raw ) : false;
+        $created_at_formatted = $timestamp
+            ? date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $timestamp )
+            : '';
+        wp_send_json_success( array(
+            'id'                   => (int) $agreement->id,
+            'participant1_id'      => (int) $agreement->participant1_id,
+            'participant2_id'      => (int) $agreement->participant2_id,
+            'initiator_id'         => (int) $agreement->initiator_id,
+            'participant1_name'    => $agreement->participant1_name ?? '',
+            'participant2_name'    => $agreement->participant2_name ?? '',
+            'initiator_name'       => $agreement->initiator_name ?? '',
+            'description'          => $agreement->description ?? '',
+            'status'               => $status,
+            'status_label'         => $status_labels[ $status ] ?? $status,
+            'created_at'           => $created_at_raw,
+            'created_at_formatted' => $created_at_formatted,
+        ) );
+    }
+
+    /**
+     * AJAX: Save agreement (create or update) via modal.
+     *
+     * @return void
+     */
+    public function handle_ajax_save_agreement() {
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( array( 'message' => esc_html__( 'Unauthorized', 'volunteer-exchange-platform' ) ) );
+        }
+
+        $nonce = isset( $_POST['_agreement_modal_nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['_agreement_modal_nonce'] ) ) : '';
+        if ( ! wp_verify_nonce( $nonce, 'vep_admin_save_agreement' ) ) {
+            wp_send_json_error( array( 'message' => esc_html__( 'Security check failed', 'volunteer-exchange-platform' ) ) );
+        }
+
+        $agreement_id = isset( $_POST['agreement_id'] ) ? (int) $_POST['agreement_id'] : 0;
+        $event_id     = isset( $_POST['event_id'] ) ? (int) $_POST['event_id'] : 0;
+        $description  = isset( $_POST['description'] ) ? sanitize_textarea_field( wp_unslash( $_POST['description'] ) ) : '';
+        $raw_status   = isset( $_POST['status'] ) ? sanitize_key( wp_unslash( $_POST['status'] ) ) : AgreementStatus::AGREED;
+        $status       = in_array( $raw_status, AgreementStatus::all(), true ) ? $raw_status : AgreementStatus::AGREED;
+
+        if ( $agreement_id > 0 ) {
+            $initiator_id = isset( $_POST['initiator_id'] ) ? (int) $_POST['initiator_id'] : 0;
+            $result = $this->event_service->update_agreement( $agreement_id, array(
+                'initiator_id' => $initiator_id,
+                'description'  => $description,
+                'status'       => $status,
+            ) );
+            if ( false === $result ) {
+                wp_send_json_error( array( 'message' => esc_html__( 'Could not update agreement.', 'volunteer-exchange-platform' ) ) );
+            }
+            wp_send_json_success( array( 'message' => esc_html__( 'Agreement updated.', 'volunteer-exchange-platform' ) ) );
+        } else {
+            $participant1_id = isset( $_POST['participant1_id'] ) ? (int) $_POST['participant1_id'] : 0;
+            $participant2_id = isset( $_POST['participant2_id'] ) ? (int) $_POST['participant2_id'] : 0;
+            $initiator_side  = isset( $_POST['initiator_side'] ) ? sanitize_text_field( wp_unslash( $_POST['initiator_side'] ) ) : 'participant1';
+            $initiator_id    = 'participant2' === $initiator_side ? $participant2_id : $participant1_id;
+            $result = $this->event_service->create_agreement( array(
+                'event_id'        => $event_id,
+                'participant1_id' => $participant1_id,
+                'participant2_id' => $participant2_id,
+                'initiator_id'    => $initiator_id,
+                'description'     => $description,
+                'status'          => $status,
+            ) );
+            if ( false === $result ) {
+                wp_send_json_error( array( 'message' => esc_html__( 'Could not create agreement.', 'volunteer-exchange-platform' ) ) );
+            }
+            wp_send_json_success( array( 'message' => esc_html__( 'Agreement created.', 'volunteer-exchange-platform' ) ) );
+        }
+    }
+
+    /**
+     * AJAX: Get participant data for the edit modal.
+     *
+     * @return void
+     */
+    public function handle_ajax_get_participant_data() {
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( array( 'message' => esc_html__( 'Unauthorized', 'volunteer-exchange-platform' ) ) );
+        }
+
+        $nonce = isset( $_POST['nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['nonce'] ) ) : '';
+        if ( ! wp_verify_nonce( $nonce, 'vep_admin_nonce' ) ) {
+            wp_send_json_error( array( 'message' => esc_html__( 'Security check failed', 'volunteer-exchange-platform' ) ) );
+        }
+
+        $id = isset( $_POST['id'] ) ? (int) $_POST['id'] : 0;
+        if ( $id <= 0 ) {
+            wp_send_json_error( array( 'message' => esc_html__( 'Invalid ID', 'volunteer-exchange-platform' ) ) );
+        }
+
+        $participant = $this->participant_service->get_by_id( $id );
+        if ( ! $participant ) {
+            wp_send_json_error( array( 'message' => esc_html__( 'Participant not found', 'volunteer-exchange-platform' ) ) );
+        }
+
+        $tag_ids = $this->participant_service->get_tag_ids( $id );
+
+        wp_send_json_success( array(
+            'id'                          => (int) $participant->id,
+            'organization_name'           => $participant->organization_name ?? '',
+            'description'                 => $participant->description ?? '',
+            'expected_participants_count' => isset( $participant->expected_participants_count ) && null !== $participant->expected_participants_count ? (string) $participant->expected_participants_count : '',
+            'expected_participants_names' => $participant->expected_participants_names ?? '',
+            'participant_type_id'         => isset( $participant->participant_type_id ) ? (int) $participant->participant_type_id : 0,
+            'contact_person_name'         => $participant->contact_person_name ?? '',
+            'contact_email'               => $participant->contact_email ?? '',
+            'contact_phone'               => $participant->contact_phone ?? '',
+            'link'                        => $participant->link ?? '',
+            'logo_url'                    => $participant->logo_url ?? '',
+            'is_approved'                 => ! empty( $participant->is_approved ) ? 1 : 0,
+            'tag_ids'                     => array_map( 'intval', $tag_ids ),
+        ) );
+    }
+
+    /**
+     * AJAX: Save participant (create or update) via modal.
+     *
+     * @return void
+     */
+    public function handle_ajax_save_participant() {
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( array( 'message' => esc_html__( 'Unauthorized', 'volunteer-exchange-platform' ) ) );
+        }
+
+        $nonce = isset( $_POST['_participant_modal_nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['_participant_modal_nonce'] ) ) : '';
+        if ( ! wp_verify_nonce( $nonce, 'vep_admin_save_participant' ) ) {
+            wp_send_json_error( array( 'message' => esc_html__( 'Security check failed', 'volunteer-exchange-platform' ) ) );
+        }
+
+        $participant_id = isset( $_POST['participant_id'] ) ? (int) $_POST['participant_id'] : 0;
+        $event_id       = isset( $_POST['event_id'] ) ? (int) $_POST['event_id'] : 0;
+        $org_name       = isset( $_POST['organization_name'] ) ? sanitize_text_field( wp_unslash( $_POST['organization_name'] ) ) : '';
+        $description    = isset( $_POST['description'] ) ? sanitize_textarea_field( wp_unslash( $_POST['description'] ) ) : '';
+        $type_id        = isset( $_POST['participant_type_id'] ) ? (int) $_POST['participant_type_id'] : 0;
+        $contact_name   = isset( $_POST['contact_person_name'] ) ? sanitize_text_field( wp_unslash( $_POST['contact_person_name'] ) ) : '';
+        $contact_email  = isset( $_POST['contact_email'] ) ? sanitize_email( wp_unslash( $_POST['contact_email'] ) ) : '';
+        $contact_phone  = isset( $_POST['contact_phone'] ) ? sanitize_text_field( wp_unslash( $_POST['contact_phone'] ) ) : '';
+        $link           = isset( $_POST['link'] ) ? esc_url_raw( wp_unslash( $_POST['link'] ) ) : '';
+        $expected_count = isset( $_POST['expected_participants_count'] ) && '' !== $_POST['expected_participants_count'] ? (int) $_POST['expected_participants_count'] : null;
+        $expected_names = isset( $_POST['expected_participants_names'] ) ? sanitize_textarea_field( wp_unslash( $_POST['expected_participants_names'] ) ) : '';
+        $is_approved    = isset( $_POST['is_approved'] ) && '1' === $_POST['is_approved'] ? 1 : 0;
+        $tag_ids        = isset( $_POST['tags'] ) && is_array( $_POST['tags'] ) ? array_map( 'intval', $_POST['tags'] ) : array();
+
+        // Handle logo upload.
+        $logo_url = null;
+        if ( ! empty( $_FILES['logo']['tmp_name'] ) ) {
+            if ( ! function_exists( 'wp_handle_upload' ) ) {
+                require_once ABSPATH . 'wp-admin/includes/file.php';
+            }
+            $upload = wp_handle_upload( $_FILES['logo'], array( 'test_form' => false ) );
+            if ( isset( $upload['url'] ) ) {
+                $logo_url = $upload['url'];
+            }
+        }
+
+        $data = array(
+            'event_id'                    => $event_id,
+            'organization_name'           => $org_name,
+            'description'                 => $description,
+            'participant_type_id'         => $type_id,
+            'contact_person_name'         => $contact_name,
+            'contact_email'               => $contact_email,
+            'contact_phone'               => $contact_phone,
+            'link'                        => $link,
+            'expected_participants_count' => $expected_count,
+            'expected_participants_names' => $expected_names,
+            'is_approved'                 => $is_approved,
+        );
+
+        if ( null !== $logo_url ) {
+            $data['logo_url'] = $logo_url;
+        }
+
+        if ( $participant_id > 0 ) {
+            $result = $this->participant_service->update_participant( $participant_id, $data );
+            if ( false === $result ) {
+                wp_send_json_error( array( 'message' => esc_html__( 'Could not update participant.', 'volunteer-exchange-platform' ) ) );
+            }
+            $this->participant_service->replace_tags( $participant_id, $tag_ids );
+            wp_send_json_success( array( 'message' => esc_html__( 'Participant updated.', 'volunteer-exchange-platform' ) ) );
+        } else {
+            $new_id = $this->participant_service->create( $data );
+            if ( ! $new_id ) {
+                wp_send_json_error( array( 'message' => esc_html__( 'Could not create participant.', 'volunteer-exchange-platform' ) ) );
+            }
+            $this->participant_service->replace_tags( $new_id, $tag_ids );
+            wp_send_json_success( array( 'message' => esc_html__( 'Participant created.', 'volunteer-exchange-platform' ) ) );
+        }
     }
 }

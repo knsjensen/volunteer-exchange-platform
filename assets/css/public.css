@@ -152,6 +152,34 @@
     background-color: #545b62;
 }
 
+.vep-button-link {
+    background: none;
+    border: none;
+    color: #dc3545;
+    text-decoration: underline;
+    padding: 0;
+    font-size: 0.875rem;
+    cursor: pointer;
+}
+
+.vep-button-link:hover {
+    color: #a71d2a;
+}
+
+.vep-button-inline-link {
+    background: none;
+    border: none;
+    color: #007bff;
+    text-decoration: underline;
+    padding: 0;
+    font-size: inherit;
+    cursor: pointer;
+}
+
+.vep-button-inline-link:hover {
+    color: #0056b3;
+}
+
 .vep-button:disabled {
     opacity: 0.6;
     cursor: not-allowed;
@@ -711,6 +739,33 @@
     background: linear-gradient(140deg, #f7fbff 0%, #eef5ff 100%);
 }
 
+.vep-unsubscribe-page .vep-page-title,
+.vep-agreements-page .vep-page-title {
+    margin: 0;
+    padding: 26px 34px 20px;
+    font-size: 32px;
+    line-height: 1.2;
+    font-weight: 800;
+    color: #16324f;
+    border-bottom: 1px solid #dbe6f4;
+    background: linear-gradient(140deg, #f7fbff 0%, #eef5ff 100%);
+}
+
+.vep-unsubscribe-page > *:not(.vep-page-title),
+.vep-agreements-page > *:not(.vep-page-title) {
+    margin-left: 34px;
+    margin-right: 34px;
+}
+
+.vep-unsubscribe-page > .vep-unsubscribe-status-message {
+    margin-top: 24px;
+}
+
+.vep-agreements-page > .vep-agreements-grid,
+.vep-agreements-page > .vep-no-agreements {
+    margin-top: 24px;
+}
+
 .vep-update-participant-page .vep-participant-detail-content {
     background: linear-gradient(180deg, #ffffff 0%, #f7f9fc 100%);
 }
@@ -1052,5 +1107,223 @@
 
     .vep-event-countdown-status {
         font-size: 22px;
+    }
+}
+
+/* -- Unsubscribe Page ------------------------------------------------ */
+
+.vep-unsubscribe-page {
+    margin: 20px auto;
+    padding: 0;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.vep-unsubscribe-page > *:not(.vep-page-title) {
+    margin-left: 34px;
+    margin-right: 34px;
+}
+
+.vep-unsubscribe-page > .vep-unsubscribe-status-message {
+    margin-top: 24px;
+}
+
+.vep-unsubscribe-page > .vep-ajax-feedback,
+.vep-unsubscribe-page > #vep-unsubscribe-ajax-message {
+    margin-top: 8px;
+}
+
+.vep-unsubscribe-page > #vep-resubscribe-btn,
+.vep-unsubscribe-page > #vep-unsubscribe-btn {
+    margin-top: 8px;
+    margin-bottom: 32px;
+}
+
+.vep-unsubscribe-status-message {
+    padding: 16px 20px;
+    border-radius: 6px;
+    font-size: 1.05rem;
+    margin-bottom: 20px;
+}
+
+.vep-unsubscribe-status-message.vep-unsubscribed {
+    background-color: #fff3cd;
+    border: 1px solid #ffc107;
+    color: #856404;
+}
+
+.vep-unsubscribe-status-message.vep-subscribed {
+    background-color: #d4edda;
+    border: 1px solid #c3e6cb;
+    color: #155724;
+}
+
+.vep-ajax-feedback {
+    padding: 10px 16px;
+    border-radius: 5px;
+    margin-bottom: 16px;
+    font-size: 0.95rem;
+}
+
+.vep-ajax-feedback.vep-success {
+    background-color: #d4edda;
+    border: 1px solid #c3e6cb;
+    color: #155724;
+}
+
+.vep-ajax-feedback.vep-error {
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    color: #721c24;
+}
+
+/* -- Update Agreements Page ------------------------------------------ */
+
+.vep-agreements-page {
+    margin: 20px auto;
+    padding: 0;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.vep-no-agreements {
+    color: #6c757d;
+    font-style: italic;
+}
+
+.vep-agreements-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+    margin-top: 20px;
+    margin-bottom: 24px;
+}
+
+.vep-agreement-card {
+    background: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 16px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.vep-agreement-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.vep-agreement-partner {
+    font-weight: 700;
+    font-size: 1rem;
+    color: #1f2328;
+}
+
+.vep-agreement-save-indicator {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 2px 10px;
+    border-radius: 999px;
+    opacity: 0;
+    transition: opacity 0.25s;
+    white-space: nowrap;
+}
+
+.vep-agreement-save-indicator.saving {
+    opacity: 1;
+    background: #e9ecef;
+    color: #6c757d;
+}
+
+.vep-agreement-save-indicator.saved {
+    opacity: 1;
+    background: #d1e7dd;
+    color: #0f5132;
+}
+
+.vep-agreement-save-indicator.error {
+    opacity: 1;
+    background: #f8d7da;
+    color: #842029;
+}
+
+.vep-agreement-description {
+    font-size: 0.9rem;
+    color: #495057;
+    line-height: 1.5;
+}
+
+.vep-agreement-status-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: auto;
+}
+
+.vep-agreement-status-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #495057;
+    white-space: nowrap;
+}
+
+.vep-agreement-status-select {
+    flex: 1;
+    padding: 6px 10px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    background-color: #fff;
+    cursor: pointer;
+}
+
+.vep-agreements-footer {
+    margin-top: 24px;
+    padding-top: 24px;
+    padding-bottom: 32px;
+    border-top: 1px solid #dee2e6;
+}
+
+.vep-unsub-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 8px;
+}
+
+.vep-unsub-label {
+    font-size: 0.95rem;
+    color: #495057;
+    margin: 0;
+}
+
+.vep-button-danger {
+    background: #dc3545;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 18px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.vep-button-danger:hover {
+    background: #bb2d3b;
+}
+
+@media (max-width: 480px) {
+    .vep-agreements-grid {
+        grid-template-columns: 1fr;
     }
 }

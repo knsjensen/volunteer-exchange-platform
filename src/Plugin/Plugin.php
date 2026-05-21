@@ -18,8 +18,13 @@ use VolunteerExchangePlatform\Admin\SettingsPage;
 use VolunteerExchangePlatform\Admin\TagsPage;
 use VolunteerExchangePlatform\Ajax\AgreementHandler;
 use VolunteerExchangePlatform\Ajax\CompetitionHandler;
+use VolunteerExchangePlatform\Ajax\EventAgreementsTableHandler;
+use VolunteerExchangePlatform\Ajax\FrontendAgreementsHandler;
+use VolunteerExchangePlatform\Ajax\ParticipantAgreementsTableHandler;
 use VolunteerExchangePlatform\Ajax\EventDisplayHandler;
+use VolunteerExchangePlatform\Ajax\EventParticipantsTableHandler;
 use VolunteerExchangePlatform\Ajax\ParticipantHandler;
+use VolunteerExchangePlatform\Ajax\AgreementOverviewHandler;
 use VolunteerExchangePlatform\Database\CompetitionRepository;
 use VolunteerExchangePlatform\Database\CompetitionWinnerRepository;
 use VolunteerExchangePlatform\Database\EventRepository;
@@ -32,6 +37,8 @@ use VolunteerExchangePlatform\Email\EmailCleanupWorker;
 use VolunteerExchangePlatform\Email\TransactionalEmailWorker;
 use VolunteerExchangePlatform\Email\ParticipantReminderWorker;
 use VolunteerExchangePlatform\Frontend\ParticipantPage;
+use VolunteerExchangePlatform\Frontend\UnsubscribePage;
+use VolunteerExchangePlatform\Frontend\UpdateAgreementsPage;
 use VolunteerExchangePlatform\Frontend\UpdateParticipantPage;
 use VolunteerExchangePlatform\Services\EventService;
 use VolunteerExchangePlatform\Services\CompetitionService;
@@ -167,6 +174,8 @@ class Plugin {
         new AgreementsList( $services['event'] );
         new ParticipantPage( $services['participant'] );
         new UpdateParticipantPage( $services['participant'], $services['participant_type'], $services['tag'] );
+        new UnsubscribePage( $services['participant'] );
+        new UpdateAgreementsPage( $services['participant'], $services['event'] );
     }
 
     private function init_ajax( array $services ) {
@@ -174,6 +183,11 @@ class Plugin {
         new AgreementHandler( $services['event'], $services['competition'] );
         new EventDisplayHandler( $services['event'], $services['competition'] );
         new CompetitionHandler( $services['competition'], $services['event'] );
+        new EventParticipantsTableHandler();
+        new EventAgreementsTableHandler();
+        new ParticipantAgreementsTableHandler();
+        new FrontendAgreementsHandler( $services['event'], $services['participant'] );
+        new AgreementOverviewHandler( $services['event'], $services['participant'] );
     }
 
     private function init_email() {
@@ -186,6 +200,20 @@ class Plugin {
     private function register_hooks() {
         add_action( 'admin_enqueue_scripts', array( $this, 'admin_enqueue_scripts' ) );
         add_action( 'wp_enqueue_scripts', array( $this, 'frontend_enqueue_scripts' ) );
+        add_action( 'init', array( $this, 'maybe_flush_rewrite_rules' ), 999 );
+    }
+
+    /**
+     * Flush rewrite rules once when the rewrite version changes.
+     *
+     * @return void
+     */
+    public function maybe_flush_rewrite_rules() {
+        $current_version = '1.2';
+        if ( get_option( 'vep_rewrite_version' ) !== $current_version ) {
+            flush_rewrite_rules();
+            update_option( 'vep_rewrite_version', $current_version );
+        }
     }
 
     /**
@@ -233,6 +261,8 @@ class Plugin {
         wp_enqueue_style( 'vep-admin-style', VEP_PLUGIN_URL . 'assets/css/admin.css', array(), $this->asset_version( 'assets/css/admin.css' ) );
         wp_enqueue_script( 'vep-admin-script', VEP_PLUGIN_URL . 'assets/js/admin.js', array( 'jquery', 'jquery-ui-sortable', 'choices-js' ), $this->asset_version( 'assets/js/admin.js' ), true );
 
+        wp_enqueue_style( 'vep-admin-ajax-spinner', VEP_PLUGIN_URL . 'assets/css/admin-ajax-spinner.css', array(), $this->asset_version( 'assets/css/admin-ajax-spinner.css' ) );
+
         wp_localize_script(
             'vep-admin-script',
             'vepAdmin',
@@ -253,6 +283,7 @@ class Plugin {
                     'agreementBetweenLabel'   => __( 'Agreement between', 'volunteer-exchange-platform' ),
                     'setCountdownTimeFirst'   => __( 'Please set a countdown time first.', 'volunteer-exchange-platform' ),
                     'confirmCompetitionDelete' => __( 'Are you sure?', 'volunteer-exchange-platform' ),
+                    'confirmBulkDelete'        => __( 'Are you sure you want to delete the selected participants?', 'volunteer-exchange-platform' ),
                     'reorderCompetitionFailed' => __( 'Failed to reorder competitions', 'volunteer-exchange-platform' ),
                     'competitionActionFailed'  => __( 'An error occurred. Please try again.', 'volunteer-exchange-platform' ),
                     'winnerSaved'             => __( 'Winner set successfully', 'volunteer-exchange-platform' ),
@@ -272,6 +303,23 @@ class Plugin {
                     'noCompetitionsAvailable'  => __( 'No competitions available.', 'volunteer-exchange-platform' ),
                     'printNoSelection'         => __( 'Select at least one participant in the table.', 'volunteer-exchange-platform' ),
                     'printNoFields'            => __( 'Select at least one field.', 'volunteer-exchange-platform' ),
+                    'agreement'                => __( 'Agreement', 'volunteer-exchange-platform' ),
+                    'editAgreement'            => __( 'Edit Agreement', 'volunteer-exchange-platform' ),
+                    'addNewAgreement'          => __( 'Add New Agreement', 'volunteer-exchange-platform' ),
+                    'editParticipant'          => __( 'Edit Participant', 'volunteer-exchange-platform' ),
+                    'addNewParticipant'        => __( 'Add New Participant', 'volunteer-exchange-platform' ),
+                    'saving'                   => __( 'Saving…', 'volunteer-exchange-platform' ),
+                    'agreementSaved'           => __( 'Agreement updated.', 'volunteer-exchange-platform' ),
+                    'agreementCreated'         => __( 'Agreement created.', 'volunteer-exchange-platform' ),
+                    'participantSaved'         => __( 'Participant updated.', 'volunteer-exchange-platform' ),
+                    'participantCreated'       => __( 'Participant created.', 'volunteer-exchange-platform' ),
+                    'selectP1'                 => __( 'Select Participant 1', 'volunteer-exchange-platform' ),
+                    'selectP2'                 => __( 'Select Participant 2', 'volunteer-exchange-platform' ),
+                    'participantsMustDiffer'   => __( 'Participants must be different', 'volunteer-exchange-platform' ),
+                    'enterDescription'         => __( 'Enter a description', 'volunteer-exchange-platform' ),
+                    'confirmSendOverview'      => __( 'Send agreement overview to all eligible participants?', 'volunteer-exchange-platform' ),
+                    'sending'                  => __( 'Sending…', 'volunteer-exchange-platform' ),
+                    'agreementOverviewSent'    => __( 'Agreement Overview Sent', 'volunteer-exchange-platform' ),
                 ),
                 'closingText'        => get_option( 'vep_display_closing_text', __( 'Tak for denne gang', 'volunteer-exchange-platform' ) ),
                 'timeUpText'         => get_option( 'vep_display_time_up_text', __( 'Tiden er gået', 'volunteer-exchange-platform' ) ),
@@ -333,10 +381,13 @@ class Plugin {
                 'ajaxUrl' => admin_url( 'admin-ajax.php' ),
                 'nonce' => wp_create_nonce( 'vep_frontend_nonce' ),
                 'i18n' => array(
-                    'submitting' => __( 'Submitting...', 'volunteer-exchange-platform' ),
-                    'creating' => __( 'Creating...', 'volunteer-exchange-platform' ),
-                    'genericError' => __( 'An error occurred. Please try again.', 'volunteer-exchange-platform' ),
+                    'submitting'    => __( 'Submitting...', 'volunteer-exchange-platform' ),
+                    'creating'      => __( 'Creating...', 'volunteer-exchange-platform' ),
+                    'genericError'  => __( 'An error occurred. Please try again.', 'volunteer-exchange-platform' ),
                     'selectAtLeastOne' => __( 'Please select at least one option.', 'volunteer-exchange-platform' ),
+                    'saving'        => __( 'Saving…', 'volunteer-exchange-platform' ),
+                    'saved'         => __( 'Saved ✓', 'volunteer-exchange-platform' ),
+                    'saveError'     => __( 'Error', 'volunteer-exchange-platform' ),
                 ),
                 'choicesI18n' => array(
                     'searchPlaceholderValue' => __( 'Search...', 'volunteer-exchange-platform' ),

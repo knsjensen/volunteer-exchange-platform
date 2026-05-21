@@ -45,6 +45,7 @@ require_once VEP_PLUGIN_DIR . 'src/Database/ParticipantTypeRepository.php';
 require_once VEP_PLUGIN_DIR . 'src/Database/TagRepository.php';
 
 require_once VEP_PLUGIN_DIR . 'src/Services/AbstractService.php';
+require_once VEP_PLUGIN_DIR . 'src/Services/AgreementStatus.php';
 require_once VEP_PLUGIN_DIR . 'src/Services/CompetitionService.php';
 require_once VEP_PLUGIN_DIR . 'src/Services/EventService.php';
 require_once VEP_PLUGIN_DIR . 'src/Services/ParticipantService.php';
@@ -70,6 +71,11 @@ require_once VEP_PLUGIN_DIR . 'src/Ajax/ParticipantHandler.php';
 require_once VEP_PLUGIN_DIR . 'src/Ajax/AgreementHandler.php';
 require_once VEP_PLUGIN_DIR . 'src/Ajax/CompetitionHandler.php';
 require_once VEP_PLUGIN_DIR . 'src/Ajax/EventDisplayHandler.php';
+require_once VEP_PLUGIN_DIR . 'src/Ajax/EventParticipantsTableHandler.php';
+require_once VEP_PLUGIN_DIR . 'src/Ajax/EventAgreementsTableHandler.php';
+require_once VEP_PLUGIN_DIR . 'src/Ajax/ParticipantAgreementsTableHandler.php';
+require_once VEP_PLUGIN_DIR . 'src/Ajax/FrontendAgreementsHandler.php';
+require_once VEP_PLUGIN_DIR . 'src/Ajax/AgreementOverviewHandler.php';
 
 require_once VEP_PLUGIN_DIR . 'src/Email/Settings.php';
 require_once VEP_PLUGIN_DIR . 'src/Email/EmailQueueRepository.php';
@@ -87,6 +93,8 @@ require_once VEP_PLUGIN_DIR . 'src/Shortcodes/AgreementForm.php';
 require_once VEP_PLUGIN_DIR . 'src/Shortcodes/AgreementsList.php';
 
 require_once VEP_PLUGIN_DIR . 'src/Frontend/ParticipantPage.php';
+require_once VEP_PLUGIN_DIR . 'src/Frontend/UnsubscribePage.php';
+require_once VEP_PLUGIN_DIR . 'src/Frontend/UpdateAgreementsPage.php';
 require_once VEP_PLUGIN_DIR . 'src/Frontend/UpdateParticipantPage.php';
 
 require_once VEP_PLUGIN_DIR . 'src/Plugin/Activator.php';

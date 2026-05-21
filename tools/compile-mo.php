@@ -34,20 +34,30 @@ $entries = [];
 $state = null; // 'msgctxt' | 'msgid' | 'msgstr'
 $msgctxt = '';
 $msgid = '';
-$msgstr = '';
+$msgid_plural = '';
+$msgstr = '';          // used for simple (non-plural) entries
+$msgstr_plural = [];   // used for plural entries: index => translation
 
-$flush = function () use (&$entries, &$msgctxt, &$msgid, &$msgstr) {
-    // Skip header (empty msgid) but keep it in MO (it is required).
-    if ($msgid !== '') {
-        // Prepend context to msgid with null byte separator if context exists
+$flush = function () use (&$entries, &$msgctxt, &$msgid, &$msgid_plural, &$msgstr, &$msgstr_plural) {
+    if ($msgid !== '' || $msgid === '') { // always flush (header has empty msgid)
         $key = $msgctxt ? $msgctxt . "\x04" . $msgid : $msgid;
-        $entries[$key] = $msgstr;
-    } else {
-        $entries[''] = $msgstr;
+
+        if ($msgid_plural !== '') {
+            // Plural entry: key is "singular\0plural", value is "t0\0t1\0..."
+            $key = $msgctxt
+                ? $msgctxt . "\x04" . $msgid . "\x00" . $msgid_plural
+                : $msgid . "\x00" . $msgid_plural;
+            ksort($msgstr_plural);
+            $entries[$key] = implode("\x00", $msgstr_plural);
+        } else {
+            $entries[$key] = $msgstr;
+        }
     }
-    $msgctxt = '';
-    $msgid = '';
-    $msgstr = '';
+    $msgctxt     = '';
+    $msgid       = '';
+    $msgid_plural = '';
+    $msgstr      = '';
+    $msgstr_plural = [];
 };
 
 $unquote = function (string $s): string {
@@ -77,12 +87,25 @@ foreach ($lines as $line) {
         continue;
     }
 
+    if (str_starts_with($line, 'msgid_plural ')) {
+        $state = 'msgid_plural';
+        $msgid_plural = $unquote(substr($line, 12));
+        continue;
+    }
+
     if (str_starts_with($line, 'msgid ')) {
         if ($state !== null && $state !== 'msgctxt') {
             $flush();
         }
         $state = 'msgid';
         $msgid = $unquote(substr($line, 5));
+        continue;
+    }
+
+    // msgstr[N] "..." — plural translation forms
+    if (preg_match('/^msgstr\[(\d+)\] (.*)$/', $line, $m)) {
+        $state = 'msgstr_plural';
+        $msgstr_plural[(int) $m[1]] = $unquote($m[2]);
         continue;
     }
 
@@ -97,8 +120,14 @@ foreach ($lines as $line) {
             $msgctxt .= $unquote($line);
         } elseif ($state === 'msgid') {
             $msgid .= $unquote($line);
+        } elseif ($state === 'msgid_plural') {
+            $msgid_plural .= $unquote($line);
         } elseif ($state === 'msgstr') {
             $msgstr .= $unquote($line);
+        } elseif ($state === 'msgstr_plural') {
+            // Continuation of the last msgstr[N].
+            $last = max(array_keys($msgstr_plural));
+            $msgstr_plural[$last] .= $unquote($line);
         }
         continue;
     }

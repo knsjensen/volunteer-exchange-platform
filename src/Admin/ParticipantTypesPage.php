@@ -158,9 +158,13 @@ class ParticipantTypesPage {
             <hr class="wp-header-end">
             
             <?php if ( ! empty( $message ) ): ?>
-                <div class="notice notice-<?php echo esc_attr(in_array($notice_type, array('success', 'warning', 'error', 'info'), true) ? $notice_type : 'success'); ?> is-dismissible">
-                    <p><?php echo esc_html( urldecode( (string) $message ) ); ?></p>
-                </div>
+                <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                    if (window.vepToast) {
+                        window.vepToast(<?php echo wp_json_encode( urldecode( (string) $message ) ); ?>, <?php echo wp_json_encode( in_array( $notice_type, array( 'success', 'warning', 'error', 'info' ), true ) ? $notice_type : 'success' ); ?>);
+                    }
+                });
+                </script>
             <?php endif; ?>
             
             <?php $list_table->display(); ?>

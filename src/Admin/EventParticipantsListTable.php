@@ -60,7 +60,7 @@ class EventParticipantsListTable extends \WP_List_Table {
             array(
                 'singular' => 'participant',
                 'plural'   => 'participants',
-                'ajax'     => false,
+                'ajax'     => true,
             )
         );
     }
@@ -186,8 +186,9 @@ class EventParticipantsListTable extends \WP_List_Table {
                 __( 'View', 'volunteer-exchange-platform' )
             ),
             'edit' => sprintf(
-                '<a href="%s">%s</a>',
+                '<a href="%s" data-participant-edit-modal="%d">%s</a>',
                 esc_url( $this->get_participant_page_url( 'edit-participant', $participant_id ) ),
+                $participant_id,
                 __( 'Edit', 'volunteer-exchange-platform' )
             ),
             'delete' => sprintf(
@@ -227,7 +228,8 @@ class EventParticipantsListTable extends \WP_List_Table {
             case 'agreements_count':
                 return isset( $item->agreements_count ) ? (string) (int) $item->agreements_count : '0';
             case 'created_at':
-                return esc_html( date_i18n( get_option( 'date_format' ), strtotime( (string) $item->$column_name ) ) );
+                // Vis både dato og tidspunkt
+                return esc_html( date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( (string) $item->$column_name ) ) );
             case 'is_approved':
                 return $this->render_approval_column( $item );
             case 'update_progress':
@@ -323,10 +325,14 @@ class EventParticipantsListTable extends \WP_List_Table {
      * @return void
      */
     public function prepare_items() {
-        $orderby_raw = filter_input( INPUT_GET, 'orderby', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
-        $order_raw = filter_input( INPUT_GET, 'order', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
-        $approval_status_raw = filter_input( INPUT_GET, 'approval_status', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
-        $per_page_raw = filter_input( INPUT_GET, 'per_page', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+        // phpcs:disable WordPress.Security.NonceVerification.Recommended
+        // Read directly from $_GET so that runtime injections (e.g. from the AJAX handler)
+        // are visible — filter_input(INPUT_GET) reads the original request and ignores them.
+        $orderby_raw         = isset( $_GET['orderby'] )         ? wp_unslash( $_GET['orderby'] )         : null;
+        $order_raw           = isset( $_GET['order'] )           ? wp_unslash( $_GET['order'] )           : null;
+        $approval_status_raw = isset( $_GET['approval_status'] ) ? wp_unslash( $_GET['approval_status'] ) : null;
+        $per_page_raw        = isset( $_GET['per_page'] )        ? wp_unslash( $_GET['per_page'] )        : null;
+        // phpcs:enable WordPress.Security.NonceVerification.Recommended
         $orderby = $orderby_raw ? sanitize_key( $orderby_raw ) : 'created_at';
         $order_param = $order_raw ? sanitize_key( $order_raw ) : '';
         $order = 'asc' === $order_param ? 'ASC' : 'DESC';
@@ -509,5 +515,14 @@ class EventParticipantsListTable extends \WP_List_Table {
             ),
             'vep_participant_' . $action . '_' . (int) $participant_id
         );
+    }
+
+    /**
+     * Output the full WP_List_Table markup with a unique id for AJAX replacement.
+     */
+    public function display() {
+        // Output the full WP_List_Table markup (toolbars, table, paging, etc.)
+        parent::display();
+        // Add table id via JS or filter if needed for AJAX targeting
     }
 }

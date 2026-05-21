@@ -258,6 +258,44 @@ class ParticipantService extends AbstractService {
     }
 
     /**
+     * Set or clear the reminder_unsubscribed flag for a participant.
+     *
+     * @param int $participant_id Participant ID.
+     * @param int $value 1 to unsubscribe, 0 to re-subscribe.
+     * @return bool
+     */
+    public function set_reminder_unsubscribed( $participant_id, $value ) {
+        if ( ! $this->is_valid_id( $participant_id ) ) {
+            return false;
+        }
+        return $this->run_guarded(
+            function () use ( $participant_id, $value ) {
+                return $this->repository->set_reminder_unsubscribed( (int) $participant_id, (int) $value ) !== false;
+            },
+            false
+        );
+    }
+
+    /**
+     * Set the agreement_overview_unsubscribed flag for a participant.
+     *
+     * @param int $participant_id Participant ID.
+     * @param int $value          1 to unsubscribe, 0 to re-subscribe.
+     * @return bool
+     */
+    public function set_agreement_overview_unsubscribed( $participant_id, $value ) {
+        if ( ! $this->is_valid_id( $participant_id ) ) {
+            return false;
+        }
+        return $this->run_guarded(
+            function () use ( $participant_id, $value ) {
+                return $this->repository->set_agreement_overview_unsubscribed( (int) $participant_id, (int) $value ) !== false;
+            },
+            false
+        );
+    }
+
+    /**
      * Get paginated participants with filters.
      *
      * @param int    $per_page Items per page.
@@ -875,5 +913,81 @@ class ParticipantService extends AbstractService {
             },
             false
         );
+    }
+
+    /**
+     * Queue an agreement overview email for a single participant.
+     *
+     * @param int   $participant_id Participant ID.
+     * @param int   $event_id       Event ID.
+     * @param array $agreements     Array of agreement objects (each with partner_name, status, description).
+     * @return bool True if queued.
+     */
+    public function queue_agreement_overview_or_reminder_email( $participant_id, $event_id, $agreements, $is_reminder = false ) {
+        if ( ! function_exists( 'vep_queue_transactional_email' ) ) {
+            return false;
+        }
+
+        $participant = $this->get_by_id_with_details( (int) $participant_id );
+        if ( ! $participant || empty( $participant->is_approved ) ) {
+            return false;
+        }
+
+        $email = isset( $participant->contact_email ) ? sanitize_email( $participant->contact_email ) : '';
+        if ( '' === $email ) {
+            return false;
+        }
+
+        $random_key = ! empty( $participant->randon_key )
+            ? sanitize_text_field( (string) $participant->randon_key )
+            : $this->ensure_randon_key( (int) $participant_id );
+        if ( '' === $random_key ) {
+            return false;
+        }
+
+        $update_url      = home_url( '/vep/opdateraftaler/' . rawurlencode( $random_key ) );
+        $unsubscribe_url = home_url( '/vep/afmeld/aftale-paamindelse/' . rawurlencode( $random_key ) );
+        $event_name      = isset( $participant->event_name ) ? (string) $participant->event_name : '';
+        $event_date_raw  = isset( $participant->event_date ) ? (string) $participant->event_date : '';
+        $event_date      = '' !== $event_date_raw ? date_i18n( 'j. F Y', strtotime( $event_date_raw ) ) : '';
+        $contact_name    = isset( $participant->contact_person_name ) ? (string) $participant->contact_person_name : '';
+        $org_name        = isset( $participant->organization_name ) ? (string) $participant->organization_name : '';
+
+        // Build agreements array for template.
+        $agreements_data = array();
+        foreach ( $agreements as $agreement ) {
+            $status_key   = isset( $agreement->status ) ? (string) $agreement->status : '';
+            $status_label = \VolunteerExchangePlatform\Services\AgreementStatus::label( $status_key );
+            $is_initiator = isset( $agreement->initiator_id ) && (int) $agreement->initiator_id === (int) $participant_id;
+            $agreements_data[] = array(
+                'participant'  => isset( $agreement->partner_name ) ? (string) $agreement->partner_name : '',
+                'initiator'    => $is_initiator ? __( 'You', 'volunteer-exchange-platform' ) : __( 'Them', 'volunteer-exchange-platform' ),
+                'description'  => isset( $agreement->description ) ? (string) $agreement->description : '',
+                'status'       => $status_label,
+            );
+        }
+
+        $agreement_count = count( $agreements );
+
+        $queued = vep_queue_transactional_email(
+            array(
+                'to'            => array( $email ),
+                'template_key'  => 'indgaaede_aftale_oversigt',
+                'template_data' => array(
+                    'is_reminder'           => $is_reminder,
+                    'event_name'            => $event_name,
+                    'event_date'            => $event_date,
+                    'contact_name'          => $contact_name,
+                    'organization_name'     => $org_name,
+                    'agreement_count'       => $agreement_count,
+                    'agreement_count_one'   => 1 === $agreement_count,
+                    'agreements'            => $agreements_data,
+                    'update_agreements_url' => $update_url,
+                    'unsubscribe_url'       => $unsubscribe_url,
+                ),
+            )
+        );
+
+        return false !== $queued;
     }
 }

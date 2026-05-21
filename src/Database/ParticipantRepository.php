@@ -503,6 +503,31 @@ class ParticipantRepository extends AbstractRepository {
     }
 
     /**
+     * Set the reminder_unsubscribed flag for a participant.
+     *
+     * @param int $participant_id Participant ID.
+     * @param int $value 1 to unsubscribe, 0 to re-subscribe.
+     * @return int|false
+     */
+    public function set_reminder_unsubscribed( $participant_id, $value ) {
+        return $this->update(
+            array( 'reminder_unsubscribed' => (int) $value ),
+            array( 'id' => $participant_id ),
+            array( '%d' ),
+            array( '%d' )
+        );
+    }
+
+    public function set_agreement_overview_unsubscribed( $participant_id, $value ) {
+        return $this->update(
+            array( 'agreement_overview_unsubscribed' => (int) $value ),
+            array( 'id' => $participant_id ),
+            array( '%d' ),
+            array( '%d' )
+        );
+    }
+
+    /**
      * Delete participant and related tag links.
      *
      * @param int $participant_id Participant ID.

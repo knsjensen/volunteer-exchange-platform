@@ -46,6 +46,7 @@ class Installer {
             start_date datetime NOT NULL,
             end_date datetime NOT NULL,
             is_active tinyint(1) DEFAULT 0,
+            agreement_overview_sent tinyint(1) DEFAULT 0,
             created_at datetime DEFAULT CURRENT_TIMESTAMP,
             updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             PRIMARY KEY (id),
@@ -101,6 +102,8 @@ class Installer {
             no_expected_count tinyint(1) DEFAULT 0,
             no_expected_names tinyint(1) DEFAULT 0,
             randon_key varchar(36) DEFAULT NULL,
+            reminder_unsubscribed tinyint(1) DEFAULT 0,
+            agreement_overview_unsubscribed tinyint(1) DEFAULT 0,
             is_approved tinyint(1) DEFAULT 0,
             created_at datetime DEFAULT CURRENT_TIMESTAMP,
             updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -132,7 +135,7 @@ class Installer {
             participant2_id bigint(20) UNSIGNED NOT NULL,
             initiator_id bigint(20) UNSIGNED NOT NULL,
             description text,
-            status varchar(50) DEFAULT 'active',
+            status varchar(50) DEFAULT 'agreed',
             created_at datetime DEFAULT CURRENT_TIMESTAMP,
             updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             PRIMARY KEY (id),
@@ -331,6 +334,52 @@ class Installer {
             // Populate GUID-like keys for pre-existing participants after adding the new column.
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Direct migration update query is required; interpolated table name is controlled from $wpdb->prefix.
             $wpdb->query("UPDATE $table_participants SET randon_key = UUID() WHERE randon_key IS NULL OR randon_key = ''");
+        }
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Direct schema inspection query is required; interpolated table name is controlled from $wpdb->prefix.
+        $has_reminder_unsubscribed = $wpdb->get_var($wpdb->prepare(
+            // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Interpolated table name is controlled.
+            "SHOW COLUMNS FROM $table_participants LIKE %s",
+            'reminder_unsubscribed'
+        ));
+        if (!$has_reminder_unsubscribed) {
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Direct schema migration query is required; interpolated table name is controlled from $wpdb->prefix.
+            $wpdb->query("ALTER TABLE $table_participants ADD COLUMN reminder_unsubscribed tinyint(1) DEFAULT 0 AFTER randon_key");
+        }
+
+        // Migrate: add agreement_overview_unsubscribed to vep_participants.
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Direct schema inspection query is required; interpolated table name is controlled from $wpdb->prefix.
+        $has_agreement_overview_unsubscribed = $wpdb->get_var( $wpdb->prepare(
+            // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Interpolated table name is controlled.
+            "SHOW COLUMNS FROM $table_participants LIKE %s",
+            'agreement_overview_unsubscribed'
+        ) );
+        if ( ! $has_agreement_overview_unsubscribed ) {
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Direct schema migration query is required; interpolated table name is controlled from $wpdb->prefix.
+            $wpdb->query( "ALTER TABLE $table_participants ADD COLUMN agreement_overview_unsubscribed tinyint(1) DEFAULT 0 AFTER reminder_unsubscribed" );
+        }
+
+        // Migrate legacy 'active' agreement status to 'agreed'.
+        $table_agreements = $wpdb->prefix . 'vep_agreements';
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Data migration; table name is controlled from $wpdb->prefix.
+        $wpdb->query( $wpdb->prepare(
+            // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Interpolated table name is controlled.
+            "UPDATE $table_agreements SET status = %s WHERE status = %s",
+            'agreed',
+            'active'
+        ) );
+
+        // Migrate: add agreement_overview_sent to vep_events.
+        $table_events = $wpdb->prefix . 'vep_events';
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Direct schema inspection query is required; interpolated table name is controlled from $wpdb->prefix.
+        $has_overview_sent = $wpdb->get_var( $wpdb->prepare(
+            // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Interpolated table name is controlled.
+            "SHOW COLUMNS FROM $table_events LIKE %s",
+            'agreement_overview_sent'
+        ) );
+        if ( ! $has_overview_sent ) {
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Direct schema migration query is required; interpolated table name is controlled from $wpdb->prefix.
+            $wpdb->query( "ALTER TABLE $table_events ADD COLUMN agreement_overview_sent tinyint(1) DEFAULT 0" );
         }
 
         $table_types = $wpdb->prefix . 'vep_participant_types';

@@ -67,6 +67,7 @@ class TransactionalEmailsListTable extends \WP_List_Table {
             'attempts'            => __( 'Attempts', 'volunteer-exchange-platform' ),
             'provider_message_id' => __( 'Provider Message ID', 'volunteer-exchange-platform' ),
             'last_error'          => __( 'Last Error', 'volunteer-exchange-platform' ),
+            'payload'             => __( 'Payload', 'volunteer-exchange-platform' ),
         );
     }
 
@@ -217,6 +218,7 @@ class TransactionalEmailsListTable extends \WP_List_Table {
                 'attempts'            => (int) $row->attempts . '/' . (int) $row->max_attempts,
                 'provider_message_id' => (string) $row->provider_message_id,
                 'last_error'          => (string) $row->last_error,
+                'payload_json'        => (string) $row->payload,
             );
         }
 
@@ -234,6 +236,38 @@ class TransactionalEmailsListTable extends \WP_List_Table {
             $this->get_columns(),
             array(),
             $this->get_sortable_columns(),
+        );
+    }
+
+    /**
+     * Render the ID column with a payload viewer button.
+     *
+     * @param object $item Item.
+     * @return string
+     */
+    protected function column_id( $item ) {
+        return esc_html( (string) (int) $item->id );
+    }
+
+    /**
+     * Render the payload column with a viewer button.
+     *
+     * @param object $item Item.
+     * @return string
+     */
+    protected function column_payload( $item ) {
+        $payload_json = isset( $item->payload_json ) ? (string) $item->payload_json : '{}';
+
+        $decoded = json_decode( $payload_json, true );
+        $pretty  = is_array( $decoded )
+            ? wp_json_encode( $decoded, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES )
+            : $payload_json;
+
+        return sprintf(
+            '<button type="button" class="button button-small vep-payload-view-btn" data-payload="%s" aria-label="%s">%s</button>',
+            esc_attr( $pretty ),
+            esc_attr__( 'View payload', 'volunteer-exchange-platform' ),
+            esc_html__( 'Vis payload', 'volunteer-exchange-platform' )
         );
     }
 

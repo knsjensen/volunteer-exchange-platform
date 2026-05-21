@@ -89,7 +89,7 @@ class AgreementHandler {
             'participant2_id' => $participant2_id,
             'initiator_id' => $initiator_id,
             'description' => $agreement_description,
-            'status' => 'active'
+            'status' => 'agreed'
         );
 
         $inserted = $this->event_service->create_agreement($data);

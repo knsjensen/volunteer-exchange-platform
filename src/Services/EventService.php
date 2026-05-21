@@ -9,6 +9,7 @@
 namespace VolunteerExchangePlatform\Services;
 
 use VolunteerExchangePlatform\Services\AbstractService;
+use VolunteerExchangePlatform\Services\AgreementStatus;
 use VolunteerExchangePlatform\Database\EventRepository;
 use VolunteerExchangePlatform\Database\ParticipantRepository;
 
@@ -454,16 +455,20 @@ class EventService extends AbstractService {
             return false;
         }
 
+        $status = isset( $data['status'] ) && in_array( $data['status'], AgreementStatus::all(), true )
+            ? $data['status']
+            : AgreementStatus::AGREED;
+
         return $this->run_guarded(
-            function () use ( $event_id, $participant1_id, $participant2_id, $initiator_id, $description ) {
+            function () use ( $event_id, $participant1_id, $participant2_id, $initiator_id, $description, $status ) {
                 return $this->repository->create_agreement(
                     array(
-                        'event_id' => $event_id,
-                        'participant1_id' => $participant1_id,
-                        'participant2_id' => $participant2_id,
-                        'initiator_id' => $initiator_id,
-                        'description' => $description,
-                        'status' => 'active',
+                        'event_id'        => $event_id,
+                        'participant1_id'  => $participant1_id,
+                        'participant2_id'  => $participant2_id,
+                        'initiator_id'     => $initiator_id,
+                        'description'      => $description,
+                        'status'           => $status,
                     )
                 );
             },
@@ -607,6 +612,62 @@ class EventService extends AbstractService {
                 );
             },
             null
+        );
+    }
+
+    /**
+     * Set the agreement_overview_sent flag on an event.
+     *
+     * @param int $event_id Event ID.
+     * @param int $value    1 to mark sent, 0 to clear.
+     * @return bool
+     */
+    public function set_agreement_overview_sent( $event_id, $value ) {
+        if ( ! $this->is_valid_id( $event_id ) ) {
+            return false;
+        }
+        return $this->run_guarded(
+            function () use ( $event_id, $value ) {
+                return $this->repository->set_agreement_overview_sent( (int) $event_id, (int) $value );
+            },
+            false
+        );
+    }
+
+    /**
+     * Get all eligible participants with their agreements for the overview email.
+     *
+     * @param int $event_id Event ID.
+     * @return array Participant objects each with ->agreements array.
+     */
+    public function get_participants_with_agreements_for_overview( $event_id ) {
+        if ( ! $this->is_valid_id( $event_id ) ) {
+            return array();
+        }
+        return $this->run_guarded(
+            function () use ( $event_id ) {
+                return $this->repository->get_participants_with_agreements_for_overview( (int) $event_id );
+            },
+            array()
+        );
+    }
+
+    /**
+     * Get agreements for a single participant on a given event.
+     *
+     * @param int $participant_id Participant ID.
+     * @param int $event_id       Event ID.
+     * @return array
+     */
+    public function get_agreements_for_participant_on_event( $participant_id, $event_id ) {
+        if ( ! $this->is_valid_id( $participant_id ) || ! $this->is_valid_id( $event_id ) ) {
+            return array();
+        }
+        return $this->run_guarded(
+            function () use ( $participant_id, $event_id ) {
+                return $this->repository->get_agreements_for_participant_on_event( (int) $participant_id, (int) $event_id );
+            },
+            array()
         );
     }
 }

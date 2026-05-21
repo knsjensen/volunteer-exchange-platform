@@ -1,4 +1,918 @@
 /**
+ * Toast notification utility — available globally as window.vepToast(message, type).
+ * Types: 'success' (default), 'error', 'warning'.
+ */
+(function () {
+    'use strict';
+    var container = null;
+
+    function getContainer() {
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'vep-toast-container';
+            document.body.appendChild(container);
+        }
+        return container;
+    }
+
+    window.vepToast = function (message, type) {
+        var c = getContainer();
+        var toast = document.createElement('div');
+        toast.className = 'vep-toast vep-toast--' + (type || 'success');
+        toast.textContent = message;
+        c.appendChild(toast);
+        requestAnimationFrame(function () { toast.classList.add('vep-toast--visible'); });
+        setTimeout(function () {
+            toast.classList.remove('vep-toast--visible');
+            setTimeout(function () {
+                if (toast.parentNode) toast.parentNode.removeChild(toast);
+            }, 300);
+        }, 3500);
+    };
+}());
+
+/**
+ * AJAX for event participants list table.
+ * Self-contained IIFE — no global pollution.
+ */
+(function () {
+    'use strict';
+
+    // Event ID read from the URL — null on pages that aren't event-view.
+    var eventId = null;
+
+    // Current navigation state, kept in sync across reloads.
+    var state = {
+        per_page:        '25',
+        paged:           '1',
+        approval_status: '',
+        orderby:         'created_at',
+        order:           'desc'
+    };
+
+    function showSpinner() {
+        var section = document.getElementById('vep-event-participants-section');
+        if (!section) return;
+        var overlay = section.querySelector('.vep-ajax-spinner-overlay');
+        if (!overlay) {
+            overlay = document.createElement('div');
+            overlay.className = 'vep-ajax-spinner-overlay';
+            overlay.innerHTML = '<div class="vep-ajax-spinner"></div>';
+            section.style.position = 'relative';
+            section.appendChild(overlay);
+        }
+        overlay.style.display = 'flex';
+    }
+
+    function hideSpinner() {
+        var overlay = document.querySelector('#vep-event-participants-section .vep-ajax-spinner-overlay');
+        if (overlay) overlay.style.display = 'none';
+    }
+
+    /**
+     * Reload the participants section via AJAX.
+     * @param {Object} overrides  Key/value pairs to merge into state.
+     *                            Special keys: participant_action, participant_id,
+     *                            bulk_action, participants (array), _wpnonce.
+     */
+    function reload(overrides) {
+        if (!eventId || typeof vepAdmin === 'undefined') return;
+
+        // Separate navigation-state keys from action keys.
+        var actionKeys = ['participant_action', 'participant_id', 'bulk_action', 'participants', '_wpnonce'];
+        var extra = {};
+
+        if (overrides) {
+            Object.keys(overrides).forEach(function (k) {
+                if (actionKeys.indexOf(k) !== -1) {
+                    extra[k] = overrides[k];
+                } else {
+                    state[k] = overrides[k];
+                }
+            });
+            // Reset to page 1 when the filter or rows-per-page changes.
+            if (overrides.approval_status !== undefined || overrides.per_page !== undefined) {
+                state.paged = '1';
+            }
+        }
+
+        showSpinner();
+
+        var data = new URLSearchParams();
+        data.append('action',   'vep_reload_event_participants_table');
+        data.append('event_id', eventId);
+        Object.keys(state).forEach(function (k) {
+            data.append(k, state[k]);
+        });
+        Object.keys(extra).forEach(function (k) {
+            if (k === 'participants' && Array.isArray(extra[k])) {
+                // Send as comma-separated string to avoid PHP %5B%5D parsing inconsistencies.
+                data.append('participants_list', extra[k].join(','));
+            } else {
+                data.append(k, extra[k]);
+            }
+        });
+
+        fetch(vepAdmin.ajaxUrl, { method: 'POST', body: data, credentials: 'same-origin' })
+            .then(function (r) { return r.json(); })
+            .then(function (result) {
+                hideSpinner();
+                if (!result || !result.success) {
+                    if (typeof window.vepToast === 'function') {
+                        window.vepToast(
+                            (result && result.data) ? result.data : 'An error occurred.',
+                            'error'
+                        );
+                    }
+                    return;
+                }
+                if (!result.data || !result.data.html) return;
+                var section = document.getElementById('vep-event-participants-section');
+                if (!section) return;
+                var temp = document.createElement('div');
+                temp.innerHTML = result.data.html;
+                var newSection = temp.querySelector('#vep-event-participants-section');
+                if (newSection) {
+                    section.parentNode.replaceChild(newSection, section);
+                }
+                if (result.data.message && typeof window.vepToast === 'function') {
+                    window.vepToast(result.data.message);
+                }
+                // Re-attach listeners to the freshly inserted DOM.
+                init();
+            })
+            .catch(function () { hideSpinner(); });
+    }
+
+    /** Attach all event listeners to the current section. */
+    function init() {
+        var section = document.getElementById('vep-event-participants-section');
+        if (!section) return;
+
+        // Block ALL native form navigation — we handle everything via AJAX.
+        var form = section.querySelector('#vep-event-participants-form');
+        if (form) {
+            form.addEventListener('submit', function (e) {
+                e.preventDefault();
+                return false;
+            });
+        }
+
+        // Rows-per-page selector.
+        section.querySelectorAll('.vep-per-page-select').forEach(function (sel) {
+            sel.addEventListener('change', function () {
+                reload({ per_page: this.value });
+            });
+        });
+
+        // Pagination links (WP outputs these inside .tablenav-pages).
+        section.querySelectorAll('.tablenav-pages a, .pagination-links a').forEach(function (link) {
+            link.addEventListener('click', function (e) {
+                e.preventDefault();
+                var url = new URL(this.href);
+                reload({ paged: url.searchParams.get('paged') || '1' });
+            });
+        });
+
+        // Filter/status view links (All / Pending Approval / Approved).
+        section.querySelectorAll('.subsubsub a').forEach(function (link) {
+            link.addEventListener('click', function (e) {
+                e.preventDefault();
+                var url = new URL(this.href);
+                reload({ approval_status: url.searchParams.get('approval_status') || '', paged: '1' });
+            });
+        });
+
+        // Column sort links.
+        section.querySelectorAll('th.sortable a, th.sorted a').forEach(function (link) {
+            link.addEventListener('click', function (e) {
+                e.preventDefault();
+                var url = new URL(this.href);
+                reload({
+                    orderby: url.searchParams.get('orderby') || 'created_at',
+                    order:   url.searchParams.get('order')   || 'desc',
+                    paged:   '1'
+                });
+            });
+        });
+
+        // Bulk-action Apply buttons (id="doaction" and id="doaction2").
+        section.querySelectorAll('input[id^="doaction"]').forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+                // Read from the select that belongs to THIS button (top → participant_bulk_action, bottom → participant_bulk_action2).
+                var selectName = (this.id === 'doaction') ? 'participant_bulk_action' : 'participant_bulk_action2';
+                var bulkSelect = section.querySelector('select[name="' + selectName + '"]');
+                var bulk_action = bulkSelect ? bulkSelect.value : '-1';
+                var selected = Array.from(section.querySelectorAll('input[name="participant[]"]:checked'))
+                                    .map(function (cb) { return cb.value; });
+                if (bulk_action === '-1') return;
+                if (selected.length === 0) return;
+                if (bulk_action === 'bulk_delete') {
+                    var confirmMsg = (typeof vepAdmin !== 'undefined' && vepAdmin.i18n && vepAdmin.i18n.confirmBulkDelete)
+                        ? vepAdmin.i18n.confirmBulkDelete
+                        : 'Er du sikker på, at du vil slette de valgte deltagere?';
+                    if (!window.confirm(confirmMsg)) return;
+                }
+                var nonceInput = section.querySelector('input[name="_wpnonce"]');
+                reload({
+                    bulk_action:  bulk_action,
+                    participants: selected,
+                    _wpnonce:     nonceInput ? nonceInput.value : ''
+                });
+            });
+        });
+
+        // Approve / Unapprove inline links.
+        section.querySelectorAll('a[href*="participant_action=approve"], a[href*="participant_action=unapprove"]').forEach(function (link) {
+            link.addEventListener('click', function (e) {
+                e.preventDefault();
+                var url = new URL(this.href);
+                reload({
+                    participant_action: url.searchParams.get('participant_action'),
+                    participant_id:     url.searchParams.get('participant_id'),
+                    _wpnonce:           url.searchParams.get('_wpnonce')
+                });
+            });
+        });
+
+        // Delete inline links — keep the confirm dialog, then AJAX.
+        section.querySelectorAll('a[href*="participant_action=delete"]').forEach(function (link) {
+            link.addEventListener('click', function (e) {
+                e.preventDefault();
+                if (!window.confirm(link.dataset.confirmMsg || 'Er du sikker?')) return;
+                var url = new URL(this.href);
+                reload({
+                    participant_action: 'delete',
+                    participant_id:     url.searchParams.get('participant_id'),
+                    _wpnonce:           url.searchParams.get('_wpnonce')
+                });
+            });
+        });
+
+        // Edit participant via modal.
+        section.querySelectorAll('a[data-participant-edit-modal]').forEach(function (link) {
+            link.addEventListener('click', function (e) {
+                e.preventDefault();
+                var id = parseInt(this.dataset.participantEditModal, 10);
+                if (typeof window.vepOpenParticipantModal === 'function') {
+                    window.vepOpenParticipantModal(id);
+                }
+            });
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        var q = new URLSearchParams(window.location.search);
+        // Only activate on the event-view admin page.
+        if (q.get('page') !== 'volunteer-exchange-events' || q.get('action') !== 'view' || !q.get('id')) return;
+        eventId = q.get('id');
+        // Seed state from the current page URL so the initial view is preserved.
+        if (q.get('per_page'))        state.per_page        = q.get('per_page');
+        if (q.get('paged'))           state.paged           = q.get('paged');
+        if (q.get('approval_status')) state.approval_status = q.get('approval_status');
+        if (q.get('orderby'))         state.orderby         = q.get('orderby');
+        if (q.get('order'))           state.order           = q.get('order');
+        init();
+        document.addEventListener('vep:reload-participants', function () { reload(); });
+    });
+
+}());
+/**
+ * AJAX for event agreements list table.
+ * Self-contained IIFE — no global pollution.
+ */
+(function () {
+    'use strict';
+
+    var eventId = null;
+
+    var state = {
+        per_page:         '25',
+        paged:            '1',
+        agreement_status: '',
+        orderby:          'id',
+        order:            'desc',
+        s:                ''
+    };
+
+    function showSpinner() {
+        var section = document.getElementById('vep-event-agreements-section');
+        if (!section) return;
+        var overlay = section.querySelector('.vep-ajax-spinner-overlay');
+        if (!overlay) {
+            overlay = document.createElement('div');
+            overlay.className = 'vep-ajax-spinner-overlay';
+            overlay.innerHTML = '<div class="vep-ajax-spinner"></div>';
+            section.style.position = 'relative';
+            section.appendChild(overlay);
+        }
+        overlay.style.display = 'flex';
+    }
+
+    function hideSpinner() {
+        var overlay = document.querySelector('#vep-event-agreements-section .vep-ajax-spinner-overlay');
+        if (overlay) overlay.style.display = 'none';
+    }
+
+    function reload(overrides) {
+        if (!eventId || typeof vepAdmin === 'undefined') return;
+
+        var actionKeys = ['agreement_action', 'agreement_id', '_wpnonce'];
+        var extra = {};
+
+        if (overrides) {
+            Object.keys(overrides).forEach(function (k) {
+                if (actionKeys.indexOf(k) !== -1) {
+                    extra[k] = overrides[k];
+                } else {
+                    state[k] = overrides[k];
+                }
+            });
+            if (overrides.agreement_status !== undefined || overrides.per_page !== undefined || overrides.s !== undefined) {
+                state.paged = '1';
+            }
+        }
+
+        showSpinner();
+
+        var data = new URLSearchParams();
+        data.append('action',   'vep_reload_event_agreements_table');
+        data.append('event_id', eventId);
+        Object.keys(state).forEach(function (k) { data.append(k, state[k]); });
+        Object.keys(extra).forEach(function (k) { data.append(k, extra[k]); });
+
+        fetch(vepAdmin.ajaxUrl, { method: 'POST', body: data, credentials: 'same-origin' })
+            .then(function (r) { return r.json(); })
+            .then(function (result) {
+                hideSpinner();
+                if (!result || !result.success) {
+                    if (typeof window.vepToast === 'function') {
+                        window.vepToast(
+                            (result && result.data) ? result.data : 'An error occurred.',
+                            'error'
+                        );
+                    }
+                    return;
+                }
+                if (!result.data || !result.data.html) return;
+                var section = document.getElementById('vep-event-agreements-section');
+                if (!section) return;
+                var temp = document.createElement('div');
+                temp.innerHTML = result.data.html;
+                var newSection = temp.querySelector('#vep-event-agreements-section');
+                if (newSection) {
+                    section.parentNode.replaceChild(newSection, section);
+                }
+                if (result.data.message && typeof window.vepToast === 'function') {
+                    window.vepToast(result.data.message);
+                }
+                init();
+            })
+            .catch(function () { hideSpinner(); });
+    }
+
+    function init() {
+        var section = document.getElementById('vep-event-agreements-section');
+        if (!section) return;
+
+        // Block form navigation; Search button / Enter triggers search reload.
+        var form = section.querySelector('#vep-event-agreements-form');
+        if (form) {
+            form.addEventListener('submit', function (e) {
+                e.preventDefault();
+                var searchInput = section.querySelector('#vep-agreements-search');
+                reload({ s: searchInput ? searchInput.value : '' });
+            });
+        }
+
+        // Rows-per-page selector.
+        section.querySelectorAll('.vep-per-page-select').forEach(function (sel) {
+            sel.addEventListener('change', function () {
+                reload({ per_page: this.value });
+            });
+        });
+
+        // Pagination links.
+        section.querySelectorAll('.tablenav-pages a, .pagination-links a').forEach(function (link) {
+            link.addEventListener('click', function (e) {
+                e.preventDefault();
+                var url = new URL(this.href);
+                reload({ paged: url.searchParams.get('paged') || '1' });
+            });
+        });
+
+        // Status filter links (All / Awaiting / Completed / Cancelled).
+        section.querySelectorAll('.subsubsub a').forEach(function (link) {
+            link.addEventListener('click', function (e) {
+                e.preventDefault();
+                var url = new URL(this.href);
+                reload({ agreement_status: url.searchParams.get('agreement_status') || '', paged: '1' });
+            });
+        });
+
+        // Column sort links.
+        section.querySelectorAll('th.sortable a, th.sorted a').forEach(function (link) {
+            link.addEventListener('click', function (e) {
+                e.preventDefault();
+                var url = new URL(this.href);
+                reload({
+                    orderby: url.searchParams.get('orderby') || 'id',
+                    order:   url.searchParams.get('order')   || 'desc',
+                    paged:   '1'
+                });
+            });
+        });
+
+        // Delete row-action links.
+        section.querySelectorAll('a[data-agreement-action="delete"]').forEach(function (link) {
+            link.addEventListener('click', function (e) {
+                e.preventDefault();
+                var msg = link.dataset.confirmMsg || 'Are you sure you want to delete this agreement?';
+                if (!window.confirm(msg)) return;
+                var url = new URL(this.href);
+                reload({
+                    agreement_action: 'delete',
+                    agreement_id:     url.searchParams.get('id'),
+                    _wpnonce:         url.searchParams.get('_wpnonce')
+                });
+            });
+        });
+
+        // Edit agreement via modal.
+        section.querySelectorAll('a[data-agreement-edit-modal]').forEach(function (link) {
+            link.addEventListener('click', function (e) {
+                e.preventDefault();
+                var id = parseInt(this.dataset.agreementEditModal, 10);
+                if (typeof window.vepOpenAgreementModal === 'function') {
+                    window.vepOpenAgreementModal(id);
+                }
+            });
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        var q = new URLSearchParams(window.location.search);
+        if (q.get('page') !== 'volunteer-exchange-events' || q.get('action') !== 'view' || !q.get('id')) return;
+        eventId = q.get('id');
+        if (q.get('per_page'))         state.per_page         = q.get('per_page');
+        if (q.get('paged'))            state.paged            = q.get('paged');
+        if (q.get('agreement_status')) state.agreement_status = q.get('agreement_status');
+        if (q.get('orderby'))          state.orderby          = q.get('orderby');
+        if (q.get('order'))            state.order            = q.get('order');
+        if (q.get('s'))                state.s                = q.get('s');
+        init();
+        document.addEventListener('vep:reload-agreements', function () { reload(); });
+    });
+
+}());
+/**
+ * Agreement create/edit modal IIFE.
+ * Exposes window.vepOpenAgreementModal(agreementId).
+ * agreementId = 0 → Add New mode; agreementId > 0 → Edit mode.
+ */
+(function () {
+    'use strict';
+
+    var i18n   = (typeof vepAdmin !== 'undefined' && vepAdmin.i18n)   ? vepAdmin.i18n   : {};
+    var ajaxUrl = (typeof vepAdmin !== 'undefined') ? vepAdmin.ajaxUrl : ajaxurl;
+    var nonce   = (typeof vepAdmin !== 'undefined') ? vepAdmin.nonce   : '';
+
+    // Choices.js instances for participant selects.
+    var choicesP1 = null;
+    var choicesP2 = null;
+
+    function getChoicesOpts() {
+        var ci18n = (typeof vepAdmin !== 'undefined' && vepAdmin.choicesI18n) ? vepAdmin.choicesI18n : {};
+        return {
+            searchEnabled: true,
+            searchFields: ['label'],
+            searchPlaceholderValue: ci18n.searchPlaceholderValue || 'Search...',
+            itemSelectText: ci18n.itemSelectText || '',
+            noResultsText: ci18n.noResultsText || 'No results found',
+            noChoicesText: ci18n.noChoicesText || 'No options available',
+            removeItemButton: false,
+            shouldSort: false
+        };
+    }
+
+    function initChoices() {
+        if (typeof Choices === 'undefined') return;
+        var p1el = document.getElementById('vep-modal-p1-id');
+        var p2el = document.getElementById('vep-modal-p2-id');
+        if (p1el && !choicesP1) { choicesP1 = new Choices(p1el, getChoicesOpts()); }
+        if (p2el && !choicesP2) { choicesP2 = new Choices(p2el, getChoicesOpts()); }
+    }
+
+    function resetChoices() {
+        try { if (choicesP1) { choicesP1.destroy(); choicesP1 = null; } } catch(e) { choicesP1 = null; }
+        try { if (choicesP2) { choicesP2.destroy(); choicesP2 = null; } } catch(e) { choicesP2 = null; }
+    }
+
+    function openModal() {
+        var overlay = document.getElementById('vep-agreement-modal-overlay');
+        if (overlay) { overlay.style.display = 'flex'; }
+        initChoices();
+    }
+
+    function closeModal() {
+        var overlay = document.getElementById('vep-agreement-modal-overlay');
+        if (overlay) { overlay.style.display = 'none'; }
+    }
+
+    function setTitle(text) {
+        var el = document.getElementById('vep-agreement-modal-title');
+        if (el) { el.textContent = text; }
+    }
+
+    function setSaveNewVisible(visible) {
+        var btn = document.getElementById('vep-agreement-modal-save-new');
+        if (btn) { btn.style.display = visible ? '' : 'none'; }
+    }
+
+    function showNewFields() {
+        var n = document.getElementById('vep-agreement-modal-new-fields');
+        var e = document.getElementById('vep-agreement-modal-edit-fields');
+        if (n) { n.style.display = ''; }
+        if (e) { e.style.display = 'none'; }
+    }
+
+    function showEditFields() {
+        var n = document.getElementById('vep-agreement-modal-new-fields');
+        var e = document.getElementById('vep-agreement-modal-edit-fields');
+        if (n) { n.style.display = 'none'; }
+        if (e) { e.style.display = ''; }
+    }
+
+    function showLoading() {
+        var loading = document.getElementById('vep-agreement-modal-loading');
+        var form    = document.getElementById('vep-agreement-modal-form');
+        var saveBtn = document.getElementById('vep-agreement-modal-save');
+        if (loading) loading.style.display = 'flex';
+        if (form)    form.style.display = 'none';
+        if (saveBtn) saveBtn.disabled = true;
+    }
+
+    function hideLoading() {
+        var loading = document.getElementById('vep-agreement-modal-loading');
+        var form    = document.getElementById('vep-agreement-modal-form');
+        var saveBtn = document.getElementById('vep-agreement-modal-save');
+        if (loading) loading.style.display = 'none';
+        if (form)    form.style.display = '';
+        if (saveBtn) saveBtn.disabled = false;
+    }
+
+    function resetForm() {
+        var form = document.getElementById('vep-agreement-modal-form');
+        if (form) { form.reset(); }
+        resetChoices();
+        document.getElementById('vep-agreement-modal-agreement-id').value = '0';
+    }
+
+    function saveAgreement(stayOpen) {
+        var form = document.getElementById('vep-agreement-modal-form');
+        if (!form) return;
+
+        var saveBtn = document.getElementById('vep-agreement-modal-save');
+        var saveNewBtn = document.getElementById('vep-agreement-modal-save-new');
+        var activeBtn = stayOpen ? saveNewBtn : saveBtn;
+        var origText = activeBtn ? activeBtn.textContent : '';
+
+        var fd = new FormData(form);
+
+        // Client-side validation for create mode.
+        if ('0' === String(fd.get('agreement_id') || '0')) {
+            var p1val      = String(fd.get('participant1_id') || '');
+            var p2val      = String(fd.get('participant2_id') || '');
+            var descval    = String(fd.get('description') || '').trim();
+            var valError   = '';
+            if (!p1val)                 { valError = i18n.selectP1 || 'Select Participant 1'; }
+            else if (!p2val)            { valError = i18n.selectP2 || 'Select Participant 2'; }
+            else if (p1val === p2val)   { valError = i18n.participantsMustDiffer || 'Participants must be different'; }
+            else if (!descval)          { valError = i18n.enterDescription || 'Enter a description'; }
+            if (valError) {
+                if (typeof window.vepToast === 'function') { window.vepToast(valError, 'error'); }
+                return;
+            }
+        }
+
+        if (activeBtn) {
+            activeBtn.textContent = i18n.saving || 'Saving\u2026';
+            activeBtn.disabled = true;
+        }
+
+        fd.append('action', 'vep_admin_save_agreement');
+
+        fetch(ajaxUrl, { method: 'POST', body: fd })
+            .then(function (r) { return r.json(); })
+            .then(function (res) {
+                if (res.success) {
+                    if (typeof window.vepToast === 'function') {
+                        window.vepToast(res.data && res.data.message ? res.data.message : (i18n.agreementSaved || 'Saved.'), 'success');
+                    }
+                    document.dispatchEvent(new CustomEvent('vep:reload-agreements'));
+                    if (stayOpen) {
+                        resetForm();
+                        initChoices();
+                        showNewFields();
+                        setSaveNewVisible(true);
+                        setTitle(i18n.addNewAgreement || 'Add New Agreement');
+                    } else {
+                        closeModal();
+                    }
+                } else {
+                    var msg = res.data && res.data.message ? res.data.message : 'Error';
+                    if (typeof window.vepToast === 'function') { window.vepToast(msg, 'error'); }
+                }
+            })
+            .catch(function () {
+                if (typeof window.vepToast === 'function') { window.vepToast('Network error', 'error'); }
+            })
+            .finally(function () {
+                if (activeBtn) {
+                    activeBtn.textContent = origText;
+                    activeBtn.disabled = false;
+                }
+            });
+    }
+
+    window.vepOpenAgreementModal = function (agreementId) {
+        agreementId = parseInt(agreementId, 10) || 0;
+
+        if (agreementId > 0) {
+            // Edit mode: open immediately with spinner, then load data.
+            setTitle(i18n.editAgreement || 'Edit Agreement');
+            showEditFields();
+            setSaveNewVisible(false);
+            document.getElementById('vep-agreement-modal-agreement-id').value = String(agreementId);
+            showLoading();
+            openModal();
+
+            fetch(ajaxUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({ action: 'vep_admin_get_agreement_data', nonce: nonce, id: String(agreementId) })
+            })
+                .then(function (r) { return r.json(); })
+                .then(function (res) {
+                    if (!res.success) {
+                        closeModal();
+                        if (typeof window.vepToast === 'function') { window.vepToast(res.data && res.data.message ? res.data.message : 'Error', 'error'); }
+                        return;
+                    }
+                    var d = res.data;
+                    // Populate participant names.
+                    var p1span = document.getElementById('vep-agreement-modal-p1-name');
+                    var p2span = document.getElementById('vep-agreement-modal-p2-name');
+                    if (p1span) p1span.textContent = d.participant1_name || '';
+                    if (p2span) p2span.textContent = d.participant2_name || '';
+                    // Populate initiator select.
+                    var opt1 = document.getElementById('vep-modal-initiator-opt1');
+                    var opt2 = document.getElementById('vep-modal-initiator-opt2');
+                    var selInitiator = document.getElementById('vep-modal-initiator-id');
+                    if (opt1) { opt1.value = String(d.participant1_id); opt1.textContent = d.participant1_name || ''; }
+                    if (opt2) { opt2.value = String(d.participant2_id); opt2.textContent = d.participant2_name || ''; }
+                    if (selInitiator) { selInitiator.value = String(d.initiator_id); }
+                    // Populate description.
+                    var desc = document.getElementById('vep-modal-agreement-desc');
+                    if (desc) desc.value = d.description || '';
+                    // Populate status.
+                    var statusSel = document.getElementById('vep-modal-agreement-status');
+                    if (statusSel) { statusSel.value = d.status || 'agreed'; }
+                    hideLoading();
+                })
+                .catch(function () {
+                    closeModal();
+                    if (typeof window.vepToast === 'function') { window.vepToast('Network error', 'error'); }
+                });
+        } else {
+            // Add New mode.
+            resetForm();
+            showNewFields();
+            setSaveNewVisible(true);
+            setTitle(i18n.addNewAgreement || 'Add New Agreement');
+            openModal();
+        }
+    };
+
+    document.addEventListener('DOMContentLoaded', function () {
+        var closeBtn = document.getElementById('vep-agreement-modal-close');
+        var cancelBtn = document.getElementById('vep-agreement-modal-cancel');
+        var saveBtn = document.getElementById('vep-agreement-modal-save');
+        var saveNewBtn = document.getElementById('vep-agreement-modal-save-new');
+        var overlay = document.getElementById('vep-agreement-modal-overlay');
+        var addNewBtn = document.getElementById('vep-open-add-agreement-modal');
+
+        if (closeBtn) closeBtn.addEventListener('click', closeModal);
+        if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
+        if (overlay) {
+            overlay.addEventListener('click', function (e) {
+                if (e.target === overlay) closeModal();
+            });
+        }
+        if (saveBtn) saveBtn.addEventListener('click', function () { saveAgreement(false); });
+        if (saveNewBtn) saveNewBtn.addEventListener('click', function () { saveAgreement(true); });
+        if (addNewBtn) {
+            addNewBtn.addEventListener('click', function () {
+                window.vepOpenAgreementModal(0);
+            });
+        }
+        document.addEventListener('keydown', function (e) {
+            if ('Escape' === e.key && overlay && overlay.style.display !== 'none') {
+                closeModal();
+            }
+        });
+    });
+
+}());
+/**
+ * Participant create/edit modal IIFE.
+ * Exposes window.vepOpenParticipantModal(participantId).
+ * participantId = 0 → Add New mode; participantId > 0 → Edit mode.
+ */
+(function () {
+    'use strict';
+
+    var i18n    = (typeof vepAdmin !== 'undefined' && vepAdmin.i18n)   ? vepAdmin.i18n   : {};
+    var ajaxUrl = (typeof vepAdmin !== 'undefined') ? vepAdmin.ajaxUrl : ajaxurl;
+    var nonce   = (typeof vepAdmin !== 'undefined') ? vepAdmin.nonce   : '';
+
+    function openModal() {
+        var overlay = document.getElementById('vep-participant-modal-overlay');
+        if (overlay) overlay.style.display = 'flex';
+    }
+
+    function closeModal() {
+        var overlay = document.getElementById('vep-participant-modal-overlay');
+        if (overlay) overlay.style.display = 'none';
+    }
+
+    function setTitle(text) {
+        var el = document.getElementById('vep-participant-modal-title');
+        if (el) el.textContent = text;
+    }
+
+    function resetForm() {
+        var form = document.getElementById('vep-participant-modal-form');
+        if (form) form.reset();
+        document.getElementById('vep-participant-modal-participant-id').value = '0';
+        // Hide logo preview.
+        var preview = document.getElementById('vep-participant-modal-logo-preview');
+        if (preview) preview.style.display = 'none';
+    }
+
+    function showLoading() {
+        var loading = document.getElementById('vep-participant-modal-loading');
+        var form    = document.getElementById('vep-participant-modal-form');
+        var saveBtn = document.getElementById('vep-participant-modal-save');
+        if (loading) loading.style.display = 'flex';
+        if (form)    form.style.display = 'none';
+        if (saveBtn) saveBtn.disabled = true;
+    }
+
+    function hideLoading() {
+        var loading = document.getElementById('vep-participant-modal-loading');
+        var form    = document.getElementById('vep-participant-modal-form');
+        var saveBtn = document.getElementById('vep-participant-modal-save');
+        if (loading) loading.style.display = 'none';
+        if (form)    form.style.display = '';
+        if (saveBtn) saveBtn.disabled = false;
+    }
+
+    function setFieldValue(id, value) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        if (el.type === 'checkbox') {
+            el.checked = (value === 1 || value === '1' || value === true);
+        } else {
+            el.value = value !== null && value !== undefined ? String(value) : '';
+        }
+    }
+
+    window.vepOpenParticipantModal = function (participantId) {
+        participantId = parseInt(participantId, 10) || 0;
+
+        if (participantId > 0) {
+            setTitle(i18n.editParticipant || 'Edit Participant');
+            document.getElementById('vep-participant-modal-participant-id').value = String(participantId);
+            showLoading();
+            openModal();
+
+            fetch(ajaxUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({ action: 'vep_admin_get_participant_data', nonce: nonce, id: String(participantId) })
+            })
+                .then(function (r) { return r.json(); })
+                .then(function (res) {
+                    if (!res.success) {
+                        closeModal();
+                        if (typeof window.vepToast === 'function') { window.vepToast(res.data && res.data.message ? res.data.message : 'Error', 'error'); }
+                        return;
+                    }
+                    var d = res.data;
+                    setFieldValue('vep-modal-org-name',        d.organization_name);
+                    setFieldValue('vep-modal-description',     d.description);
+                    setFieldValue('vep-modal-expected-count',  d.expected_participants_count);
+                    setFieldValue('vep-modal-expected-names',  d.expected_participants_names);
+                    setFieldValue('vep-modal-type-id',         String(d.participant_type_id));
+                    setFieldValue('vep-modal-contact-person',  d.contact_person_name);
+                    setFieldValue('vep-modal-contact-email',   d.contact_email);
+                    setFieldValue('vep-modal-contact-phone',   d.contact_phone);
+                    setFieldValue('vep-modal-link',            d.link);
+                    setFieldValue('vep-modal-is-approved',     d.is_approved);
+
+                    // Logo preview.
+                    var preview = document.getElementById('vep-participant-modal-logo-preview');
+                    var img = document.getElementById('vep-participant-modal-logo-img');
+                    if (d.logo_url) {
+                        if (img) img.src = d.logo_url;
+                        if (preview) preview.style.display = '';
+                    } else {
+                        if (preview) preview.style.display = 'none';
+                    }
+
+                    // Tag checkboxes.
+                    var tagIds = Array.isArray(d.tag_ids) ? d.tag_ids : [];
+                    document.querySelectorAll('#vep-participant-modal-form .vep-modal-tag-cb').forEach(function (cb) {
+                        cb.checked = tagIds.indexOf(parseInt(cb.value, 10)) !== -1;
+                    });
+
+                    hideLoading();
+                })
+                .catch(function () {
+                    closeModal();
+                    if (typeof window.vepToast === 'function') { window.vepToast('Network error', 'error'); }
+                });
+        } else {
+            resetForm();
+            setTitle(i18n.addNewParticipant || 'Add New Participant');
+            openModal();
+        }
+    };
+
+    function saveParticipant() {
+        var form = document.getElementById('vep-participant-modal-form');
+        if (!form) return;
+
+        var saveBtn = document.getElementById('vep-participant-modal-save');
+        var origText = saveBtn ? saveBtn.textContent : '';
+        if (saveBtn) { saveBtn.textContent = i18n.saving || 'Saving\u2026'; saveBtn.disabled = true; }
+
+        var fd = new FormData(form);
+        fd.append('action', 'vep_admin_save_participant');
+
+        fetch(ajaxUrl, { method: 'POST', body: fd })
+            .then(function (r) { return r.json(); })
+            .then(function (res) {
+                if (res.success) {
+                    if (typeof window.vepToast === 'function') {
+                        window.vepToast(res.data && res.data.message ? res.data.message : (i18n.participantSaved || 'Saved.'), 'success');
+                    }
+                    document.dispatchEvent(new CustomEvent('vep:reload-participants'));
+                    closeModal();
+                } else {
+                    var msg = res.data && res.data.message ? res.data.message : 'Error';
+                    if (typeof window.vepToast === 'function') { window.vepToast(msg, 'error'); }
+                }
+            })
+            .catch(function () {
+                if (typeof window.vepToast === 'function') { window.vepToast('Network error', 'error'); }
+            })
+            .finally(function () {
+                if (saveBtn) { saveBtn.textContent = origText; saveBtn.disabled = false; }
+            });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        var closeBtn  = document.getElementById('vep-participant-modal-close');
+        var cancelBtn = document.getElementById('vep-participant-modal-cancel');
+        var saveBtn   = document.getElementById('vep-participant-modal-save');
+        var overlay   = document.getElementById('vep-participant-modal-overlay');
+        var addNewBtn = document.getElementById('vep-open-add-participant-modal');
+
+        if (closeBtn)  closeBtn.addEventListener('click', closeModal);
+        if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
+        if (overlay) {
+            overlay.addEventListener('click', function (e) {
+                if (e.target === overlay) closeModal();
+            });
+        }
+        if (saveBtn) saveBtn.addEventListener('click', saveParticipant);
+        if (addNewBtn) {
+            addNewBtn.addEventListener('click', function () {
+                window.vepOpenParticipantModal(0);
+            });
+        }
+        document.addEventListener('keydown', function (e) {
+            if ('Escape' === e.key && overlay && overlay.style.display !== 'none') {
+                closeModal();
+            }
+        });
+    });
+
+}());
+/**
  * Admin JavaScript for Volunteer Exchange Platform
  */
 
@@ -17,44 +931,44 @@
     });
 
     function initCopyActiveEmails() {
-        const button = document.getElementById('vep-copy-selected-emails');
-        if (!button || typeof vepAdmin === 'undefined') {
+        if (typeof vepAdmin === 'undefined') {
             return;
         }
 
         const i18n = vepAdmin.i18n || {};
 
+        const execCommandCopy = (text) => new Promise((resolve, reject) => {
+            const helper = document.createElement('textarea');
+            helper.value = text;
+            helper.setAttribute('readonly', 'readonly');
+            helper.style.position = 'absolute';
+            helper.style.left = '-9999px';
+            document.body.appendChild(helper);
+            helper.select();
+            try {
+                const ok = document.execCommand('copy');
+                document.body.removeChild(helper);
+                ok ? resolve() : reject(new Error('Copy command failed'));
+            } catch (error) {
+                document.body.removeChild(helper);
+                reject(error);
+            }
+        });
+
         const copyText = (text) => {
             if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
-                return navigator.clipboard.writeText(text);
+                // Falls back to execCommand if the clipboard API fails due to focus issues.
+                return navigator.clipboard.writeText(text).catch(() => execCommandCopy(text));
             }
-
-            return new Promise((resolve, reject) => {
-                const helper = document.createElement('textarea');
-                helper.value = text;
-                helper.setAttribute('readonly', 'readonly');
-                helper.style.position = 'absolute';
-                helper.style.left = '-9999px';
-                document.body.appendChild(helper);
-                helper.select();
-
-                try {
-                    const ok = document.execCommand('copy');
-                    document.body.removeChild(helper);
-                    if (ok) {
-                        resolve();
-                    } else {
-                        reject(new Error('Copy command failed'));
-                    }
-                } catch (error) {
-                    document.body.removeChild(helper);
-                    reject(error);
-                }
-            });
+            return execCommandCopy(text);
         };
 
-        button.addEventListener('click', () => {
-            const selectedCheckboxes = document.querySelectorAll('#vep-event-participants-form input[name="participant[]"]:checked');
+        // Use event delegation so the listener survives AJAX DOM replacements.
+        document.addEventListener('click', function (e) {
+            const button = e.target.closest('#vep-copy-selected-emails');
+            if (!button) return;
+
+            const selectedCheckboxes = document.querySelectorAll('#vep-event-participants-section input[name="participant[]"]:checked');
             if (!selectedCheckboxes.length) {
                 window.alert(i18n.printNoSelection || 'Select at least one participant in the table.');
                 return;
@@ -2336,23 +3250,23 @@
         }
 
         // Open modal from the top-level print button.
-        if (openBtn) {
-            openBtn.addEventListener('click', function () {
-                const selectedIds = getSelectedParticipantIds();
-                if (!selectedIds.length) {
-                    window.alert(vepAdmin.i18n && vepAdmin.i18n.printNoSelection
-                        ? vepAdmin.i18n.printNoSelection
-                        : 'Select at least one participant in the table.');
-                    return;
-                }
+        // Use event delegation so the listener survives AJAX DOM replacements.
+        document.addEventListener('click', function (e) {
+            if (!e.target.closest('#vep-print-selected-participants')) return;
+            const selectedIds = getSelectedParticipantIds();
+            if (!selectedIds.length) {
+                window.alert(vepAdmin.i18n && vepAdmin.i18n.printNoSelection
+                    ? vepAdmin.i18n.printNoSelection
+                    : 'Select at least one participant in the table.');
+                return;
+            }
 
-                if (layoutSel && gridWrap) {
-                    gridWrap.style.display = layoutSel.value === 'grid' ? 'flex' : 'none';
-                }
-                modal.style.display = 'flex';
-                modal.querySelector('.vep-modal-container').focus();
-            });
-        }
+            if (layoutSel && gridWrap) {
+                gridWrap.style.display = layoutSel.value === 'grid' ? 'flex' : 'none';
+            }
+            modal.style.display = 'flex';
+            modal.querySelector('.vep-modal-container').focus();
+        });
 
         // Show/hide grid columns input based on layout selection.
         if (layoutSel && gridWrap) {
@@ -2377,6 +3291,12 @@
         // Close on Escape.
         document.addEventListener('keydown', function (e) {
             if (e.key === 'Escape' && modal.style.display !== 'none') closeModal();
+        });
+
+        // Close if page is restored from bfcache (back/forward navigation).
+        // Without this, the modal overlay stays visible and blocks all clicks.
+        window.addEventListener('pageshow', function (e) {
+            if (e.persisted) closeModal();
         });
 
         // Build print URL and open in new tab.
@@ -2465,6 +3385,308 @@
     }
 
 })();
+
+// ─── Collapsible Sections ────────────────────────────────────────────────────
+(function () {
+    'use strict';
+
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.vep-collapsible-section').forEach(function (details) {
+            var summary = details.querySelector('summary');
+            if (!summary) { return; }
+
+            summary.addEventListener('click', function (e) {
+                e.preventDefault();
+                if (e.target.classList.contains('vep-collapsible-heading')) {
+                    details.open = !details.open;
+                }
+            });
+        });
+    });
+}());
+
+// ─── Agreement View Modal ────────────────────────────────────────────────────
+(function () {
+    'use strict';
+
+    if (typeof vepAdmin === 'undefined') { return; }
+
+    var ajaxUrl = vepAdmin.ajaxUrl;
+    var nonce   = vepAdmin.nonce;
+    var i18n    = vepAdmin.i18n || {};
+    var overlay = document.getElementById('vep-agreement-view-modal-overlay');
+
+    if (!overlay) { return; }
+
+    function openModal() {
+        overlay.style.display = '';
+    }
+
+    function closeModal() {
+        overlay.style.display = 'none';
+    }
+
+    function showLoading() {
+        var loading = document.getElementById('vep-agreement-view-modal-loading');
+        var content = document.getElementById('vep-agreement-view-modal-content');
+        if (loading) loading.style.display = 'flex';
+        if (content) content.style.display = 'none';
+    }
+
+    function hideLoading() {
+        var loading = document.getElementById('vep-agreement-view-modal-loading');
+        var content = document.getElementById('vep-agreement-view-modal-content');
+        if (loading) loading.style.display = 'none';
+        if (content) content.style.display = '';
+    }
+
+    function setText(id, value) {
+        var el = document.getElementById(id);
+        if (el) { el.textContent = value || ''; }
+    }
+
+    window.vepOpenAgreementViewModal = function (agreementId) {
+        agreementId = parseInt(agreementId, 10) || 0;
+        if (agreementId <= 0) { return; }
+
+        var titleEl = document.getElementById('vep-agreement-view-modal-title');
+        if (titleEl) { titleEl.textContent = (i18n.agreement || 'Agreement') + ' #' + agreementId; }
+
+        var editBtn = document.getElementById('vep-agreement-view-modal-edit-btn');
+        if (editBtn) { editBtn.setAttribute('data-agreement-id', String(agreementId)); }
+
+        showLoading();
+        openModal();
+
+        fetch(ajaxUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({ action: 'vep_admin_get_agreement_data', nonce: nonce, id: String(agreementId) })
+        })
+            .then(function (r) { return r.json(); })
+            .then(function (res) {
+                if (!res.success) {
+                    closeModal();
+                    if (typeof window.vepToast === 'function') { window.vepToast(res.data && res.data.message ? res.data.message : 'Error', 'error'); }
+                    return;
+                }
+                var d = res.data;
+                setText('vep-agreement-view-p1-name',        d.participant1_name);
+                setText('vep-agreement-view-p2-name',        d.participant2_name);
+                setText('vep-agreement-view-initiator-name', d.initiator_name);
+                setText('vep-agreement-view-description',    d.description);
+                setText('vep-agreement-view-status',         d.status_label || d.status);
+                setText('vep-agreement-view-created-at',     d.created_at_formatted || d.created_at);
+                hideLoading();
+            })
+            .catch(function () {
+                closeModal();
+                if (typeof window.vepToast === 'function') { window.vepToast('Network error', 'error'); }
+            });
+    };
+
+    document.addEventListener('DOMContentLoaded', function () {
+        var closeBtn       = document.getElementById('vep-agreement-view-modal-close');
+        var closeBtnFooter = document.getElementById('vep-agreement-view-modal-close-btn');
+        var editBtn        = document.getElementById('vep-agreement-view-modal-edit-btn');
+
+        if (closeBtn)       { closeBtn.addEventListener('click', closeModal); }
+        if (closeBtnFooter) { closeBtnFooter.addEventListener('click', closeModal); }
+
+        overlay.addEventListener('click', function (e) {
+            if (e.target === overlay) { closeModal(); }
+        });
+
+        if (editBtn) {
+            editBtn.addEventListener('click', function () {
+                var id = parseInt(editBtn.getAttribute('data-agreement-id'), 10) || 0;
+                closeModal();
+                if (id > 0 && typeof window.vepOpenAgreementModal === 'function') {
+                    window.vepOpenAgreementModal(id);
+                }
+            });
+        }
+
+        document.addEventListener('keydown', function (e) {
+            if ('Escape' === e.key && overlay.style.display !== 'none') {
+                closeModal();
+            }
+        });
+
+        document.addEventListener('click', function (e) {
+            var target = e.target.closest('[data-agreement-view-modal]');
+            if (!target) { return; }
+            e.preventDefault();
+            var id = parseInt(target.getAttribute('data-agreement-view-modal'), 10) || 0;
+            if (id > 0) {
+                window.vepOpenAgreementViewModal(id);
+            }
+        });
+    });
+
+})();
+
+// ─── Participant Agreements Table (AJAX) ─────────────────────────────────────
+(function () {
+    'use strict';
+
+    var participantId = null;
+    var eventId       = null;
+
+    var state = {
+        participant_agreement_status: '',
+        orderby:     'id',
+        order:       'desc',
+        agreement_s: '',
+    };
+
+    function showSpinner() {
+        var section = document.getElementById('vep-participant-agreements-section');
+        if (!section) { return; }
+        var overlay = section.querySelector('.vep-ajax-spinner-overlay');
+        if (!overlay) {
+            overlay = document.createElement('div');
+            overlay.className = 'vep-ajax-spinner-overlay';
+            overlay.innerHTML = '<div class="vep-ajax-spinner"></div>';
+            section.style.position = 'relative';
+            section.appendChild(overlay);
+        }
+        overlay.style.display = 'flex';
+    }
+
+    function hideSpinner() {
+        var overlay = document.querySelector('#vep-participant-agreements-section .vep-ajax-spinner-overlay');
+        if (overlay) { overlay.style.display = 'none'; }
+    }
+
+    function reload(overrides) {
+        if (!participantId || typeof vepAdmin === 'undefined') { return; }
+
+        var actionKeys = ['agreement_action', 'agreement_id', '_wpnonce'];
+        var extra = {};
+
+        if (overrides) {
+            Object.keys(overrides).forEach(function (k) {
+                if (actionKeys.indexOf(k) !== -1) {
+                    extra[k] = overrides[k];
+                } else {
+                    state[k] = overrides[k];
+                }
+            });
+        }
+
+        showSpinner();
+
+        var data = new URLSearchParams();
+        data.append('action',         'vep_reload_participant_agreements_table');
+        data.append('participant_id', participantId);
+        data.append('event_id',       eventId || '0');
+        Object.keys(state).forEach(function (k) { data.append(k, state[k]); });
+        Object.keys(extra).forEach(function (k) { data.append(k, extra[k]); });
+
+        fetch(vepAdmin.ajaxUrl, { method: 'POST', body: data, credentials: 'same-origin' })
+            .then(function (r) { return r.json(); })
+            .then(function (result) {
+                hideSpinner();
+                if (!result || !result.success) {
+                    if (typeof window.vepToast === 'function') {
+                        window.vepToast(result && result.data ? result.data : 'An error occurred.', 'error');
+                    }
+                    return;
+                }
+                if (!result.data || !result.data.html) { return; }
+                var section = document.getElementById('vep-participant-agreements-section');
+                if (!section) { return; }
+                var temp = document.createElement('div');
+                temp.innerHTML = result.data.html;
+                var newSection = temp.querySelector('#vep-participant-agreements-section');
+                if (newSection) {
+                    section.parentNode.replaceChild(newSection, section);
+                }
+                if (result.data.message && typeof window.vepToast === 'function') {
+                    window.vepToast(result.data.message);
+                }
+                init();
+            })
+            .catch(function () { hideSpinner(); });
+    }
+
+    function init() {
+        var section = document.getElementById('vep-participant-agreements-section');
+        if (!section) { return; }
+
+        // Block form navigation; search triggers reload.
+        var form = section.querySelector('#vep-participant-agreements-form');
+        if (form) {
+            form.addEventListener('submit', function (e) {
+                e.preventDefault();
+                var searchInput = section.querySelector('#vep-participant-agreements-search');
+                reload({ agreement_s: searchInput ? searchInput.value : '' });
+            });
+        }
+
+        // Status filter links.
+        section.querySelectorAll('.subsubsub a').forEach(function (link) {
+            link.addEventListener('click', function (e) {
+                e.preventDefault();
+                var url = new URL(this.href);
+                reload({ participant_agreement_status: url.searchParams.get('participant_agreement_status') || '' });
+            });
+        });
+
+        // Column sort links.
+        section.querySelectorAll('th.sortable a, th.sorted a').forEach(function (link) {
+            link.addEventListener('click', function (e) {
+                e.preventDefault();
+                var url = new URL(this.href);
+                reload({
+                    orderby: url.searchParams.get('orderby') || 'id',
+                    order:   url.searchParams.get('order')   || 'desc',
+                });
+            });
+        });
+
+        // Delete row-action links.
+        section.querySelectorAll('a[data-agreement-action="delete"]').forEach(function (link) {
+            link.addEventListener('click', function (e) {
+                e.preventDefault();
+                var msg = link.dataset.confirmMsg || 'Are you sure you want to delete this agreement?';
+                if (!window.confirm(msg)) { return; }
+                var url = new URL(this.href);
+                reload({
+                    agreement_action: 'delete',
+                    agreement_id:     url.searchParams.get('id'),
+                    _wpnonce:         url.searchParams.get('_wpnonce'),
+                });
+            });
+        });
+
+        // Edit agreement via modal.
+        section.querySelectorAll('a[data-agreement-edit-modal]').forEach(function (link) {
+            link.addEventListener('click', function (e) {
+                e.preventDefault();
+                var id = parseInt(this.dataset.agreementEditModal, 10);
+                if (typeof window.vepOpenAgreementModal === 'function') {
+                    window.vepOpenAgreementModal(id);
+                }
+            });
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        var q = new URLSearchParams(window.location.search);
+        if (q.get('page') !== 'volunteer-exchange-events' || q.get('action') !== 'view-participant' || !q.get('id')) { return; }
+        participantId = q.get('id');
+        eventId       = q.get('return_id') || '0';
+        if (q.get('participant_agreement_status')) { state.participant_agreement_status = q.get('participant_agreement_status'); }
+        if (q.get('orderby'))                      { state.orderby     = q.get('orderby'); }
+        if (q.get('order'))                        { state.order       = q.get('order'); }
+        if (q.get('agreement_s'))                  { state.agreement_s = q.get('agreement_s'); }
+        init();
+        document.addEventListener('vep:reload-agreements', function () { reload(); });
+    });
+
+}());
 
 (function($) {
     'use strict';
@@ -2949,3 +4171,103 @@
         });
     }
 })(jQuery);
+
+// ─── Send Agreement Overview (bulk) ──────────────────────────────────────────
+(function () {
+    'use strict';
+
+    document.addEventListener('DOMContentLoaded', function () {
+        var btn = document.getElementById('vep-send-agreement-overview');
+        if (!btn) { return; }
+
+        btn.addEventListener('click', function () {
+            var eventId = btn.getAttribute('data-event-id');
+            if (!eventId || btn.disabled) { return; }
+
+            if (!window.confirm(
+                (typeof vepAdmin !== 'undefined' && vepAdmin.i18n && vepAdmin.i18n.confirmSendOverview)
+                    ? vepAdmin.i18n.confirmSendOverview
+                    : 'Send agreement overview to all eligible participants?'
+            )) { return; }
+
+            btn.disabled = true;
+            var originalText = btn.textContent;
+            btn.textContent = (typeof vepAdmin !== 'undefined' && vepAdmin.i18n && vepAdmin.i18n.sending)
+                ? vepAdmin.i18n.sending
+                : 'Sending…';
+
+            var data = new FormData();
+            data.append('action', 'vep_send_agreement_overview');
+            data.append('nonce', (typeof vepAdmin !== 'undefined') ? vepAdmin.nonce : '');
+            data.append('event_id', eventId);
+
+            fetch((typeof vepAdmin !== 'undefined') ? vepAdmin.ajaxUrl : ajaxurl, {
+                method: 'POST',
+                body: data,
+                credentials: 'same-origin',
+            })
+            .then(function (res) { return res.json(); })
+            .then(function (response) {
+                if (response.success) {
+                    if (window.vepToast) { window.vepToast(response.data.message || 'Sent.', 'success'); }
+                    btn.textContent = (typeof vepAdmin !== 'undefined' && vepAdmin.i18n && vepAdmin.i18n.agreementOverviewSent)
+                        ? vepAdmin.i18n.agreementOverviewSent
+                        : 'Agreement Overview Sent';
+                    btn.disabled = true;
+                } else {
+                    var msg = (response.data && response.data.message) ? response.data.message : 'Error';
+                    if (window.vepToast) { window.vepToast(msg, 'error'); }
+                    btn.textContent = originalText;
+                    btn.disabled = false;
+                }
+            })
+            .catch(function () {
+                if (window.vepToast) { window.vepToast('Request failed.', 'error'); }
+                btn.textContent = originalText;
+                btn.disabled = false;
+            });
+        });
+    });
+}());
+
+// ─── Send Single Agreement Overview ──────────────────────────────────────────
+(function () {
+    'use strict';
+
+    document.addEventListener('DOMContentLoaded', function () {
+        var btn = document.getElementById('vep-send-single-agreement-overview');
+        if (!btn) { return; }
+
+        btn.addEventListener('click', function () {
+            var participantId = btn.getAttribute('data-participant-id');
+            var eventId       = btn.getAttribute('data-event-id');
+            if (!participantId || !eventId || btn.disabled) { return; }
+
+            btn.disabled = true;
+
+            var data = new FormData();
+            data.append('action', 'vep_send_single_agreement_overview');
+            data.append('nonce', (typeof vepAdmin !== 'undefined') ? vepAdmin.nonce : '');
+            data.append('participant_id', participantId);
+            data.append('event_id', eventId);
+
+            fetch((typeof vepAdmin !== 'undefined') ? vepAdmin.ajaxUrl : ajaxurl, {
+                method: 'POST',
+                body: data,
+                credentials: 'same-origin',
+            })
+            .then(function (res) { return res.json(); })
+            .then(function (response) {
+                var msg = (response.data && response.data.message) ? response.data.message : (response.success ? 'Sent.' : 'Error');
+                if (window.vepToast) {
+                    window.vepToast(msg, response.success ? 'success' : 'error');
+                }
+                btn.disabled = false;
+            })
+            .catch(function () {
+                if (window.vepToast) { window.vepToast('Request failed.', 'error'); }
+                btn.disabled = false;
+            });
+        });
+    });
+}());

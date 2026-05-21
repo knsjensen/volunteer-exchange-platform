@@ -329,13 +329,17 @@ class EventDisplayPage {
             <h1><?php esc_html_e('Event Display', 'volunteer-exchange-platform'); ?></h1>
             
             <?php if ( sanitize_key( (string) $message ) === 'settings_saved' ): ?>
-                <div class="notice notice-success is-dismissible">
-                    <p><?php esc_html_e('Settings saved successfully.', 'volunteer-exchange-platform'); ?></p>
-                </div>
+                <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                    if (window.vepToast) { window.vepToast(<?php echo wp_json_encode( __( 'Settings saved successfully.', 'volunteer-exchange-platform' ) ); ?>); }
+                });
+                </script>
             <?php elseif ( sanitize_key( (string) $message ) === 'settings_reset' ): ?>
-                <div class="notice notice-success is-dismissible">
-                    <p><?php esc_html_e('Settings reset to defaults.', 'volunteer-exchange-platform'); ?></p>
-                </div>
+                <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                    if (window.vepToast) { window.vepToast(<?php echo wp_json_encode( __( 'Settings reset to defaults.', 'volunteer-exchange-platform' ) ); ?>); }
+                });
+                </script>
             <?php endif; ?>
             
             <?php if ( ! $active_event ): ?>
