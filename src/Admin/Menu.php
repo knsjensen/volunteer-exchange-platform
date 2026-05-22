@@ -89,8 +89,8 @@ class Menu {
         // Event Display submenu
         add_submenu_page(
             'volunteer-exchange',
-            __('Event Display', 'volunteer-exchange-platform'),
-            __('Event Display', 'volunteer-exchange-platform'),
+            __('Presentation', 'volunteer-exchange-platform'),
+            __('Presentation', 'volunteer-exchange-platform'),
             'manage_options',
             'vep-event-display',
             array($this->eventDisplayPage, 'render')

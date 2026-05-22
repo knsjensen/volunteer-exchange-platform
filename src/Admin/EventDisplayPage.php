@@ -326,7 +326,7 @@ class EventDisplayPage {
         
         ?>
         <div class="wrap">
-            <h1><?php esc_html_e('Event Display', 'volunteer-exchange-platform'); ?></h1>
+            <h1><?php esc_html_e('Event Presentation', 'volunteer-exchange-platform'); ?></h1>
             
             <?php if ( sanitize_key( (string) $message ) === 'settings_saved' ): ?>
                 <script>
@@ -354,7 +354,7 @@ class EventDisplayPage {
             
             <div class="vep-display-settings-container" style="max-width: 800px; margin-top: 20px;">
                 <div class="card" id="vep-display-settings-card" style="padding: 20px;">
-                    <h2 style="margin-top:0;"><?php esc_html_e('Display Settings', 'volunteer-exchange-platform'); ?></h2>
+                    <h2 style="margin-top:0;"><?php esc_html_e('Presentation Settings', 'volunteer-exchange-platform'); ?></h2>
                     <div id="vep-display-settings-body" style="margin-top:16px;">
                     <form method="post" action="">
                         <?php wp_nonce_field('vep_display_settings', 'vep_display_nonce'); ?>
@@ -373,7 +373,7 @@ class EventDisplayPage {
                         <table class="form-table">
                             <tr>
                                 <th scope="row">
-                                    <label for="display_title"><?php esc_html_e('Display Title', 'volunteer-exchange-platform'); ?></label>
+                                    <label for="display_title"><?php esc_html_e('Presentation Title', 'volunteer-exchange-platform'); ?></label>
                                 </th>
                                 <td>
                                     <input type="text" 
@@ -659,8 +659,8 @@ class EventDisplayPage {
                 
                 <?php if ($active_event && !empty($event_end_datetime)): ?>
                     <div class="card" style="padding: 20px; margin-top: 20px;">
-                        <h2><?php esc_html_e('Display Control', 'volunteer-exchange-platform'); ?></h2>
-                        <p><?php esc_html_e('Click the button below to launch the fullscreen event display.', 'volunteer-exchange-platform'); ?></p>
+                        <h2><?php esc_html_e('Presentation Control', 'volunteer-exchange-platform'); ?></h2>
+                        <p><?php esc_html_e('Click the button below to launch the fullscreen event presentation.', 'volunteer-exchange-platform'); ?></p>
                         
                         <button type="button" 
                                 id="vep-start-event-display" 
@@ -683,7 +683,7 @@ class EventDisplayPage {
                                 data-auto-switch-stats="<?php echo $auto_switch_stats ? '1' : '0'; ?>"
                                 style="margin-top: 10px;">
                             <span class="dashicons dashicons-visibility" style="margin-top: 6px;"></span>
-                            <?php esc_html_e('Start Event Display', 'volunteer-exchange-platform'); ?>
+                            <?php esc_html_e('Start Presentation', 'volunteer-exchange-platform'); ?>
                         </button>
                         
                         <p class="description" style="margin-top: 10px;">
@@ -768,7 +768,8 @@ class EventDisplayPage {
                     <p id="vep-nav-status" class="description" style="margin-top: 12px; font-style: italic;"></p>
 
                     <hr style="margin: 16px 0;">
-                    <button type="button" id="vep-nav-reset" class="button button-secondary" style="color:#b32d2e;">
+                    <button type="button" id="vep-nav-reset" class="button button-secondary" style="color:#b32d2e;"
+                            data-confirm="<?php esc_attr_e( 'Are you sure you want to reset the navigation system?', 'volunteer-exchange-platform' ); ?>">
                         <?php esc_html_e( 'Nulstil navigationssystem', 'volunteer-exchange-platform' ); ?>
                     </button>
                     <p class="description" style="margin-top:6px; font-size:11px;">

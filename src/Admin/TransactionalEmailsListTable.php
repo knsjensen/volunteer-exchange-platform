@@ -32,6 +32,31 @@ class TransactionalEmailsListTable extends \WP_List_Table {
      */
     private $status_filter;
 
+    /**
+     * @var int  0 = all
+     */
+    private $per_page_option;
+
+    /**
+     * @var string  YYYY-MM-DD or empty
+     */
+    private $date_from;
+
+    /**
+     * @var string  YYYY-MM-DD or empty
+     */
+    private $date_to;
+
+    /**
+     * @var string
+     */
+    private $search_email;
+
+    /**
+     * @var int
+     */
+    private $total_items = 0;
+
     public function __construct( ?\wpdb $wpdb_instance = null ) {
         global $wpdb;
 
@@ -41,6 +66,20 @@ class TransactionalEmailsListTable extends \WP_List_Table {
         $allowed_statuses = array( 'all', 'pending', 'processing', 'sent', 'failed' );
         $status_filter = isset( $_GET['vep_email_status'] ) ? sanitize_key( wp_unslash( $_GET['vep_email_status'] ) ) : 'all';
         $this->status_filter = in_array( $status_filter, $allowed_statuses, true ) ? $status_filter : 'all';
+
+        $allowed_per_page = array( 50, 100, 500, 0 );
+        $per_page_raw     = isset( $_GET['vep_per_page'] ) ? (int) $_GET['vep_per_page'] : 50;
+        $this->per_page_option = in_array( $per_page_raw, $allowed_per_page, true ) ? $per_page_raw : 50;
+
+        $date_from_raw   = isset( $_GET['vep_date_from'] ) ? sanitize_text_field( wp_unslash( $_GET['vep_date_from'] ) ) : '';
+        $date_to_raw     = isset( $_GET['vep_date_to'] )   ? sanitize_text_field( wp_unslash( $_GET['vep_date_to'] ) )   : '';
+        $date_pattern    = '/^\d{4}-\d{2}-\d{2}$/';
+        $this->date_from = preg_match( $date_pattern, $date_from_raw ) ? $date_from_raw : '';
+        $this->date_to   = preg_match( $date_pattern, $date_to_raw )   ? $date_to_raw   : '';
+
+        $this->search_email = isset( $_GET['vep_search_email'] )
+            ? sanitize_text_field( wp_unslash( $_GET['vep_search_email'] ) )
+            : '';
 
         parent::__construct(
             array(
@@ -58,7 +97,7 @@ class TransactionalEmailsListTable extends \WP_List_Table {
      */
     public function get_columns() {
         return array(
-            'id'                  => __( 'ID', 'volunteer-exchange-platform' ),
+            'id'                  => 'Id',
             'status'              => __( 'Status', 'volunteer-exchange-platform' ),
             'date'                => __( 'Date', 'volunteer-exchange-platform' ),
             'to'                  => __( 'To', 'volunteer-exchange-platform' ),
@@ -81,6 +120,80 @@ class TransactionalEmailsListTable extends \WP_List_Table {
             'id'   => array( 'id', true ),
             'date' => array( 'date', false ),
         );
+    }
+
+    /**
+     * Render rows-per-page dropdown above the table.
+     *
+     * @param string $which top|bottom.
+     * @return void
+     */
+    protected function extra_tablenav( $which ) {
+        if ( 'top' !== $which ) {
+            return;
+        }
+        // Hide WP's built-in item count – we render it ourselves on the right.
+        echo '<style>.tablenav.top .tablenav-pages .displaying-num { display:none; }</style>';
+        $options = array(
+            50  => '50',
+            100 => '100',
+            500 => '500',
+            0   => __( 'All', 'volunteer-exchange-platform' ),
+        );
+        echo '<div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; margin-bottom:4px;">';
+
+        // Date + search filter – left.
+        echo '<div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">';
+        echo '<label for="vep-date-from">' . esc_html__( 'From', 'volunteer-exchange-platform' ) . ':</label>';
+        printf(
+            '<input type="date" id="vep-date-from" name="vep_date_from" value="%s" style="padding:2px 4px;">',
+            esc_attr( $this->date_from )
+        );
+        echo '<label for="vep-date-to">' . esc_html__( 'To', 'volunteer-exchange-platform' ) . ':</label>';
+        printf(
+            '<input type="date" id="vep-date-to" name="vep_date_to" value="%s" style="padding:2px 4px;">',
+            esc_attr( $this->date_to )
+        );
+        printf(
+            '<input type="search" id="vep-search-email" name="vep_search_email" value="%s" placeholder="%s" style="padding:2px 6px; min-width:200px;">',
+            esc_attr( $this->search_email ),
+            esc_attr__( 'Search email addresses', 'volunteer-exchange-platform' )
+        );
+        echo '<button type="submit" class="button">' . esc_html__( 'Filter', 'volunteer-exchange-platform' ) . '</button>';
+        if ( $this->date_from || $this->date_to || '' !== $this->search_email ) {
+            $clear_url = add_query_arg(
+                array(
+                    'page'         => 'vep-email-settings',
+                    'tab'          => 'transactional-emails',
+                    'vep_per_page' => $this->per_page_option,
+                ),
+                admin_url( 'admin.php' )
+            );
+            echo ' <a href="' . esc_url( $clear_url ) . '" class="button">' . esc_html__( 'Clear', 'volunteer-exchange-platform' ) . '</a>';
+        }
+        echo '</div>';
+
+        // Rows per page + total count – right.
+        echo '<div style="display:flex; align-items:center; gap:8px;">';
+        echo '<label for="vep-per-page">' . esc_html__( 'Rows per page', 'volunteer-exchange-platform' ) . ':</label>';
+        echo '<select id="vep-per-page" name="vep_per_page" onchange="this.form.submit()">';
+        foreach ( $options as $value => $label ) {
+            printf(
+                '<option value="%d"%s>%s</option>',
+                (int) $value,
+                selected( $this->per_page_option, $value, false ),
+                esc_html( $label )
+            );
+        }
+        echo '</select>';
+        echo '<span style="color:#666;">' . sprintf(
+            /* translators: %d: number of items */
+            esc_html( _n( '%d item', '%d items', $this->total_items, 'volunteer-exchange-platform' ) ),
+            (int) $this->total_items
+        ) . '</span>';
+        echo '</div>';
+
+        echo '</div>';
     }
 
     /**
@@ -128,6 +241,10 @@ class TransactionalEmailsListTable extends \WP_List_Table {
                     'page'             => 'vep-email-settings',
                     'tab'              => 'transactional-emails',
                     'vep_email_status' => $key,
+                    'vep_per_page'     => $this->per_page_option,
+                    'vep_date_from'    => $this->date_from,
+                    'vep_date_to'      => $this->date_to,
+                    'vep_search_email' => $this->search_email,
                 ),
                 admin_url( 'admin.php' )
             );
@@ -146,9 +263,7 @@ class TransactionalEmailsListTable extends \WP_List_Table {
      * @return void
      */
     public function prepare_items() {
-        $per_page = 50;
-        $current_page = $this->get_pagenum();
-        $offset = ( $current_page - 1 ) * $per_page;
+        $current_page = ( 0 === $this->per_page_option ) ? 1 : $this->get_pagenum();
 
         $orderby = isset( $_GET['orderby'] ) ? sanitize_key( wp_unslash( $_GET['orderby'] ) ) : 'id';
         $order = isset( $_GET['order'] ) ? sanitize_key( wp_unslash( $_GET['order'] ) ) : 'desc';
@@ -162,9 +277,25 @@ class TransactionalEmailsListTable extends \WP_List_Table {
 
         $where_sql = '';
         $where_args = array();
+        $where_parts = array();
         if ( 'all' !== $this->status_filter ) {
-            $where_sql = ' WHERE status = %s';
-            $where_args[] = $this->status_filter;
+            $where_parts[] = 'status = %s';
+            $where_args[]  = $this->status_filter;
+        }
+        if ( '' !== $this->date_from ) {
+            $where_parts[] = 'COALESCE(sent_at, scheduled_at) >= %s';
+            $where_args[]  = $this->date_from . ' 00:00:00';
+        }
+        if ( '' !== $this->date_to ) {
+            $where_parts[] = 'COALESCE(sent_at, scheduled_at) <= %s';
+            $where_args[]  = $this->date_to . ' 23:59:59';
+        }
+        if ( '' !== $this->search_email ) {
+            $where_parts[] = "JSON_SEARCH(payload, 'one', %s, NULL, '$.to[*]') IS NOT NULL";
+            $where_args[]  = '%' . $this->wpdb->esc_like( $this->search_email ) . '%';
+        }
+        if ( ! empty( $where_parts ) ) {
+            $where_sql = ' WHERE ' . implode( ' AND ', $where_parts );
         }
 
         // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is controlled from $wpdb->prefix.
@@ -173,6 +304,10 @@ class TransactionalEmailsListTable extends \WP_List_Table {
         $prepared_count_sql = empty( $where_args ) ? $count_sql : $this->wpdb->prepare( $count_sql, $where_args );
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Admin listing query.
         $total_items = (int) $this->wpdb->get_var( $prepared_count_sql );
+        $this->total_items = $total_items;
+
+        $per_page = ( 0 === $this->per_page_option ) ? max( $total_items, 1 ) : $this->per_page_option;
+        $offset   = ( $current_page - 1 ) * $per_page;
 
         // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name and order clause are controlled.
         $sql = "SELECT id, status, attempts, max_attempts, scheduled_at, sent_at, provider_message_id, last_error, payload

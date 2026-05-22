@@ -209,7 +209,7 @@ class Plugin {
      * @return void
      */
     public function maybe_flush_rewrite_rules() {
-        $current_version = '1.2';
+        $current_version = '1.3';
         if ( get_option( 'vep_rewrite_version' ) !== $current_version ) {
             flush_rewrite_rules();
             update_option( 'vep_rewrite_version', $current_version );
@@ -259,6 +259,7 @@ class Plugin {
         }
 
         wp_enqueue_style( 'vep-admin-style', VEP_PLUGIN_URL . 'assets/css/admin.css', array(), $this->asset_version( 'assets/css/admin.css' ) );
+        wp_enqueue_script( 'postbox' );
         wp_enqueue_script( 'vep-admin-script', VEP_PLUGIN_URL . 'assets/js/admin.js', array( 'jquery', 'jquery-ui-sortable', 'choices-js' ), $this->asset_version( 'assets/js/admin.js' ), true );
 
         wp_enqueue_style( 'vep-admin-ajax-spinner', VEP_PLUGIN_URL . 'assets/css/admin-ajax-spinner.css', array(), $this->asset_version( 'assets/css/admin-ajax-spinner.css' ) );
@@ -308,6 +309,8 @@ class Plugin {
                     'addNewAgreement'          => __( 'Add New Agreement', 'volunteer-exchange-platform' ),
                     'editParticipant'          => __( 'Edit Participant', 'volunteer-exchange-platform' ),
                     'addNewParticipant'        => __( 'Add New Participant', 'volunteer-exchange-platform' ),
+                    'editEvent'                => __( 'Edit Event', 'volunteer-exchange-platform' ),
+                    'addNewEvent'              => __( 'Add New Event', 'volunteer-exchange-platform' ),
                     'saving'                   => __( 'Saving…', 'volunteer-exchange-platform' ),
                     'agreementSaved'           => __( 'Agreement updated.', 'volunteer-exchange-platform' ),
                     'agreementCreated'         => __( 'Agreement created.', 'volunteer-exchange-platform' ),

@@ -109,7 +109,7 @@ class EventsListTable extends \WP_List_Table {
         switch ($column_name) {
             case 'start_date':
             case 'end_date':
-                return date_i18n(get_option('date_format'), strtotime($item->$column_name));
+                return date_i18n(get_option('date_format') . ' ' . get_option('time_format'), strtotime($item->$column_name));
             case 'created_at':
                 return date_i18n(get_option('date_format'), strtotime($item->$column_name));
             case 'is_active':
@@ -154,10 +154,9 @@ class EventsListTable extends \WP_List_Table {
                 __('View', 'volunteer-exchange-platform')
             ),
             'edit' => sprintf(
-                '<a href="?page=%s&action=%s&id=%s">%s</a>',
-                'volunteer-exchange-events',
-                'edit',
-                $item->id,
+                '<a href="%s" data-event-edit-modal="%d">%s</a>',
+                esc_url( add_query_arg( array( 'page' => 'volunteer-exchange-events', 'action' => 'edit', 'id' => (int) $item->id ), admin_url( 'admin.php' ) ) ),
+                (int) $item->id,
                 __('Edit', 'volunteer-exchange-platform')
             ),
             'delete' => sprintf(

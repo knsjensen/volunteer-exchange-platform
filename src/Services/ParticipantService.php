@@ -416,7 +416,7 @@ class ParticipantService extends AbstractService {
         }
 
         if ( array_key_exists( 'contact_phone', $data ) || ! $is_update ) {
-            $normalized['contact_phone'] = sanitize_text_field( $data['contact_phone'] ?? '' );
+            $normalized['contact_phone'] = $this->normalize_phone_number( sanitize_text_field( $data['contact_phone'] ?? '' ) );
         }
 
         if ( array_key_exists( 'logo_url', $data ) ) {
@@ -448,6 +448,18 @@ class ParticipantService extends AbstractService {
         }
 
         return $normalized;
+    }
+
+    private function normalize_phone_number( string $phone ): string {
+        if ( '' === $phone ) {
+            return $phone;
+        }
+        // Strip spaces for prefix check only.
+        $stripped = str_replace( ' ', '', $phone );
+        if ( str_starts_with( $stripped, '+45' ) || str_starts_with( $stripped, '0045' ) ) {
+            return $phone;
+        }
+        return '+45 ' . $phone;
     }
 
     private function normalize_tag_ids( $tag_ids ) {

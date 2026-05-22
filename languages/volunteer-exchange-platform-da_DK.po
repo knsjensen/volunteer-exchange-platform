@@ -841,8 +841,8 @@ msgid "Cancel"
 msgstr "Annuller"
 
 #: src/Admin/EventDisplayPage.php
-msgid "Click the button below to launch the fullscreen event display."
-msgstr "Klik på knappen nedenfor for at åbne begivenhedsvisningen i fuld skærm."
+msgid "Click the button below to launch the fullscreen event presentation."
+msgstr "Klik på knappen nedenfor for at åbne begivenhedspræsentationen i fuld skærm."
 
 #: src/Admin/EventDisplayPage.php
 msgid "Close Display (ESC)"
@@ -935,16 +935,20 @@ msgid "Describe what this organization does."
 msgstr "Beskriv hvad denne organisation laver."
 
 #: src/Admin/EventDisplayPage.php
-msgid "Display Control"
-msgstr "Visningskontrol"
+msgid "Presentation Control"
+msgstr "Præsentationskontrol"
 
 #: src/Admin/EventDisplayPage.php
-msgid "Display Settings"
-msgstr "Visningsindstillinger"
+msgid "Are you sure you want to reset the navigation system?"
+msgstr "Er du sikker på at du vil nulstille navigationssystemet?"
 
 #: src/Admin/EventDisplayPage.php
-msgid "Display Title"
-msgstr "Visningstitel"
+msgid "Presentation Settings"
+msgstr "Præsentationsindstillinger"
+
+#: src/Admin/EventDisplayPage.php
+msgid "Presentation Title"
+msgstr "Præsentationstitel"
 
 #: src/Admin/EventDisplayPage.php
 msgid "e.g., Welcome to Our Event"
@@ -1004,9 +1008,12 @@ msgid "Event Details"
 msgstr "Begivenhedsdetaljer"
 
 #: src/Admin/Menu.php
+msgid "Presentation"
+msgstr "Præsentation"
+
 #: src/Admin/EventDisplayPage.php
-msgid "Event Display"
-msgstr "Begivenhedsvisning"
+msgid "Event Presentation"
+msgstr "Begivenhedspræsentation"
 
 #: src/Admin/EventsPage.php
 msgid "Event Name"
@@ -1105,6 +1112,10 @@ msgstr "Påmindelse sat i kø."
 msgid "Are you sure you want to delete the selected participants?"
 msgstr "Er du sikker på, at du vil slette de valgte deltagere?"
 
+#: src/Admin/EventsPage.php
+msgid "Participant"
+msgstr "Deltager"
+
 #: src/Admin/ParticipantsPage.php
 msgid "Participant Details"
 msgstr "Deltagerdetaljer"
@@ -1143,6 +1154,14 @@ msgstr "Deltagertyper"
 msgid "Participants"
 msgstr "Deltagere"
 
+#: src/Admin/EventsPage.php
+msgid "Count"
+msgstr "Antal"
+
+#: src/Admin/EventsPage.php
+msgid "Names"
+msgstr "Navne"
+
 #: src/Admin/ParticipantsListTable.php
 msgid "Pending Approval"
 msgstr "Afventer godkendelse"
@@ -1165,8 +1184,8 @@ msgid "Start Date"
 msgstr "Startdato"
 
 #: src/Admin/EventDisplayPage.php
-msgid "Start Event Display"
-msgstr "Start begivenhedsvisning"
+msgid "Start Presentation"
+msgstr "Start præsentation"
 
 #: src/Admin/EventsPage.php
 msgid "Status"
@@ -1409,6 +1428,10 @@ msgstr "Status gemt."
 msgid "My exchange agreements"
 msgstr "Mine børsaftaler"
 
+#: src/Admin/EventsPage.php
+msgid "Exchange agreements"
+msgstr "Børsaftaler"
+
 #: src/Frontend/UpdateAgreementsPage.php
 #, php-format
 msgid "My exchange agreements from %s"
@@ -1548,6 +1571,24 @@ msgstr "Er du sikker på, at du vil sende denne påmindelse?"
 #: src/Admin/TagsPage.php:155
 msgid "Clear"
 msgstr "Ryd"
+
+#: src/Admin/TransactionalEmailsListTable.php
+msgid "From"
+msgstr "Fra"
+
+#: src/Admin/TransactionalEmailsListTable.php
+msgid "To"
+msgstr "Til"
+
+#: src/Admin/TransactionalEmailsListTable.php
+msgid "Search email addresses"
+msgstr "Søg i email adresser"
+
+#: src/Admin/TransactionalEmailsListTable.php
+msgid "%d item"
+msgid_plural "%d items"
+msgstr[0] "%d element"
+msgstr[1] "%d elementer"
 
 #: src/Admin/EventParticipantsListTable.php
 msgid "Copy selected emails"
