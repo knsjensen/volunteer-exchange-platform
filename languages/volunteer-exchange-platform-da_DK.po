@@ -1196,6 +1196,10 @@ msgid "None"
 msgstr "Ingen"
 
 #: src/Admin/TagsPage.php
+msgid "Name is required."
+msgstr "Navn er påkrævet."
+
+#: src/Admin/TagsPage.php
 msgid "Tag created successfully."
 msgstr "Tagget blev oprettet."
 

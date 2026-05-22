@@ -124,8 +124,8 @@ class TagsListTable extends \WP_List_Table {
     protected function column_name($item) {
         $actions = array(
             'edit' => sprintf(
-                '<a href="%s">%s</a>',
-                esc_url( TagsPage::get_admin_url( array( 'action' => 'edit', 'id' => $item->id ) ) ),
+                '<a href="#" class="vep-tag-edit-btn" data-id="%d">%s</a>',
+                (int) $item->id,
                 __('Edit', 'volunteer-exchange-platform')
             ),
             'delete' => sprintf(
