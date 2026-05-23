@@ -226,7 +226,7 @@ class Plugin {
         if (
             strpos( $hook, 'volunteer-exchange' ) === false &&
             strpos( $hook, 'vep-event-display' ) === false &&
-            strpos( $hook, 'vep-email-settings' ) === false
+            strpos( $hook, 'vep-settings' ) === false
         ) {
             return;
         }

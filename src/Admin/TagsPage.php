@@ -25,7 +25,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @package VolunteerExchangePlatform\Admin
  */
 class TagsPage {
-    public const SETTINGS_PAGE_SLUG = 'vep-email-settings';
+    public const SETTINGS_PAGE_SLUG = 'vep-settings';
     public const SETTINGS_TAB = 'tags';
 
     /**
@@ -151,7 +151,7 @@ class TagsPage {
                 </script>
             <?php endif; ?>
 
-            <div id="vep-tags-table-wrap"><?php $list_table->display(); ?></div>
+            <div id="vep-tags-table-wrap" class="vep-ajax-wrap"><?php $list_table->display(); ?></div>
         </div>
         <div class="vep-modal-overlay" id="vep-tag-modal-overlay" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="vep-tag-modal-title">
             <div class="vep-modal-container">
@@ -293,17 +293,21 @@ class TagsPage {
                         if (window.vepToast) window.vepToast(res.data && res.data.message ? res.data.message : '');
                         if (res.success) {
                             if (window.jQuery) window.jQuery(window).off('beforeunload');
+                            var wrap = document.getElementById('vep-tags-table-wrap');
+                            if (wrap) wrap.classList.add('is-loading');
                             var refresh = new FormData();
                             refresh.append('action', 'vep_get_tags_table');
                             refresh.append('nonce', nonce);
                             fetch(ajaxUrl, { method: 'POST', body: refresh, credentials: 'same-origin' })
                                 .then(function (r2) { return r2.json(); })
                                 .then(function (res2) {
+                                    if (wrap) wrap.classList.remove('is-loading');
                                     if (res2.success) {
-                                        document.getElementById('vep-tags-table-wrap').innerHTML = res2.data.html;
+                                        wrap.innerHTML = res2.data.html;
                                         tagsData = res2.data.items;
                                     }
-                                });
+                                })
+                                .catch(function () { if (wrap) wrap.classList.remove('is-loading'); });
                         }
                     })
                     .catch(function () { saveBtn.disabled = false; });
@@ -312,6 +316,39 @@ class TagsPage {
             // ESC key.
             document.addEventListener('keydown', function (e) {
                 if (e.key === 'Escape' && overlay.style.display !== 'none') closeModal();
+            });
+
+            // Table navigation (pagination + sort) via AJAX — no page reload.
+            document.addEventListener('click', function (e) {
+                var wrap = document.getElementById('vep-tags-table-wrap');
+                if (!wrap) return;
+                var link = e.target.closest('a');
+                if (!link || !wrap.contains(link)) return;
+                var href = link.getAttribute('href');
+                if (!href || href === '#') return;
+                var url;
+                try { url = new URL(href, window.location.href); } catch (ex) { return; }
+                var hasTableParam = url.searchParams.has('paged') || url.searchParams.has('orderby') || url.searchParams.has('order');
+                if (!hasTableParam) return;
+                e.preventDefault();
+                wrap.classList.add('is-loading');
+                var params = new FormData();
+                params.append('action', 'vep_get_tags_table');
+                params.append('nonce', nonce);
+                url.searchParams.forEach(function (v, k) {
+                    if (k === 'orderby' || k === 'order' || k === 'paged') params.append(k, v);
+                });
+                fetch(ajaxUrl, { method: 'POST', body: params, credentials: 'same-origin' })
+                    .then(function (r) { return r.json(); })
+                    .then(function (res) {
+                        wrap.classList.remove('is-loading');
+                        if (res.success) {
+                            wrap.innerHTML = res.data.html;
+                            tagsData = res.data.items;
+                            history.replaceState(null, '', href);
+                        }
+                    })
+                    .catch(function () { wrap.classList.remove('is-loading'); });
             });
         }());
         </script>
@@ -458,6 +495,13 @@ class TagsPage {
         }
 
         $list_table = new \VolunteerExchangePlatform\Admin\TagsListTable( $this->service );
+        foreach ( array( 'orderby', 'order', 'paged' ) as $param ) {
+            if ( isset( $_POST[ $param ] ) ) {
+                $val = sanitize_key( wp_unslash( $_POST[ $param ] ) );
+                $_GET[ $param ]     = $val;
+                $_REQUEST[ $param ] = $val;
+            }
+        }
         $list_table->prepare_items();
         ob_start();
         $list_table->display();

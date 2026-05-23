@@ -288,10 +288,10 @@ class EventsPage {
                         ?>
                     </p>
                     <p>
-                        <a class="button" href="<?php echo esc_url(admin_url('admin.php?page=vep-email-settings&tab=participant-types')); ?>">
+                        <a class="button" href="<?php echo esc_url(admin_url('admin.php?page=vep-settings&tab=participant-types')); ?>">
                             <?php echo esc_html__('Go to Participant Types', 'volunteer-exchange-platform'); ?>
                         </a>
-                        <a class="button" href="<?php echo esc_url(admin_url('admin.php?page=vep-email-settings&tab=tags')); ?>">
+                        <a class="button" href="<?php echo esc_url(admin_url('admin.php?page=vep-settings&tab=tags')); ?>">
                             <?php echo esc_html__('Go to We Offer Tags', 'volunteer-exchange-platform'); ?>
                         </a>
                     </p>
@@ -340,10 +340,10 @@ class EventsPage {
                         ?>
                     </p>
                     <p>
-                        <a class="button" href="<?php echo esc_url(admin_url('admin.php?page=vep-email-settings&tab=participant-types')); ?>">
+                        <a class="button" href="<?php echo esc_url(admin_url('admin.php?page=vep-settings&tab=participant-types')); ?>">
                             <?php echo esc_html__('Go to Participant Types', 'volunteer-exchange-platform'); ?>
                         </a>
-                        <a class="button" href="<?php echo esc_url(admin_url('admin.php?page=vep-email-settings&tab=tags')); ?>">
+                        <a class="button" href="<?php echo esc_url(admin_url('admin.php?page=vep-settings&tab=tags')); ?>">
                             <?php echo esc_html__('Go to We Offer Tags', 'volunteer-exchange-platform'); ?>
                         </a>
                     </p>

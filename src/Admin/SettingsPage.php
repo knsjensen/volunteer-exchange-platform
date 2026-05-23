@@ -31,6 +31,8 @@ class SettingsPage {
         $this->participant_types_page = $participant_types_page ?: new ParticipantTypesPage();
         $this->tags_page = $tags_page ?: new TagsPage();
         add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
+        add_action( 'wp_ajax_vep_get_settings_tab', array( $this, 'get_tab_ajax' ) );
+        add_action( 'wp_ajax_vep_get_emails_table', array( $this, 'get_emails_table_ajax' ) );
     }
 
     /**
@@ -40,14 +42,14 @@ class SettingsPage {
      * @return void
      */
     public function enqueue_scripts( $hook ) {
-        if ( false === strpos( $hook, 'vep-email-settings' ) ) {
+        if ( false === strpos( $hook, 'vep-settings' ) ) {
             return;
         }
 
         wp_enqueue_style( 'wp-color-picker' );
         wp_enqueue_script( 'wp-color-picker' );
 
-        // Inline script — no external dependency needed.
+        // Inline script â€” no external dependency needed.
         wp_add_inline_script(
             'jquery',
             $this->inline_js()
@@ -91,8 +93,14 @@ class SettingsPage {
         $settings = Settings::get_all();
         $profiles = $settings['template_profiles'];
         ?>
-        <div class="wrap vep-email-settings">
+        <div class="wrap vep-settings">
             <h1><?php esc_html_e( 'Settings', 'volunteer-exchange-platform' ); ?></h1>
+            <script>
+            window._vepSettingsPage = {
+                nonce: '<?php echo esc_js( wp_create_nonce( 'vep_admin_nonce' ) ); ?>',
+                ajaxUrl: '<?php echo esc_js( admin_url( 'admin-ajax.php' ) ); ?>'
+            };
+            </script>
 
             <?php $this->render_tabs( $tab ); ?>
 
@@ -112,20 +120,46 @@ class SettingsPage {
                 </script>
             <?php endforeach; ?>
 
-            <?php if ( 'transactional-emails' === $tab ) : ?>
-                <?php $this->render_sent_emails_tab(); ?>
-            <?php elseif ( 'participant-types' === $tab ) : ?>
-                <?php $this->participant_types_page->render_settings_tab(); ?>
-            <?php elseif ( 'tags' === $tab ) : ?>
-                <?php $this->tags_page->render_settings_tab(); ?>
-            <?php else : ?>
+            <div id="vep-settings-tab-content" class="vep-ajax-wrap">
+                <?php $this->render_tab_content( $tab ); ?>
+            </div>
+        </div>
+
+        <style>
+            .vep-settings .vep-profile-row { border: 1px solid #c3c4c7; border-radius: 4px; padding: 16px; margin-bottom: 16px; background: #f9f9f9; }
+            .vep-settings .vep-profile-row h3 { margin-top: 0; }
+            .vep-settings .vep-profile-row .form-table th { width: 200px; }
+            .vep-settings .remove-profile { float: right; color: #b32d2e; border-color: #b32d2e; }
+            .vep-settings .remove-profile:hover { background: #b32d2e; color: #fff; }
+        </style>
+        <?php
+    }
+
+    /**
+     * Render content for a single settings tab (used by both render() and AJAX).
+     *
+     * @param string $tab Active tab key.
+     * @return void
+     */
+    private function render_tab_content( $tab ) {
+        $settings = Settings::get_all();
+        $profiles = $settings['template_profiles'];
+
+        if ( 'transactional-emails' === $tab ) {
+            $this->render_sent_emails_tab();
+        } elseif ( 'participant-types' === $tab ) {
+            $this->participant_types_page->render_settings_tab();
+        } elseif ( 'tags' === $tab ) {
+            $this->tags_page->render_settings_tab();
+        } else {
+            ?>
             <form method="post" action="">
                 <?php wp_nonce_field( 'vep_email_settings_save', 'vep_email_settings_nonce' ); ?>
                 <input type="hidden" name="tab" value="<?php echo esc_attr( $tab ); ?>" />
 
                 <?php if ( 'settings' === $tab ) : ?>
 
-                <!-- ── General ────────────────────────────────────────── -->
+                <!-- â”€â”€ General â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
                 <h2 class="title"><?php esc_html_e( 'General', 'volunteer-exchange-platform' ); ?></h2>
                 <table class="form-table" role="presentation">
                     <tr>
@@ -162,7 +196,7 @@ class SettingsPage {
                     </tr>
                 </table>
 
-                <!-- ── Log retention ──────────────────────────────────── -->
+                <!-- â”€â”€ Log retention â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
                 <h2 class="title"><?php esc_html_e( 'Email Log Retention', 'volunteer-exchange-platform' ); ?></h2>
                 <table class="form-table" role="presentation">
                     <tr>
@@ -234,7 +268,7 @@ class SettingsPage {
 
                 <?php elseif ( 'smtp2go' === $tab ) : ?>
 
-                <!-- ── SMTP2GO connection ───────────────────────────────── -->
+                <!-- â”€â”€ SMTP2GO connection â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
                 <h2 class="title"><?php esc_html_e( 'SMTP2GO Connection', 'volunteer-exchange-platform' ); ?></h2>
                 <table class="form-table" role="presentation">
                     <tr>
@@ -248,7 +282,6 @@ class SettingsPage {
                                 name="api_key"
                                 class="regular-text"
                                 autocomplete="new-password"
-                                value=""
                             >
                             <?php if ( '' !== $settings['api_key'] ) : ?>
                                 <p class="description"><?php esc_html_e( 'A key is already saved. Leave blank to keep the current key, or enter a new one to replace it.', 'volunteer-exchange-platform' ); ?></p>
@@ -289,7 +322,7 @@ class SettingsPage {
                     </tr>
                 </table>
 
-                <!-- ── Template profiles ───────────────────────────────── -->
+                <!-- â”€â”€ Template profiles â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
                 <h2 class="title"><?php esc_html_e( 'Email Templates', 'volunteer-exchange-platform' ); ?></h2>
                 <p class="description"><?php esc_html_e( 'Each template corresponds to an SMTP2GO template ID. The internal key is used in code to queue the right email.', 'volunteer-exchange-platform' ); ?></p>
 
@@ -309,28 +342,84 @@ class SettingsPage {
                     </button>
                 </p>
 
+                <!-- Row template used by JS to clone new rows. -->
+                <script type="text/html" id="vep-profile-row-template">
+                    <?php $this->render_profile_row( '__INDEX__', array() ); ?>
+                </script>
+
                 <?php endif; ?>
 
                 <?php submit_button( __( 'Save Settings', 'volunteer-exchange-platform' ) ); ?>
             </form>
-            <?php endif; ?>
-        </div>
+            <?php
+        }
+    }
 
-        <?php if ( 'smtp2go' === $tab ) : ?>
-            <!-- Row template used by JS to clone new rows. -->
-            <script type="text/html" id="vep-profile-row-template">
-                <?php $this->render_profile_row( '__INDEX__', array() ); ?>
-            </script>
-        <?php endif; ?>
+    /**
+     * AJAX handler: return rendered tab content HTML.
+     *
+     * @return void
+     */
+    /**
+     * AJAX: return the transactional-emails tab HTML with table params injected.
+     *
+     * @return void
+     */
+    public function get_emails_table_ajax() {
+        $nonce = isset( $_POST['nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['nonce'] ) ) : '';
+        if ( ! wp_verify_nonce( $nonce, 'vep_admin_nonce' ) ) {
+            wp_send_json_error();
+        }
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error();
+        }
 
-        <style>
-            .vep-email-settings .vep-profile-row { border: 1px solid #c3c4c7; border-radius: 4px; padding: 16px; margin-bottom: 16px; background: #f9f9f9; }
-            .vep-email-settings .vep-profile-row h3 { margin-top: 0; }
-            .vep-email-settings .vep-profile-row .form-table th { width: 200px; }
-            .vep-email-settings .remove-profile { float: right; color: #b32d2e; border-color: #b32d2e; }
-            .vep-email-settings .remove-profile:hover { background: #b32d2e; color: #fff; }
-        </style>
-        <?php
+        // Forward table-specific params from POST into $_GET so WP_List_Table reads them.
+        $table_params = array( 'orderby', 'order', 'paged', 'vep_email_status', 'vep_per_page', 'vep_date_from', 'vep_date_to', 'vep_search_email' );
+        foreach ( $table_params as $key ) {
+            if ( isset( $_POST[ $key ] ) ) {
+                // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified above.
+                $_GET[ $key ]     = sanitize_text_field( wp_unslash( $_POST[ $key ] ) );
+                $_REQUEST[ $key ] = $_GET[ $key ];
+            }
+        }
+
+        // Spoof REQUEST_URI so WP_List_Table builds sort/pagination links pointing to the
+        // real admin page rather than admin-ajax.php.
+        $uri_params = array( 'page' => 'vep-settings', 'tab' => 'transactional-emails' );
+        foreach ( $table_params as $key ) {
+            if ( isset( $_GET[ $key ] ) && '' !== $_GET[ $key ] ) {
+                $uri_params[ $key ] = $_GET[ $key ];
+            }
+        }
+        $_SERVER['REQUEST_URI'] = '/wp-admin/admin.php?' . http_build_query( $uri_params );
+
+        ob_start();
+        $this->render_sent_emails_tab();
+        $html = ob_get_clean();
+
+        wp_send_json_success( array( 'html' => $html ) );
+    }
+
+    public function get_tab_ajax() {
+        $nonce = isset( $_POST['nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['nonce'] ) ) : '';
+        if ( ! wp_verify_nonce( $nonce, 'vep_admin_nonce' ) ) {
+            wp_send_json_error();
+        }
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error();
+        }
+
+        $tab = isset( $_POST['tab'] ) ? sanitize_key( wp_unslash( $_POST['tab'] ) ) : 'settings';
+        if ( ! in_array( $tab, array( 'settings', 'participant-types', 'tags', 'design', 'smtp2go', 'transactional-emails' ), true ) ) {
+            $tab = 'settings';
+        }
+
+        ob_start();
+        $this->render_tab_content( $tab );
+        $html = ob_get_clean();
+
+        wp_send_json_success( array( 'html' => $html, 'tab' => $tab ) );
     }
 
     /**
@@ -340,30 +429,30 @@ class SettingsPage {
      * @return void
      */
     private function render_tabs( $active_tab ) {
-        $settings_url = admin_url( 'admin.php?page=vep-email-settings&tab=settings' );
-        $participant_types_url = admin_url( 'admin.php?page=vep-email-settings&tab=participant-types' );
-        $tags_url = admin_url( 'admin.php?page=vep-email-settings&tab=tags' );
-        $design_url = admin_url( 'admin.php?page=vep-email-settings&tab=design' );
-        $smtp2go_url = admin_url( 'admin.php?page=vep-email-settings&tab=smtp2go' );
-        $log_url = admin_url( 'admin.php?page=vep-email-settings&tab=transactional-emails' );
+        $settings_url = admin_url( 'admin.php?page=vep-settings&tab=settings' );
+        $participant_types_url = admin_url( 'admin.php?page=vep-settings&tab=participant-types' );
+        $tags_url = admin_url( 'admin.php?page=vep-settings&tab=tags' );
+        $design_url = admin_url( 'admin.php?page=vep-settings&tab=design' );
+        $smtp2go_url = admin_url( 'admin.php?page=vep-settings&tab=smtp2go' );
+        $log_url = admin_url( 'admin.php?page=vep-settings&tab=transactional-emails' );
         ?>
         <h2 class="nav-tab-wrapper">
-            <a href="<?php echo esc_url( $settings_url ); ?>" class="nav-tab <?php echo 'settings' === $active_tab ? 'nav-tab-active' : ''; ?>">
+            <a href="<?php echo esc_url( $settings_url ); ?>" data-vep-tab="settings" class="nav-tab <?php echo 'settings' === $active_tab ? 'nav-tab-active' : ''; ?>">
                 <?php esc_html_e( 'Settings', 'volunteer-exchange-platform' ); ?>
             </a>
-            <a href="<?php echo esc_url( $participant_types_url ); ?>" class="nav-tab <?php echo 'participant-types' === $active_tab ? 'nav-tab-active' : ''; ?>">
+            <a href="<?php echo esc_url( $participant_types_url ); ?>" data-vep-tab="participant-types" class="nav-tab <?php echo 'participant-types' === $active_tab ? 'nav-tab-active' : ''; ?>">
                 <?php esc_html_e( 'Participant Types', 'volunteer-exchange-platform' ); ?>
             </a>
-            <a href="<?php echo esc_url( $tags_url ); ?>" class="nav-tab <?php echo 'tags' === $active_tab ? 'nav-tab-active' : ''; ?>">
+            <a href="<?php echo esc_url( $tags_url ); ?>" data-vep-tab="tags" class="nav-tab <?php echo 'tags' === $active_tab ? 'nav-tab-active' : ''; ?>">
                 <?php esc_html_e( 'We Offer Tags', 'volunteer-exchange-platform' ); ?>
             </a>
-            <a href="<?php echo esc_url( $design_url ); ?>" class="nav-tab <?php echo 'design' === $active_tab ? 'nav-tab-active' : ''; ?>">
+            <a href="<?php echo esc_url( $design_url ); ?>" data-vep-tab="design" class="nav-tab <?php echo 'design' === $active_tab ? 'nav-tab-active' : ''; ?>">
                 <?php esc_html_e( 'Design', 'volunteer-exchange-platform' ); ?>
             </a>
-            <a href="<?php echo esc_url( $smtp2go_url ); ?>" class="nav-tab <?php echo 'smtp2go' === $active_tab ? 'nav-tab-active' : ''; ?>">
+            <a href="<?php echo esc_url( $smtp2go_url ); ?>" data-vep-tab="smtp2go" class="nav-tab <?php echo 'smtp2go' === $active_tab ? 'nav-tab-active' : ''; ?>">
                 <?php esc_html_e( 'SMTP2GO', 'volunteer-exchange-platform' ); ?>
             </a>
-            <a href="<?php echo esc_url( $log_url ); ?>" class="nav-tab <?php echo 'transactional-emails' === $active_tab ? 'nav-tab-active' : ''; ?>">
+            <a href="<?php echo esc_url( $log_url ); ?>" data-vep-tab="transactional-emails" class="nav-tab <?php echo 'transactional-emails' === $active_tab ? 'nav-tab-active' : ''; ?>">
                 <?php esc_html_e( 'Sent Mail', 'volunteer-exchange-platform' ); ?>
             </a>
         </h2>
@@ -382,7 +471,7 @@ class SettingsPage {
         $status_filter = isset( $_GET['vep_email_status'] ) ? sanitize_key( wp_unslash( $_GET['vep_email_status'] ) ) : 'all';
         ?>
         <form method="get">
-            <input type="hidden" name="page" value="vep-email-settings" />
+            <input type="hidden" name="page" value="vep-settings" />
             <input type="hidden" name="tab" value="transactional-emails" />
             <?php if ( 'all' !== $status_filter ) : ?>
                 <input type="hidden" name="vep_email_status" value="<?php echo esc_attr( $status_filter ); ?>" />
@@ -448,6 +537,22 @@ class SettingsPage {
                     });
                 }
             });
+
+            // Date range constraints: "to" cannot be before "from".
+            var dateFrom = document.getElementById('vep-date-from');
+            var dateTo   = document.getElementById('vep-date-to');
+            if (dateFrom && dateTo) {
+                if (dateFrom.value) dateTo.min   = dateFrom.value;
+                if (dateTo.value)   dateFrom.max = dateTo.value;
+                dateFrom.addEventListener('change', function () {
+                    dateTo.min = this.value || '';
+                    if (dateTo.value && dateTo.value < this.value) dateTo.value = this.value;
+                });
+                dateTo.addEventListener('change', function () {
+                    dateFrom.max = this.value || '';
+                    if (dateFrom.value && dateFrom.value > this.value) dateFrom.value = this.value;
+                });
+            }
         }());
         </script>
         <?php
@@ -486,7 +591,7 @@ class SettingsPage {
                         );
                         ?>
                         <select name="profile_key[<?php echo esc_attr( $index ); ?>]" class="regular-text">
-                            <option value=""><?php esc_html_e( '— Select a key —', 'volunteer-exchange-platform' ); ?></option>
+                            <option value=""><?php esc_html_e( 'â€” Select a key â€”', 'volunteer-exchange-platform' ); ?></option>
                             <?php foreach ( $known_keys as $k => $label ) : ?>
                                 <option value="<?php echo esc_attr( $k ); ?>" <?php selected( $key, $k ); ?>><?php echo esc_html( $label ); ?></option>
                             <?php endforeach; ?>
@@ -663,6 +768,123 @@ jQuery(function ($) {
 
     $container.on('change', 'select[name^="profile_key["]', function () {
         refreshKeyUI();
+    });
+});
+
+// Settings tab switching via AJAX.
+jQuery(function () {
+    var cfg = window._vepSettingsPage;
+    if (!cfg) return;
+
+    var content = document.getElementById('vep-settings-tab-content');
+    if (!content) return;
+
+    function executeScripts(container) {
+        Array.from(container.querySelectorAll('script')).forEach(function (old) {
+            if (old.type && old.type !== 'text/javascript') return;
+            var s = document.createElement('script');
+            Array.from(old.attributes).forEach(function (a) { s.setAttribute(a.name, a.value); });
+            s.textContent = old.textContent;
+            old.parentNode.replaceChild(s, old);
+        });
+    }
+
+    function loadTab(tab) {
+        content.classList.add('is-loading');
+        var fd = new FormData();
+        fd.append('action', 'vep_get_settings_tab');
+        fd.append('nonce', cfg.nonce);
+        fd.append('tab', tab);
+        fetch(cfg.ajaxUrl, { method: 'POST', body: fd, credentials: 'same-origin' })
+            .then(function (r) { return r.json(); })
+            .then(function (res) {
+                content.classList.remove('is-loading');
+                if (!res.success) return;
+                content.innerHTML = res.data.html;
+                executeScripts(content);
+                if (typeof jQuery !== 'undefined' && jQuery.fn.wpColorPicker) {
+                    jQuery(content).find('.vep-color-picker').wpColorPicker();
+                }
+            })
+            .catch(function () { content.classList.remove('is-loading'); });
+    }
+
+    document.querySelectorAll('.nav-tab[data-vep-tab]').forEach(function (link) {
+        link.addEventListener('click', function (e) {
+            e.preventDefault();
+            var tab = link.getAttribute('data-vep-tab');
+            document.querySelectorAll('.nav-tab').forEach(function (t) {
+                t.classList.toggle('nav-tab-active', t === link);
+            });
+            history.pushState({ tab: tab }, '', link.getAttribute('href'));
+            loadTab(tab);
+        });
+    });
+
+    window.addEventListener('popstate', function (e) {
+        if (e.state && e.state.tab) {
+            var tab = e.state.tab;
+            document.querySelectorAll('.nav-tab[data-vep-tab]').forEach(function (t) {
+                t.classList.toggle('nav-tab-active', t.getAttribute('data-vep-tab') === tab);
+            });
+            loadTab(tab);
+        }
+    });
+
+    // ── Emails table AJAX navigation (sort, pagination, filter) ──────────
+    var emailTableKeys = ['orderby', 'order', 'paged', 'vep_email_status', 'vep_per_page', 'vep_date_from', 'vep_date_to', 'vep_search_email'];
+
+    function isEmailsTabShown() {
+        return !!(content && content.querySelector('#vep-payload-modal'));
+    }
+
+    function loadEmailsTable(searchParams) {
+        content.classList.add('is-loading');
+        var fd = new FormData();
+        fd.append('action', 'vep_get_emails_table');
+        fd.append('nonce', cfg.nonce);
+        emailTableKeys.forEach(function (k) {
+            var v = searchParams.get(k);
+            if (v !== null && v !== '') fd.append(k, v);
+        });
+        fetch(cfg.ajaxUrl, { method: 'POST', body: fd, credentials: 'same-origin' })
+            .then(function (r) { return r.json(); })
+            .then(function (res) {
+                content.classList.remove('is-loading');
+                if (!res.success) return;
+                content.innerHTML = res.data.html;
+                executeScripts(content);
+            })
+            .catch(function () { content.classList.remove('is-loading'); });
+    }
+
+    // Intercept sort and pagination link clicks inside the emails tab.
+    document.addEventListener('click', function (e) {
+        if (!isEmailsTabShown()) return;
+        var link = e.target.closest('a');
+        if (!link || !content.contains(link)) return;
+        var href = link.getAttribute('href');
+        if (!href || href === '#') return;
+        var url;
+        try { url = new URL(href, window.location.href); } catch (ex) { return; }
+        var hasTableParam = url.searchParams.has('orderby') || url.searchParams.has('order') ||
+            url.searchParams.has('paged') || url.searchParams.has('vep_email_status');
+        if (!hasTableParam) return;
+        e.preventDefault();
+        history.replaceState(null, '', href);
+        loadEmailsTable(url.searchParams);
+    });
+
+    // Intercept filter form submit (date, email search, per-page select).
+    document.addEventListener('submit', function (e) {
+        if (!isEmailsTabShown()) return;
+        var form = e.target;
+        if (!content.contains(form)) return;
+        e.preventDefault();
+        var sp = new URLSearchParams();
+        Array.from(new FormData(form)).forEach(function (pair) { sp.set(pair[0], pair[1]); });
+        history.replaceState(null, '', '?' + sp.toString());
+        loadEmailsTable(sp);
     });
 });
 JS;

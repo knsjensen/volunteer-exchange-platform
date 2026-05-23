@@ -233,8 +233,32 @@ class UpdateParticipantPage {
                 </div>
 
                 <div id="vep-expected-names-field" class="vep-form-group vep-form-group--full<?php echo (int) ( $participant->no_expected_names ?? 0 ) ? ' is-hidden' : ''; ?>">
-                    <label for="update_expected_participants_names"><?php esc_html_e( 'Participant Names', 'volunteer-exchange-platform' ); ?></label>
-                    <textarea id="update_expected_participants_names" name="expected_participants_names" rows="3" placeholder="<?php esc_attr_e( 'e.g., Jane Doe, John Smith', 'volunteer-exchange-platform' ); ?>"><?php echo esc_textarea( (string) $participant->expected_participants_names ); ?></textarea>
+                    <label><?php esc_html_e( 'Participant Names', 'volunteer-exchange-platform' ); ?></label>
+                    <div class="vep-names-list" id="vep-names-list">
+                        <?php
+                        $names_json = trim( (string) ( $participant->expected_participants_names ?? '' ) );
+                        $existing_names = array();
+                        if ( '' !== $names_json ) {
+                            $decoded = json_decode( $names_json, true );
+                            if ( is_array( $decoded ) ) {
+                                $existing_names = array_values( array_filter( array_map( 'trim', $decoded ) ) );
+                            } else {
+                                // Legacy: plain text — split by comma or newline.
+                                $existing_names = array_values( array_filter( array_map( 'trim', preg_split( '/[\r\n,]+/', $names_json ) ) ) );
+                            }
+                        }
+                        if ( empty( $existing_names ) ) {
+                            $existing_names = array( '' );
+                        }
+                        foreach ( $existing_names as $existing_name ) :
+                        ?>
+                        <div class="vep-names-row">
+                            <input type="text" name="expected_participants_names[]" value="<?php echo esc_attr( $existing_name ); ?>" placeholder="<?php esc_attr_e( 'e.g., Jane Doe', 'volunteer-exchange-platform' ); ?>" autocomplete="off">
+                            <button type="button" class="vep-remove-name-btn" aria-label="<?php esc_attr_e( 'Remove', 'volunteer-exchange-platform' ); ?>">&#x2715;</button>
+                        </div>
+                        <?php endforeach; ?>
+                    </div>
+                    <button type="button" class="vep-add-name-btn vep-button vep-button-secondary"><?php esc_html_e( '+ Add participant', 'volunteer-exchange-platform' ); ?></button>
                 </div>
                 <div class="vep-form-group vep-form-group--full">
                     <div class="vep-toggle-checkbox-row">

@@ -112,7 +112,7 @@ class Menu {
             __('Settings', 'volunteer-exchange-platform'),
             __('Settings', 'volunteer-exchange-platform'),
             'manage_options',
-            'vep-email-settings',
+            'vep-settings',
             array($this->settingsPage, 'render')
         );
 

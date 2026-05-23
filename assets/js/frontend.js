@@ -461,8 +461,65 @@
         const contactPhoneInput = form.querySelector('#update_contact_phone');
         const descriptionInput = form.querySelector('#update_description');
         const expectedCountInput = form.querySelector('#update_expected_participants_count');
-        const expectedNamesInput = form.querySelector('#update_expected_participants_names');
+        const namesList = form.querySelector('.vep-names-list');
+        const addNameBtn = form.querySelector('.vep-add-name-btn');
         const tagsInputs = Array.from(form.querySelectorAll('input[type="checkbox"][name="tags[]"]'));
+
+        function buildNameRow(value) {
+            const row = document.createElement('div');
+            row.className = 'vep-names-row';
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.name = 'expected_participants_names[]';
+            input.value = value || '';
+            input.placeholder = typeof vepFrontend !== 'undefined' && vepFrontend.i18n && vepFrontend.i18n.namePlaceholder
+                ? vepFrontend.i18n.namePlaceholder : 'e.g., Jane Doe';
+            input.autocomplete = 'off';
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'vep-remove-name-btn';
+            btn.setAttribute('aria-label', 'Remove');
+            btn.innerHTML = '&#x2715;';
+            btn.addEventListener('click', function() {
+                if (namesList && namesList.querySelectorAll('.vep-names-row').length > 1) {
+                    row.remove();
+                } else {
+                    input.value = '';
+                }
+            });
+            row.appendChild(input);
+            row.appendChild(btn);
+            return row;
+        }
+
+        function setNamesList(names) {
+            if (!namesList) return;
+            namesList.innerHTML = '';
+            const list = (Array.isArray(names) && names.length > 0) ? names : [''];
+            list.forEach(function(n) { namesList.appendChild(buildNameRow(n)); });
+        }
+
+        if (addNameBtn && namesList) {
+            addNameBtn.addEventListener('click', function() {
+                namesList.appendChild(buildNameRow(''));
+            });
+        }
+
+        // Wire up remove buttons on server-rendered rows.
+        if (namesList) {
+            namesList.querySelectorAll('.vep-remove-name-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    const row = btn.closest('.vep-names-row');
+                    if (!row) return;
+                    if (namesList.querySelectorAll('.vep-names-row').length > 1) {
+                        row.remove();
+                    } else {
+                        const inp = row.querySelector('input');
+                        if (inp) inp.value = '';
+                    }
+                });
+            });
+        }
         const logoWrapper = form.querySelector('.vep-current-logo-wrapper');
         const logoPreviewImage = form.querySelector('.vep-current-logo-preview img');
         const logoRemoveBtn = form.querySelector('.vep-logo-remove-btn');
@@ -513,7 +570,7 @@
             if (contactPhoneInput) contactPhoneInput.value = '';
             if (descriptionInput) descriptionInput.value = '';
             if (expectedCountInput) expectedCountInput.value = '';
-            if (expectedNamesInput) expectedNamesInput.value = '';
+            setNamesList([]);
             tagsInputs.forEach(function(input) {
                 input.checked = false;
             });
@@ -556,8 +613,15 @@
                 expectedCountInput.value = (count === null || typeof count === 'undefined' || count === '') ? '' : String(count);
             }
 
-            if (expectedNamesInput) {
-                expectedNamesInput.value = participant && participant.expected_participants_names ? participant.expected_participants_names : '';
+            if (namesList) {
+                var rawNames = participant && participant.expected_participants_names ? participant.expected_participants_names : '';
+                var parsedNames = [];
+                if (rawNames) {
+                    try { parsedNames = JSON.parse(rawNames); } catch(e) {
+                        parsedNames = rawNames.split(/[\r\n,]+/).map(function(s) { return s.trim(); }).filter(Boolean);
+                    }
+                }
+                setNamesList(parsedNames.length > 0 ? parsedNames : ['']);
             }
 
             const selectedTagIds = new Set(

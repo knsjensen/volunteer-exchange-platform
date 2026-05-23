@@ -185,10 +185,10 @@ class TagsListTable extends \WP_List_Table {
         $per_page     = 20;
         $current_page = $this->get_pagenum();
 
-        $orderby_raw = filter_input( INPUT_GET, 'orderby', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
-        $order_raw = filter_input( INPUT_GET, 'order', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
-        $orderby = $orderby_raw ? sanitize_key( $orderby_raw ) : 'name';
-        $order_param = $order_raw ? sanitize_key( $order_raw ) : '';
+        $orderby_raw = isset( $_GET['orderby'] ) ? sanitize_key( wp_unslash( $_GET['orderby'] ) ) : '';
+        $order_raw   = isset( $_GET['order'] )   ? sanitize_key( wp_unslash( $_GET['order'] ) )   : '';
+        $orderby     = $orderby_raw ? $orderby_raw : 'name';
+        $order_param = $order_raw;
         $order   = 'desc' === $order_param ? 'DESC' : 'ASC';
 
         $offset = ($current_page - 1) * $per_page;

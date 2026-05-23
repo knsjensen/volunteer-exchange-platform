@@ -2,6 +2,38 @@
  * Admin Styles for Volunteer Exchange Platform
  */
 
+/* ── AJAX loading overlay ─────────────────────────────────────── */
+.vep-ajax-wrap {
+    position: relative;
+}
+.vep-ajax-wrap.is-loading {
+    pointer-events: none;
+}
+.vep-ajax-wrap.is-loading::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, .65);
+    z-index: 100;
+}
+.vep-ajax-wrap.is-loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 28px;
+    height: 28px;
+    margin: -14px 0 0 -14px;
+    border: 3px solid rgba(0, 0, 0, .1);
+    border-top-color: #2271b1;
+    border-radius: 50%;
+    animation: vep-spin .7s linear infinite;
+    z-index: 101;
+}
+@keyframes vep-spin {
+    to { transform: rotate(360deg); }
+}
+
 /* Participants list table column widths */
 table.wp-list-table th.column-is_approved,
 table.wp-list-table td.column-is_approved {

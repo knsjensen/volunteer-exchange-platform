@@ -682,7 +682,7 @@ class EventDisplayPage {
                                 data-text-color="<?php echo esc_attr($display_text_color); ?>"
                                 data-auto-switch-stats="<?php echo $auto_switch_stats ? '1' : '0'; ?>"
                                 style="margin-top: 10px;">
-                            <span class="dashicons dashicons-visibility" style="margin-top: 6px;"></span>
+                            <span class="dashicons dashicons-visibility"></span>
                             <?php esc_html_e('Start Presentation', 'volunteer-exchange-platform'); ?>
                         </button>
                         

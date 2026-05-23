@@ -918,6 +918,15 @@ msgstr "Kender ikke navne"
 msgid "Does not know participant names"
 msgstr "Kender ikke navne"
 
+msgid "e.g., Jane Doe"
+msgstr "f.eks. Jane Doe"
+
+msgid "Remove"
+msgstr "Fjern"
+
+msgid "+ Add participant"
+msgstr "+ Tilføj deltager"
+
 msgid "More information"
 msgstr "Mere information"
 

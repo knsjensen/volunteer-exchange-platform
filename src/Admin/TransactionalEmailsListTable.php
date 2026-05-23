@@ -73,7 +73,7 @@ class TransactionalEmailsListTable extends \WP_List_Table {
 
         $date_from_raw   = isset( $_GET['vep_date_from'] ) ? sanitize_text_field( wp_unslash( $_GET['vep_date_from'] ) ) : '';
         $date_to_raw     = isset( $_GET['vep_date_to'] )   ? sanitize_text_field( wp_unslash( $_GET['vep_date_to'] ) )   : '';
-        $date_pattern    = '/^\d{4}-\d{2}-\d{2}$/';
+        $date_pattern    = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/';
         $this->date_from = preg_match( $date_pattern, $date_from_raw ) ? $date_from_raw : '';
         $this->date_to   = preg_match( $date_pattern, $date_to_raw )   ? $date_to_raw   : '';
 
@@ -146,12 +146,12 @@ class TransactionalEmailsListTable extends \WP_List_Table {
         echo '<div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">';
         echo '<label for="vep-date-from">' . esc_html__( 'From', 'volunteer-exchange-platform' ) . ':</label>';
         printf(
-            '<input type="date" id="vep-date-from" name="vep_date_from" value="%s" style="padding:2px 4px;">',
+            '<input type="datetime-local" id="vep-date-from" name="vep_date_from" value="%s" style="padding:2px 4px;">',
             esc_attr( $this->date_from )
         );
         echo '<label for="vep-date-to">' . esc_html__( 'To', 'volunteer-exchange-platform' ) . ':</label>';
         printf(
-            '<input type="date" id="vep-date-to" name="vep_date_to" value="%s" style="padding:2px 4px;">',
+            '<input type="datetime-local" id="vep-date-to" name="vep_date_to" value="%s" style="padding:2px 4px;">',
             esc_attr( $this->date_to )
         );
         printf(
@@ -163,7 +163,7 @@ class TransactionalEmailsListTable extends \WP_List_Table {
         if ( $this->date_from || $this->date_to || '' !== $this->search_email ) {
             $clear_url = add_query_arg(
                 array(
-                    'page'         => 'vep-email-settings',
+                    'page'         => 'vep-settings',
                     'tab'          => 'transactional-emails',
                     'vep_per_page' => $this->per_page_option,
                 ),
@@ -238,7 +238,7 @@ class TransactionalEmailsListTable extends \WP_List_Table {
         foreach ( $labels as $key => $label ) {
             $url = add_query_arg(
                 array(
-                    'page'             => 'vep-email-settings',
+                    'page'             => 'vep-settings',
                     'tab'              => 'transactional-emails',
                     'vep_email_status' => $key,
                     'vep_per_page'     => $this->per_page_option,
@@ -284,11 +284,11 @@ class TransactionalEmailsListTable extends \WP_List_Table {
         }
         if ( '' !== $this->date_from ) {
             $where_parts[] = 'COALESCE(sent_at, scheduled_at) >= %s';
-            $where_args[]  = $this->date_from . ' 00:00:00';
+            $where_args[]  = str_replace( 'T', ' ', $this->date_from ) . ':00';
         }
         if ( '' !== $this->date_to ) {
             $where_parts[] = 'COALESCE(sent_at, scheduled_at) <= %s';
-            $where_args[]  = $this->date_to . ' 23:59:59';
+            $where_args[]  = str_replace( 'T', ' ', $this->date_to ) . ':59';
         }
         if ( '' !== $this->search_email ) {
             $where_parts[] = "JSON_SEARCH(payload, 'one', %s, NULL, '$.to[*]') IS NOT NULL";

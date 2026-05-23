@@ -209,7 +209,9 @@ class ParticipantHandler {
             'contact_email'               => isset( $_POST['contact_email'] ) ? sanitize_email( wp_unslash( $_POST['contact_email'] ) ) : '',
             'contact_phone'               => isset( $_POST['contact_phone'] ) ? sanitize_text_field( wp_unslash( $_POST['contact_phone'] ) ) : '',
             'description'                 => isset( $_POST['description'] ) ? sanitize_textarea_field( wp_unslash( $_POST['description'] ) ) : '',
-            'expected_participants_names' => isset( $_POST['expected_participants_names'] ) ? sanitize_textarea_field( wp_unslash( $_POST['expected_participants_names'] ) ) : '',
+            'expected_participants_names' => ( isset( $_POST['expected_participants_names'] ) && is_array( $_POST['expected_participants_names'] ) )
+                ? wp_json_encode( array_values( array_filter( array_map( 'sanitize_text_field', array_map( 'wp_unslash', $_POST['expected_participants_names'] ) ), 'strlen' ) ) )
+                : ( isset( $_POST['expected_participants_names'] ) ? sanitize_textarea_field( wp_unslash( $_POST['expected_participants_names'] ) ) : '' ),
             'link'                        => isset( $_POST['link'] ) ? esc_url_raw( wp_unslash( $_POST['link'] ) ) : '',
         );
 
