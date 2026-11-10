@@ -9,6 +9,7 @@
 
 namespace VolunteerExchangePlatform\Admin;
 
+use VolunteerExchangePlatform\Services\ParticipantEmailService;
 use VolunteerExchangePlatform\Services\ParticipantService;
 
 // Exit if accessed directly
@@ -31,6 +32,11 @@ class ParticipantPrintPage {
      * @var ParticipantService
      */
     private $participant_service;
+
+    /**
+     * @var ParticipantEmailService
+     */
+    private $participant_email_service;
 
     /**
      * Allowed field keys.
@@ -59,8 +65,9 @@ class ParticipantPrintPage {
      * @param ParticipantService|null $participant_service Participant service instance.
      * @return void
      */
-    public function __construct( ?ParticipantService $participant_service = null ) {
-        $this->participant_service = $participant_service ?: new ParticipantService();
+    public function __construct( ?ParticipantService $participant_service = null, ?ParticipantEmailService $participant_email_service = null ) {
+        $this->participant_service       = $participant_service ?: new ParticipantService();
+        $this->participant_email_service = $participant_email_service ?: new ParticipantEmailService( $this->participant_service );
         add_action( 'admin_post_vep_print_participant', array( $this, 'render_print' ) );
     }
 
@@ -142,7 +149,7 @@ class ParticipantPrintPage {
             $entries[] = array(
                 'participant' => $participant,
                 'tags'        => $participant_tags,
-                'missing'     => $this->participant_service->get_update_reminder_missing_fields( $participant ),
+                'missing'     => $this->participant_email_service->get_update_reminder_missing_fields( $participant ),
             );
         }
 
@@ -245,6 +252,12 @@ class ParticipantPrintPage {
 
                 if ( is_array( $names_value ) ) {
                     $names_value = implode( ', ', array_map( 'strval', $names_value ) );
+                } else {
+                    // JSON-encoded array (new format).
+                    $_decoded = json_decode( (string) $names_value, true );
+                    if ( is_array( $_decoded ) ) {
+                        $names_value = implode( ', ', array_map( 'strval', $_decoded ) );
+                    }
                 }
 
                 $names = trim( (string) $names_value );

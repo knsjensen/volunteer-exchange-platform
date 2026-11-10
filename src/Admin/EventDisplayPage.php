@@ -323,7 +323,20 @@ class EventDisplayPage {
                 $event_end_datetime_input = $this->to_datetime_local_value( $normalized_event_end );
             }
         }
-        
+
+        // Event end as an absolute epoch (seconds). The stored end_date is WP-local
+        // wall time, so it is parsed with wp_timezone() on the server; the browser
+        // must never parse the naive string (timezone/Safari differences).
+        $event_end_ts = 0;
+        if ( '' !== $event_end_datetime ) {
+            try {
+                $event_end_ts = ( new \DateTimeImmutable( $event_end_datetime, wp_timezone() ) )->getTimestamp();
+            } catch ( \Exception $e ) {
+                $event_end_ts = 0;
+            }
+        }
+        $server_now_ms = (int) round( microtime( true ) * 1000 );
+
         ?>
         <div class="wrap">
             <h1><?php esc_html_e('Event Presentation', 'volunteer-exchange-platform'); ?></h1>
@@ -667,6 +680,8 @@ class EventDisplayPage {
                                 class="button button-primary button-hero"
                                 data-event-end="<?php echo esc_attr($event_end_datetime); ?>"
                                 data-countdown="<?php echo esc_attr($event_end_datetime); ?>"
+                                data-event-end-ts="<?php echo esc_attr( (string) $event_end_ts ); ?>"
+                                data-server-now="<?php echo esc_attr( (string) $server_now_ms ); ?>"
                                 data-event-id="<?php echo esc_attr($active_event->id); ?>"
                                 data-display-mode="<?php echo esc_attr($display_mode); ?>"
                                 data-display-title="<?php echo esc_attr($display_title ? $display_title : $active_event->name); ?>"
@@ -687,7 +702,7 @@ class EventDisplayPage {
                         </button>
                         
                         <p class="description" style="margin-top: 10px;">
-                            <?php esc_html_e('This will open a fullscreen display with countdown timer and live agreement count. Press ESC to exit fullscreen.', 'volunteer-exchange-platform'); ?>
+                            <?php esc_html_e( 'This will open a fullscreen display with countdown timer and live agreement count. The display keeps its state if it is closed by accident; use the close button (X) to close it. If fullscreen is exited, a button appears to re-enter it.', 'volunteer-exchange-platform' ); ?>
                         </p>
                     </div>
                 <?php endif; ?>
@@ -779,9 +794,25 @@ class EventDisplayPage {
             </div>
         </div>
         
+        <script>
+        window.vepDisplayI18n = <?php
+        echo wp_json_encode(
+            array(
+                'sessionExpired'    => __( 'Your session has expired. Please reload the page to continue.', 'volunteer-exchange-platform' ),
+                'reload'            => __( 'Reload', 'volunteer-exchange-platform' ),
+                'reenterFullscreen' => __( 'Re-enter fullscreen', 'volunteer-exchange-platform' ),
+                'confirmCloseHint'  => __( 'Click again to close the display', 'volunteer-exchange-platform' ),
+                'connectionLost'    => __( 'Connection to the server was lost. Trying to reconnect…', 'volunteer-exchange-platform' ),
+                'secondsShort'      => __( '%d sec.', 'volunteer-exchange-platform' ),
+                'minutesShort'      => __( '%d min.', 'volunteer-exchange-platform' ),
+            )
+        );
+        ?>;
+        </script>
+
         <!-- Fullscreen Display Modal -->
         <div id="vep-fullscreen-display" class="vep-fullscreen-display" style="display: none;">
-            <button id="vep-close-display" class="vep-close-display" title="<?php esc_attr_e('Close Display (ESC)', 'volunteer-exchange-platform'); ?>">
+            <button id="vep-close-display" class="vep-close-display" title="<?php esc_attr_e( 'Close Display', 'volunteer-exchange-platform' ); ?>">
                 <span class="dashicons dashicons-no-alt"></span>
             </button>
             

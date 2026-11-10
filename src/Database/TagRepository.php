@@ -91,6 +91,7 @@ class TagRepository extends AbstractRepository {
      * @return int|false
      */
     public function delete_tag( $tag_id ) {
+        $this->wpdb->delete( $this->wpdb->prefix . 'vep_participant_tags', array( 'tag_id' => (int) $tag_id ), array( '%d' ) );
         return $this->delete( array( 'id' => $tag_id ), array( '%d' ) );
     }
 }

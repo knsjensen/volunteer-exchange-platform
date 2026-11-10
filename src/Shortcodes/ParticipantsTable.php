@@ -68,13 +68,13 @@ class ParticipantsTable {
         $active_event = $this->event_service->get_active_event();
 
         if ( ! $active_event ) {
-            return '<div class="vep-message vep-error">' . __( 'No active event at the moment.', 'volunteer-exchange-platform' ) . '</div>';
+            return '<div class="vep-message vep-error">' . esc_html__( 'No active event at the moment.', 'volunteer-exchange-platform' ) . '</div>';
         }
 
         $participants = $this->participant_service->get_approved_for_event_with_type( $active_event->id );
 
         if ( empty( $participants ) ) {
-            return '<div class="vep-message vep-info">' . __( 'No participants yet.', 'volunteer-exchange-platform' ) . '</div>';
+            return '<div class="vep-message vep-info">' . esc_html__( 'No participants yet.', 'volunteer-exchange-platform' ) . '</div>';
         }
 
         usort(
@@ -114,7 +114,7 @@ class ParticipantsTable {
                             <td><?php echo esc_html( $participant->organization_name ); ?></td>
                             <?php if ( $show_button ) : ?>
                                 <td class="vep-participants-table-col-action">
-                                    <a href="<?php echo esc_url( add_query_arg( 'vep_back', get_permalink(), \VolunteerExchangePlatform\Frontend\ParticipantPage::get_participant_url( $participant->id ) ) ); ?>" class="vep-button vep-button-secondary vep-view-details">
+                                    <a href="<?php echo esc_url( add_query_arg( 'vep_back', rawurlencode( get_permalink() ), \VolunteerExchangePlatform\Frontend\ParticipantPage::get_participant_url( $participant->id ) ) ); ?>" class="vep-button vep-button-secondary vep-view-details">
                                         <?php esc_html_e( 'View Details', 'volunteer-exchange-platform' ); ?>
                                     </a>
                                 </td>

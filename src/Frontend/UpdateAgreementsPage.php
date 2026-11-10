@@ -86,6 +86,7 @@ class UpdateAgreementsPage {
         $randon_key  = sanitize_text_field( (string) $randon_key );
         $participant = $this->participant_service->get_by_randon_key( $randon_key );
 
+        nocache_headers();
         get_header();
         echo '<div class="vep-page-wrapper">';
 
@@ -111,7 +112,7 @@ class UpdateAgreementsPage {
      */
     private function render( $participant, $randon_key ) {
         $agreements      = $this->participant_service->get_agreements_for_participant( (int) $participant->id );
-        $is_unsubscribed = ! empty( $participant->reminder_unsubscribed );
+        $is_unsubscribed = ! empty( $participant->agreement_overview_unsubscribed );
         $event           = isset( $participant->event_id ) ? $this->event_service->get_by_id( (int) $participant->event_id ) : null;
         $event_name      = $event ? ( $event->name ?? '' ) : '';
 
@@ -146,7 +147,10 @@ class UpdateAgreementsPage {
                         ?>
                         <div class="vep-agreement-card" data-agreement-id="<?php echo esc_attr( (int) $agreement->id ); ?>">
                             <div class="vep-agreement-card-header">
-                                <span class="vep-agreement-partner"><?php echo esc_html( $partner_name ); ?></span>
+                                <span class="vep-agreement-partner"><?php
+                                /* translators: %s: partner organization name */
+                                echo esc_html( sprintf( __( 'Exchange agreement with %s', 'volunteer-exchange-platform' ), $partner_name ) );
+                                ?></span>
                                 <span class="vep-agreement-save-indicator" aria-live="polite"></span>
                             </div>
 
@@ -181,24 +185,26 @@ class UpdateAgreementsPage {
                 <div id="vep-agreements-unsub-message" class="vep-ajax-feedback" style="display:none;" aria-live="polite"></div>
 
                 <div id="vep-agreements-sub-state" class="vep-unsub-state" <?php echo $is_unsubscribed ? 'style="display:none;"' : ''; ?>>
-                    <p class="vep-unsub-label"><?php esc_html_e( 'Unsubscribe from reminder emails', 'volunteer-exchange-platform' ); ?></p>
+                    <p class="vep-unsub-label"><?php esc_html_e( 'Unsubscribe from agreement overview emails', 'volunteer-exchange-platform' ); ?></p>
                     <button
                         type="button"
                         id="vep-agreements-unsubscribe-btn"
                         class="vep-button vep-button-danger"
                         data-randon-key="<?php echo esc_attr( $randon_key ); ?>"
+                        data-unsubscribe-type="aftale-paamindelse"
                     >
                         <?php esc_html_e( 'Unsubscribe', 'volunteer-exchange-platform' ); ?>
                     </button>
                 </div>
 
                 <div id="vep-agreements-unsub-state" class="vep-unsub-state" <?php echo $is_unsubscribed ? '' : 'style="display:none;"'; ?>>
-                    <p class="vep-unsub-label"><?php esc_html_e( 'You are unsubscribed from reminder emails.', 'volunteer-exchange-platform' ); ?></p>
+                    <p class="vep-unsub-label"><?php esc_html_e( 'You are unsubscribed from agreement overview emails.', 'volunteer-exchange-platform' ); ?></p>
                     <button
                         type="button"
                         id="vep-agreements-resubscribe-btn"
                         class="vep-button vep-button-secondary"
                         data-randon-key="<?php echo esc_attr( $randon_key ); ?>"
+                        data-unsubscribe-type="aftale-paamindelse"
                     >
                         <?php esc_html_e( 'Re-subscribe', 'volunteer-exchange-platform' ); ?>
                     </button>
@@ -207,5 +213,26 @@ class UpdateAgreementsPage {
         </div>
         <?php
         return ob_get_clean();
+    }
+
+    /**
+     * Get the update-agreements URL for a participant key.
+     *
+     * Works with pretty and plain permalinks.
+     *
+     * @param string $randon_key Participant key.
+     * @return string
+     */
+    public static function get_update_agreements_url( $randon_key ) {
+        $randon_key = sanitize_text_field( (string) $randon_key );
+
+        if ( empty( get_option( 'permalink_structure' ) ) ) {
+            return add_query_arg( 'vep_update_agreements_key', rawurlencode( $randon_key ), home_url( '/' ) );
+        }
+
+        $locale = function_exists( 'determine_locale' ) ? determine_locale() : get_locale();
+        $slug   = ( is_string( $locale ) && 0 === strpos( strtolower( $locale ), 'da' ) ) ? 'opdateraftaler' : 'update-agreements';
+
+        return home_url( user_trailingslashit( 'vep/' . $slug . '/' . rawurlencode( $randon_key ) ) );
     }
 }

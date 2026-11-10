@@ -145,14 +145,14 @@ class ParticipantsGrid {
         $active_event = $this->event_service->get_active_event();
         
         if (!$active_event) {
-            return '<div class="vep-message vep-error">' . __('No active event at the moment.', 'volunteer-exchange-platform') . '</div>';
+            return '<div class="vep-message vep-error">' . esc_html__( 'No active event at the moment.', 'volunteer-exchange-platform' ) . '</div>';
         }
         
         // Get approved participants for active event
         $participants = $this->participant_service->get_approved_for_event_with_type($active_event->id);
         
         if (empty($participants)) {
-            return '<div class="vep-message vep-info">' . __('No participants yet.', 'volunteer-exchange-platform') . '</div>';
+            return '<div class="vep-message vep-info">' . esc_html__( 'No participants yet.', 'volunteer-exchange-platform' ) . '</div>';
         }
 
         usort(
@@ -294,7 +294,7 @@ class ParticipantsGrid {
                             <div class="vep-participant-info">
                                 <h3><?php echo esc_html($participant->participant_number); ?>: <?php echo esc_html($participant->organization_name); ?></h3>
                                 <p class="vep-participant-type"<?php echo '' !== $participant_type_style ? ' style="' . esc_attr( $participant_type_style ) . '"' : ''; ?>><?php echo esc_html($participant->type_name ?? ''); ?></p>
-                                <a href="<?php echo esc_url( add_query_arg( 'vep_back', get_permalink(), \VolunteerExchangePlatform\Frontend\ParticipantPage::get_participant_url($participant->id) ) ); ?>" class="vep-button vep-button-secondary vep-view-details"<?php echo '' !== $button_style ? ' style="' . esc_attr( $button_style ) . '"' : ''; ?>>
+                                <a href="<?php echo esc_url( add_query_arg( 'vep_back', rawurlencode( get_permalink() ), \VolunteerExchangePlatform\Frontend\ParticipantPage::get_participant_url($participant->id) ) ); ?>" class="vep-button vep-button-secondary vep-view-details"<?php echo '' !== $button_style ? ' style="' . esc_attr( $button_style ) . '"' : ''; ?>>
                                     <?php esc_html_e('View Details', 'volunteer-exchange-platform'); ?>
                                 </a>
                             </div>

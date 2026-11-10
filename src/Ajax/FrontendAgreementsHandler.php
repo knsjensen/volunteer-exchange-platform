@@ -31,6 +31,16 @@ class FrontendAgreementsHandler {
      * @param EventService|null       $event_service       Event service.
      * @param ParticipantService|null $participant_service Participant service.
      */
+    /**
+     * Public, uncached server time (used by the countdown shortcode).
+     *
+     * @return void
+     */
+    public function handle_server_time() {
+        nocache_headers();
+        wp_send_json_success( array( 'server_now_ms' => (int) round( microtime( true ) * 1000 ) ) );
+    }
+
     public function __construct(
         ?EventService $event_service = null,
         ?ParticipantService $participant_service = null
@@ -39,6 +49,9 @@ class FrontendAgreementsHandler {
         $this->participant_service = $participant_service ?: new ParticipantService();
 
         // Both actions run as nopriv (public-facing pages).
+        add_action( 'wp_ajax_vep_server_time',        array( $this, 'handle_server_time' ) );
+        add_action( 'wp_ajax_nopriv_vep_server_time', array( $this, 'handle_server_time' ) );
+
         add_action( 'wp_ajax_vep_frontend_toggle_unsubscribe',        array( $this, 'handle_toggle_unsubscribe' ) );
         add_action( 'wp_ajax_nopriv_vep_frontend_toggle_unsubscribe', array( $this, 'handle_toggle_unsubscribe' ) );
 

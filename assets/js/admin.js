@@ -240,7 +240,7 @@
         section.querySelectorAll('a[href*="participant_action=delete"]').forEach(function (link) {
             link.addEventListener('click', function (e) {
                 e.preventDefault();
-                if (!window.confirm(link.dataset.confirmMsg || 'Er du sikker?')) return;
+                if (!window.confirm(link.dataset.confirmMsg || 'Are you sure?')) return;
                 var url = new URL(this.href);
                 reload({
                     participant_action: 'delete',
@@ -756,6 +756,8 @@
         var form = document.getElementById('vep-participant-modal-form');
         if (form) form.reset();
         document.getElementById('vep-participant-modal-participant-id').value = '0';
+        // Reset names list to one empty row.
+        setNamesField('');
         // Hide logo preview.
         var preview = document.getElementById('vep-participant-modal-logo-preview');
         if (preview) preview.style.display = 'none';
@@ -789,6 +791,56 @@
         }
     }
 
+    function makeNameRow(value) {
+        var row = document.createElement('div');
+        row.style.cssText = 'display:flex; gap:6px; margin-bottom:4px;';
+        var input = document.createElement('input');
+        input.type = 'text';
+        input.name = 'expected_participants_names[]';
+        input.value = value || '';
+        input.placeholder = (typeof vepAdmin !== 'undefined' && vepAdmin.i18n && vepAdmin.i18n.namePlaceholder) || 'e.g., Jane Doe';
+        input.className = 'regular-text';
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.textContent = '\u2715';
+        btn.className = 'button';
+        btn.setAttribute('aria-label', (typeof vepAdmin !== 'undefined' && vepAdmin.i18n && vepAdmin.i18n.remove) || 'Remove');
+        btn.addEventListener('click', function () {
+            var list = document.getElementById('vep-modal-names-list');
+            if (list && list.children.length > 1) {
+                row.remove();
+            } else {
+                input.value = '';
+            }
+        });
+        row.appendChild(input);
+        row.appendChild(btn);
+        return row;
+    }
+
+    function setNamesField(rawValue) {
+        var list = document.getElementById('vep-modal-names-list');
+        if (!list) return;
+        list.innerHTML = '';
+        var names = [];
+        if (rawValue) {
+            var decoded = null;
+            try {
+                decoded = JSON.parse(rawValue);
+            } catch (e) {
+                decoded = null;
+            }
+            if (Array.isArray(decoded)) {
+                names = decoded.filter(function (n) { return typeof n === 'string' && n.trim(); });
+            } else {
+                // Legacy plain text: one name per line (commas may be part of a name).
+                names = String(rawValue).split(/[\r\n]+/).map(function (n) { return n.trim(); }).filter(Boolean);
+            }
+        }
+        if (names.length === 0) names = [''];
+        names.forEach(function (name) { list.appendChild(makeNameRow(name)); });
+    }
+
     window.vepOpenParticipantModal = function (participantId) {
         participantId = parseInt(participantId, 10) || 0;
 
@@ -814,7 +866,7 @@
                     setFieldValue('vep-modal-org-name',        d.organization_name);
                     setFieldValue('vep-modal-description',     d.description);
                     setFieldValue('vep-modal-expected-count',  d.expected_participants_count);
-                    setFieldValue('vep-modal-expected-names',  d.expected_participants_names);
+                    setNamesField(d.expected_participants_names);
                     setFieldValue('vep-modal-type-id',         String(d.participant_type_id));
                     setFieldValue('vep-modal-contact-person',  d.contact_person_name);
                     setFieldValue('vep-modal-contact-email',   d.contact_email);
@@ -902,6 +954,13 @@
         if (addNewBtn) {
             addNewBtn.addEventListener('click', function () {
                 window.vepOpenParticipantModal(0);
+            });
+        }
+        var addNameBtn = document.getElementById('vep-modal-add-name-btn');
+        if (addNameBtn) {
+            addNameBtn.addEventListener('click', function () {
+                var list = document.getElementById('vep-modal-names-list');
+                if (list) list.appendChild(makeNameRow(''));
             });
         }
         document.addEventListener('keydown', function (e) {
@@ -1008,6 +1067,55 @@
     }
     
     /**
+     * Escape a value for safe use in innerHTML (text and attribute contexts).
+     */
+    function escapeHtml(value) {
+        return String(value === null || value === undefined ? '' : value).replace(/[&<>"']/g, function(ch) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch];
+        });
+    }
+
+    /**
+     * POST to admin-ajax with the admin nonce and resolve with the parsed JSON.
+     * An expired nonce / session (HTTP 403 "-1", or "0") rejects with
+     * {vepAuth: true} and fires a 'vep:auth-expired' event so the UI can show a
+     * visible "reload" notice instead of silently freezing.
+     */
+    function vepAjax(action, fields) {
+        const data = new FormData();
+        data.append('action', action);
+        data.append('nonce', vepAdmin.nonce);
+        Object.keys(fields || {}).forEach(function(key) {
+            data.append(key, fields[key]);
+        });
+
+        const authFailed = function() {
+            document.dispatchEvent(new CustomEvent('vep:auth-expired'));
+            const err = new Error('auth');
+            err.vepAuth = true;
+            return err;
+        };
+
+        return fetch(vepAdmin.ajaxUrl, { method: 'POST', body: data, credentials: 'same-origin' })
+            .then(function(response) {
+                return response.text().then(function(text) {
+                    const trimmed = text.trim();
+                    if (response.status === 403 || response.status === 401 || trimmed === '-1' || (response.status === 400 && trimmed === '0')) {
+                        throw authFailed();
+                    }
+                    if (!response.ok) {
+                        throw new Error('HTTP ' + response.status);
+                    }
+                    try {
+                        return JSON.parse(text);
+                    } catch (e) {
+                        throw new Error('Invalid JSON response');
+                    }
+                });
+            });
+    }
+
+    /**
      * Helper function to switch views
      * @param {string} viewId - The ID of the view to show ('countdown', 'statistics', 'competitions')
      * @param {string|null} actionButtonsId - The ID of the action buttons to show, or null to hide all
@@ -1071,6 +1179,31 @@
         let competitionsRefreshInterval = null;
         let currentStatistics = null;
 
+        // Shared-presentation / clock state (see applySync / serverNow)
+        const dI18n = window.vepDisplayI18n || {};
+        let displayOpen = false;
+        let endTsMs = 0;
+        let clockOffset = 0;
+        let clockSamples = [];
+        let phase = null;
+        let endedLive = false;
+        let endedHandled = false;
+        let autoRequested = false;
+        let localKey = null;
+        let serverState = null;
+        let syncedOnce = false;
+        let pollInFlight = false;
+        // Local request ordering: responses older than the newest applied one are dropped.
+        let reqCounter = 0;
+        let lastAppliedReqId = 0;
+        let countPollInFlight = false;
+        let connFails = 0;
+        let applyToken = 0;
+        let screenId = '';
+        let noticeEl = null;
+        let noticeKind = '';
+        let fsButton = null;
+
         function syncRightPanelHeight() {
             // Height equality is now handled entirely by CSS:
             // - .vep-display-main-content uses align-items: stretch
@@ -1106,59 +1239,234 @@
             }
         }
 
-        function reportDisplayState(view, extra) {
-            currentDisplayView = view;
-            const data = new FormData();
-            data.append('action', 'vep_display_report_state');
-            data.append('nonce', vepAdmin.nonce);
-            data.append('event_id', startButton.dataset.eventId);
-            data.append('view', view);
-            data.append('winner_index', (extra && extra.winner_index !== undefined) ? extra.winner_index : 0);
-            data.append('total_winners', (extra && extra.total_winners !== undefined) ? extra.total_winners : 0);
-            data.append('auto_switch', (extra && extra.auto_switch !== undefined) ? (extra.auto_switch ? '1' : '0') : (currentAutoSwitch ? '1' : '0'));
-            if (extra && extra.competitions) {
-                data.append('competitions', JSON.stringify(extra.competitions));
+        // ---------------------------------------------------------------
+        // Server clock, connection/notice handling
+        // ---------------------------------------------------------------
+
+        /**
+         * Server time in ms. The display PC's clock/timezone is never trusted:
+         * clockOffset = server_now_ms - local time, smoothed (median of last 5,
+         * RTT/2 corrected) from every poll response.
+         */
+        function serverNow() {
+            return Date.now() + clockOffset;
+        }
+
+        function recordClockSample(serverNowMs, t0, t1) {
+            if (!serverNowMs) return;
+            // The server stamped the response roughly half-way through the round trip.
+            clockSamples.push(serverNowMs - (t0 + t1) / 2);
+            if (clockSamples.length > 5) clockSamples.shift();
+            const sorted = clockSamples.slice().sort((a, b) => a - b);
+            clockOffset = sorted[Math.floor(sorted.length / 2)];
+        }
+
+        function getScreenId() {
+            if (screenId) return screenId;
+            try {
+                screenId = window.sessionStorage.getItem('vep_display_screen_id') || '';
+            } catch (e) { screenId = ''; }
+            if (!screenId) {
+                screenId = 's' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+                try { window.sessionStorage.setItem('vep_display_screen_id', screenId); } catch (e) { /* ignore */ }
             }
-            fetch(vepAdmin.ajaxUrl, { method: 'POST', body: data, credentials: 'same-origin' }).catch(() => {});
+            return screenId;
+        }
+
+        function ensureDisplayChrome() {
+            if (!noticeEl) {
+                noticeEl = document.createElement('div');
+                noticeEl.id = 'vep-display-notice';
+                noticeEl.setAttribute('role', 'alert');
+                noticeEl.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:100001;padding:10px 16px;background:#b32d2e;color:#fff;font-size:18px;text-align:center;display:none;';
+                displayModal.appendChild(noticeEl);
+            }
+            if (!fsButton) {
+                fsButton = document.createElement('button');
+                fsButton.type = 'button';
+                fsButton.id = 'vep-reenter-fullscreen';
+                fsButton.className = 'button button-secondary';
+                fsButton.textContent = dI18n.reenterFullscreen || 'Re-enter fullscreen';
+                fsButton.style.cssText = 'position:fixed;right:16px;bottom:16px;z-index:100001;opacity:0.85;display:none;';
+                fsButton.addEventListener('click', function() {
+                    requestFullscreen(displayModal);
+                });
+                displayModal.appendChild(fsButton);
+            }
+        }
+
+        /** kind: 'auth' | 'conn' | '' (hide) */
+        function showDisplayNotice(kind) {
+            ensureDisplayChrome();
+            if (noticeKind === kind) return;
+            noticeKind = kind;
+            noticeEl.textContent = '';
+            if (!kind) {
+                noticeEl.style.display = 'none';
+                return;
+            }
+            const msg = document.createElement('span');
+            msg.textContent = kind === 'auth'
+                ? (dI18n.sessionExpired || 'Your session has expired. Please reload the page to continue.')
+                : (dI18n.connectionLost || 'Connection to the server was lost. Trying to reconnect…');
+            noticeEl.appendChild(msg);
+            if (kind === 'auth') {
+                const reloadBtn = document.createElement('button');
+                reloadBtn.type = 'button';
+                reloadBtn.className = 'button';
+                reloadBtn.style.marginLeft = '12px';
+                reloadBtn.textContent = dI18n.reload || 'Reload';
+                reloadBtn.addEventListener('click', function() { window.location.reload(); });
+                noticeEl.appendChild(reloadBtn);
+            }
+            noticeEl.style.display = 'block';
+        }
+
+        document.addEventListener('vep:auth-expired', function() {
+            if (displayOpen) showDisplayNotice('auth');
+        });
+
+        /**
+         * POST via the shared helper; records the server clock and the
+         * (possibly edited) event end from every response and tracks connectivity.
+         */
+        function displayAjax(action, fields) {
+            const t0 = Date.now();
+            return vepAjax(action, fields).then(function(resp) {
+                const t1 = Date.now();
+                connFails = 0;
+                if (noticeKind === 'conn') showDisplayNotice('');
+                if (resp && resp.success && resp.data) {
+                    recordClockSample(resp.data.server_now_ms, t0, t1);
+                    if (resp.data.end_ts_ms) endTsMs = resp.data.end_ts_ms;
+                }
+                return resp;
+            }, function(err) {
+                if (!(err && err.vepAuth)) {
+                    connFails++;
+                    if (connFails >= 3 && displayOpen && noticeKind !== 'auth') showDisplayNotice('conn');
+                }
+                throw err;
+            });
+        }
+
+        // ---------------------------------------------------------------
+        // Shared presentation state: screens are read-only followers
+        // ---------------------------------------------------------------
+
+        /**
+         * Apply one server response (poll, navigation or auto-transition).
+         * Renders when the server state key (gen:seq) differs from what this
+         * screen currently shows; the transition to "ended" is driven by the
+         * server-decided phase, never by the local clock.
+         */
+        function applySync(data, reqId) {
+            if (!displayOpen || !data) return;
+            if (reqId && reqId < lastAppliedReqId) return; // stale response, issued before a newer applied one
+            if (reqId) lastAppliedReqId = reqId;
+
+            if (typeof data.auto_switch !== 'undefined') currentAutoSwitch = !!data.auto_switch;
+
+            const first = !syncedOnce;
+            syncedOnce = true;
+
+            const prevPhase = phase;
+            if (data.phase) phase = data.phase;
+            if (phase !== 'ended') {
+                endedLive = false;
+                endedHandled = false;
+                autoRequested = false;
+            } else if (prevPhase && prevPhase !== 'ended') {
+                endedLive = true; // the event ended while this screen was open
+            }
+            const phaseLeftEnded = prevPhase === 'ended' && phase !== 'ended';
+
+            let state = data.state || null;
+            if (state && serverState && state.gen === serverState.gen && state.seq < serverState.seq) {
+                state = serverState; // a slower, older response must not roll the view back
+            }
+            const key = state ? state.gen + ':' + state.seq : null;
+            const changed = first || key !== localKey;
+            serverState = state;
+
+            if (changed) {
+                localKey = key;
+                autoRequested = false;
+                if (state) {
+                    applyState(state, first);
+                } else {
+                    showCountdownView({ restore: first });
+                }
+                return;
+            }
+
+            if (currentDisplayView === 'countdown') {
+                if (phase === 'ended') {
+                    if (prevPhase !== 'ended') {
+                        enterEndedCountdown();
+                    } else {
+                        maybeAutoTransition();
+                    }
+                } else if (phaseLeftEnded) {
+                    showRunningCountdownUI();
+                }
+            }
+        }
+
+        function applyState(state, restore) {
+            const token = ++applyToken;
+            const view = state.view;
+            if (view === 'countdown') {
+                showCountdownView({ restore: restore });
+            } else if (view === 'statistics') {
+                showStatisticsView({ auto: !!state.auto });
+            } else if (view === 'competitions') {
+                showCompetitionsView();
+            } else if (view === 'winner') {
+                const idx = parseInt(state.winner_index, 10) || 0;
+                loadCompetitions().then(function() {
+                    if (token !== applyToken || !displayOpen) return;
+                    if (winnersForDisplay[idx]) {
+                        showWinnerView(idx, { instant: restore });
+                    } else {
+                        showCompetitionsView();
+                    }
+                }).catch(function() {
+                    if (token === applyToken && displayOpen) showCompetitionsView();
+                });
+            } else if (view === 'closing') {
+                showClosingView();
+            }
+        }
+
+        /** Explicit navigation: the server increments seq; every screen follows. */
+        function navigate(action, winnerIndex) {
+            const reqId = ++reqCounter;
+            return displayAjax('vep_display_send_command', {
+                event_id: startButton.dataset.eventId,
+                nav_action: action,
+                winner_index: winnerIndex || 0,
+                screen_id: getScreenId()
+            }).then(function(resp) {
+                if (resp && resp.success && resp.data) applySync(resp.data, reqId);
+            }).catch(function() { /* notice already shown by displayAjax */ });
         }
 
         function startCommandPolling(eventId) {
             if (commandPollInterval) return;
-            // Track last executed command timestamp so multiple open displays each
-            // execute a command exactly once (command is no longer deleted server-side).
-            let lastCommandTs = 0;
-            commandPollInterval = setInterval(function() {
-                const data = new FormData();
-                data.append('action', 'vep_display_poll_command');
-                data.append('nonce', vepAdmin.nonce);
-                data.append('event_id', eventId);
-                fetch(vepAdmin.ajaxUrl, { method: 'POST', body: data, credentials: 'same-origin' })
-                    .then(r => r.json())
-                    .then(resp => {
-                        if (!resp.success || !resp.data || !resp.data.command) return;
-                        const cmd = resp.data.command;
-                        // Skip if already acted on this command (same timestamp).
-                        if (!cmd.timestamp || cmd.timestamp === lastCommandTs) return;
-                        lastCommandTs = cmd.timestamp;
-                        if (cmd.action === 'showCountdown') {
-                            const countdownTarget = startButton.dataset.eventEnd || startButton.dataset.countdown;
-                            if (countdownTarget) {
-                                startCountdown(countdownTarget, currentAutoSwitch);
-                                switchView('vep-countdown-view', 'vep-post-time-actions');
-                                reportDisplayState('countdown', {});
-                            }
-                        } else if (cmd.action === 'showStatistics') {
-                            showStatisticsView(eventId, false);
-                        } else if (cmd.action === 'showCompetitions') {
-                            showCompetitionsView(eventId);
-                        } else if (cmd.action === 'showWinner') {
-                            showWinnerView(parseInt(cmd.winner_index, 10) || 0);
-                        } else if (cmd.action === 'showClosing') {
-                            showClosingView();
-                        }
+            function pollOnce() {
+                if (!displayOpen || pollInFlight) return;
+                pollInFlight = true;
+                const reqId = ++reqCounter;
+                displayAjax('vep_display_poll_command', { event_id: eventId, screen_id: getScreenId() })
+                    .then(function(resp) {
+                        if (resp && resp.success) applySync(resp.data, reqId);
                     })
-                    .catch(() => {});
-            }, 1000);
+                    .catch(function() {})
+                    .then(function() { pollInFlight = false; });
+            }
+            pollOnce();
+            commandPollInterval = setInterval(pollOnce, 1000);
         }
 
         function stopCommandPolling() {
@@ -1168,37 +1476,77 @@
             }
         }
 
-        // Start display
-        startButton.addEventListener('click', function() {
-            const countdownTime = this.dataset.eventEnd || this.dataset.countdown;
-            const eventId = this.dataset.eventId;
-            const displayTitle = this.dataset.displayTitle;
-            const displayMode = this.dataset.displayMode || 'leaderboard';
-            const backgroundType = this.getAttribute('data-background-type') || 'gradient';
-            const solidColor = this.getAttribute('data-background-solid-color') || '#1e3c72';
-            const gradientColor1 = this.getAttribute('data-background-gradient-color-1') || '#db870f';
-            const gradientColor2 = this.getAttribute('data-background-gradient-color-2') || '#db870f';
-            const gradientColor3 = this.getAttribute('data-background-gradient-color-3') || '#b014db';
-            const gradientStop1 = parseInt(this.getAttribute('data-background-gradient-stop-1'), 10);
-            const gradientStop2 = parseInt(this.getAttribute('data-background-gradient-stop-2'), 10);
-            const gradientStop3 = parseInt(this.getAttribute('data-background-gradient-stop-3'), 10);
-            const gradientAngle = parseInt(this.getAttribute('data-background-gradient-angle'), 10);
-            const textColor = this.getAttribute('data-text-color') || '#ffffff';
-            
-            if (!countdownTime) {
+        // ---------------------------------------------------------------
+        // Open / close
+        // ---------------------------------------------------------------
+
+        function setDisplayOpenFlag(open) {
+            try {
+                const key = 'vep_display_open_' + startButton.dataset.eventId;
+                if (open) {
+                    window.sessionStorage.setItem(key, '1');
+                } else {
+                    window.sessionStorage.removeItem(key);
+                }
+            } catch (e) { /* ignore */ }
+        }
+
+        function openDisplay(opts) {
+            opts = opts || {};
+            const btn = startButton;
+            const eventId = btn.dataset.eventId;
+            const displayTitle = btn.dataset.displayTitle;
+            const displayMode = btn.dataset.displayMode || 'leaderboard';
+            const backgroundType = btn.getAttribute('data-background-type') || 'gradient';
+            const solidColor = btn.getAttribute('data-background-solid-color') || '#1e3c72';
+            const gradientColor1 = btn.getAttribute('data-background-gradient-color-1') || '#db870f';
+            const gradientColor2 = btn.getAttribute('data-background-gradient-color-2') || '#db870f';
+            const gradientColor3 = btn.getAttribute('data-background-gradient-color-3') || '#b014db';
+            const gradientStop1 = parseInt(btn.getAttribute('data-background-gradient-stop-1'), 10);
+            const gradientStop2 = parseInt(btn.getAttribute('data-background-gradient-stop-2'), 10);
+            const gradientStop3 = parseInt(btn.getAttribute('data-background-gradient-stop-3'), 10);
+            const gradientAngle = parseInt(btn.getAttribute('data-background-gradient-angle'), 10);
+            const textColor = btn.getAttribute('data-text-color') || '#ffffff';
+
+            // Absolute epoch from the server; refreshed by every poll response.
+            const initialEndTs = parseInt(btn.dataset.eventEndTs, 10) || 0;
+            if (!initialEndTs) {
                 alert(vepAdmin.i18n.setCountdownTimeFirst);
                 return;
             }
-            
+            endTsMs = initialEndTs * 1000;
+            clockOffset = 0;
+            clockSamples = [];
+
+            // Reset per-session state: this screen renders whatever the SERVER says.
+            displayOpen = true;
+            syncedOnce = false;
+            localKey = null;
+            serverState = null;
+            phase = null;
+            endedLive = false;
+            endedHandled = false;
+            autoRequested = false;
+            connFails = 0;
+            currentAutoSwitch = btn.dataset.autoSwitchStats === '1';
+            setDisplayOpenFlag(true);
+
             // Show modal
             displayModal.style.display = 'flex';
-            
-            // Set display title
+            ensureDisplayChrome();
+            showDisplayNotice('');
+
+            // Nothing is shown until the first server sync tells us which view to render.
+            document.querySelectorAll('.vep-view').forEach(function(view) {
+                view.classList.remove('vep-view-active');
+                view.style.display = 'none';
+            });
+            document.querySelectorAll('.vep-action-buttons').forEach(function(el) { el.style.display = 'none'; });
+
             document.getElementById('vep-display-event-name').textContent = displayTitle;
 
             applyRightPanelMode(displayMode);
 
-            // Apply selected background style
             applyDisplayBackground(
                 displayModal,
                 backgroundType,
@@ -1214,17 +1562,13 @@
 
             applyDisplayTextColor(displayModal, textColor);
 
-            if (postTimeActions) {
-                postTimeActions.style.display = 'none';
-            }
-
-            // Ensure we start in countdown view
-            switchView('vep-countdown-view', null);
-
             // Set dynamic text from settings
             const timeUpTextVal = (vepAdmin && vepAdmin.timeUpText) ? vepAdmin.timeUpText : 'Tiden er gået';
             const timeUpHeadingEl = document.getElementById('vep-display-time-up');
-            if (timeUpHeadingEl) timeUpHeadingEl.textContent = timeUpTextVal;
+            if (timeUpHeadingEl) {
+                timeUpHeadingEl.textContent = timeUpTextVal;
+                timeUpHeadingEl.style.display = 'none';
+            }
             const expiredTextEl = document.getElementById('vep-countdown-expired-text');
             if (expiredTextEl) expiredTextEl.textContent = timeUpTextVal;
 
@@ -1235,208 +1579,185 @@
                 postTimeRevealTimeout = null;
             }
 
-            const timeUpEl = document.getElementById('vep-display-time-up');
-            if (timeUpEl) timeUpEl.style.display = 'none';
-            
-            // Request fullscreen
-            requestFullscreen(displayModal);
-            
-            // Start countdown
-            const autoSwitchStats = this.dataset.autoSwitchStats === '1';
-            currentAutoSwitch = autoSwitchStats;
-            startCountdown(countdownTime, autoSwitchStats);
-            
-            // Start polling for agreement count
+            if (opts.restore) {
+                // Browsers only allow fullscreen from a user gesture.
+                showFullscreenButton(true);
+            } else {
+                requestFullscreen(displayModal);
+            }
+
+            // Polling: agreement count (3 s) and shared state / heartbeat (1 s).
             startPolling(eventId, displayMode);
-
-            // Start command polling and report initial state.
-            // Skip the 'countdown' report when the event is already expired and
-            // auto-switch is on — showStatisticsView will report 'statistics'
-            // almost immediately (setTimeout 0), and a simultaneous 'countdown'
-            // write can race-overwrite it on the server.
             startCommandPolling(eventId);
-            const nowTs = Math.floor(Date.now() / 1000);
-            const endTs = Math.floor(new Date(countdownTime).getTime() / 1000);
-            if (endTs > nowTs || !autoSwitchStats) {
-                reportDisplayState('countdown', {
-                    competitions: winnersForDisplay.map((c, i) => ({ title: c.title || '', index: i }))
-                });
-            }
+        }
+
+        // Start display
+        startButton.addEventListener('click', function() {
+            openDisplay({ restore: false });
         });
-        
-        // Show statistics view
-        const showStatisticsBtn = document.getElementById('vep-show-statistics');
-        if (showStatisticsBtn) {
-            showStatisticsBtn.addEventListener('click', function() {
-                showStatisticsView(startButton.dataset.eventId);
+
+        // Navigation buttons: every button asks the server to change the shared
+        // state (seq + 1); this screen and all others then follow the new state.
+        function bindNav(id, action, indexFn) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.addEventListener('click', function() {
+                const idx = indexFn ? indexFn() : 0;
+                if (idx === false) return;
+                navigate(action, idx);
             });
         }
 
-        // Show competitions view
-        const showCompetitionsBtn = document.getElementById('vep-show-competitions');
-        if (showCompetitionsBtn) {
-            showCompetitionsBtn.addEventListener('click', function() {
-                showCompetitionsView(startButton.dataset.eventId);
-            });
+        bindNav('vep-show-statistics', 'showStatistics');
+        bindNav('vep-show-competitions', 'showCompetitions');
+        bindNav('vep-show-closing-from-countdown', 'showClosing');
+        bindNav('vep-show-statistics-from-competitions', 'showStatistics');
+        bindNav('vep-show-first-winner', 'showWinner', function() { return winnersForDisplay.length > 0 ? 0 : false; });
+        bindNav('vep-winner-back-to-list', 'showCompetitions');
+        bindNav('vep-winner-prev', 'showWinner', function() { return currentWinnerIndex > 0 ? currentWinnerIndex - 1 : false; });
+        bindNav('vep-winner-next', 'showWinner', function() { return currentWinnerIndex < winnersForDisplay.length - 1 ? currentWinnerIndex + 1 : false; });
+        bindNav('vep-winner-finish', 'showClosing');
+        bindNav('vep-show-closing-from-statistics', 'showClosing');
+        bindNav('vep-show-closing-from-competitions', 'showClosing');
+        bindNav('vep-closing-back-to-competitions', 'showCompetitions');
+        bindNav('vep-closing-back-to-statistics', 'showStatistics');
+        bindNav('vep-show-competitions-from-statistics', 'showCompetitions');
+        bindNav('vep-back-to-countdown', 'showCountdown');
+
+        // Close display (X button) — two-click confirmation shown inside the display.
+        // A native confirm() is not used: browsers drop fullscreen when a JS dialog
+        // opens and the dialog can end up hidden behind the fullscreen layer.
+        // ESC never closes the display.
+        let closeArmedTimeout = null;
+        let closeHintEl = null;
+        function disarmClose() {
+            if (closeArmedTimeout) {
+                clearTimeout(closeArmedTimeout);
+                closeArmedTimeout = null;
+            }
+            if (closeHintEl) closeHintEl.style.display = 'none';
         }
-
-        const showClosingFromCountdownBtn = document.getElementById('vep-show-closing-from-countdown');
-        if (showClosingFromCountdownBtn) {
-            showClosingFromCountdownBtn.addEventListener('click', function() {
-                showClosingView();
-            });
-        }
-
-        // Back to statistics from competitions
-        const backToStatisticsBtn = document.getElementById('vep-show-statistics-from-competitions');
-        if (backToStatisticsBtn) {
-            backToStatisticsBtn.addEventListener('click', function() {
-                showStatisticsView(startButton.dataset.eventId, false);
-            });
-        }
-
-        // Show first winner from competitions
-        const showFirstWinnerBtn = document.getElementById('vep-show-first-winner');
-        if (showFirstWinnerBtn) {
-            showFirstWinnerBtn.addEventListener('click', function() {
-                if (winnersForDisplay.length > 0) {
-                    showWinnerView(0);
-                }
-            });
-        }
-
-        // Winner view navigation
-        const winnerBackToListBtn = document.getElementById('vep-winner-back-to-list');
-        if (winnerBackToListBtn) {
-            winnerBackToListBtn.addEventListener('click', function() {
-                showCompetitionsView(startButton.dataset.eventId);
-            });
-        }
-
-        const winnerPrevBtn = document.getElementById('vep-winner-prev');
-        if (winnerPrevBtn) {
-            winnerPrevBtn.addEventListener('click', function() {
-                if (currentWinnerIndex > 0) {
-                    showWinnerView(currentWinnerIndex - 1);
-                }
-            });
-        }
-
-        const winnerNextBtn = document.getElementById('vep-winner-next');
-        if (winnerNextBtn) {
-            winnerNextBtn.addEventListener('click', function() {
-                if (currentWinnerIndex < winnersForDisplay.length - 1) {
-                    showWinnerView(currentWinnerIndex + 1);
-                }
-            });
-        }
-
-        const winnerFinishBtn = document.getElementById('vep-winner-finish');
-        if (winnerFinishBtn) {
-            winnerFinishBtn.addEventListener('click', function() {
-                showClosingView();
-            });
-        }
-
-        const showClosingFromStatsBtn = document.getElementById('vep-show-closing-from-statistics');
-        if (showClosingFromStatsBtn) {
-            showClosingFromStatsBtn.addEventListener('click', function() {
-                showClosingView();
-            });
-        }
-
-        const showClosingFromCompetitionsBtn = document.getElementById('vep-show-closing-from-competitions');
-        if (showClosingFromCompetitionsBtn) {
-            showClosingFromCompetitionsBtn.addEventListener('click', function() {
-                showClosingView();
-            });
-        }
-
-        const closingBackBtn = document.getElementById('vep-closing-back-to-competitions');
-        if (closingBackBtn) {
-            closingBackBtn.addEventListener('click', function() {
-                showCompetitionsView(startButton.dataset.eventId);
-            });
-        }
-
-        const closingBackToStatsBtn = document.getElementById('vep-closing-back-to-statistics');
-        if (closingBackToStatsBtn) {
-            closingBackToStatsBtn.addEventListener('click', function() {
-                showStatisticsView(startButton.dataset.eventId, false);
-            });
-        }
-
-        // Show competitions from statistics
-        const showCompetitionsFromStatisticsBtn = document.getElementById('vep-show-competitions-from-statistics');
-        if (showCompetitionsFromStatisticsBtn) {
-            showCompetitionsFromStatisticsBtn.addEventListener('click', function() {
-                showCompetitionsView(startButton.dataset.eventId);
-            });
-        }
-
-        // Back to countdown from statistics
-        const backToCountdownBtn = document.getElementById('vep-back-to-countdown');
-        if (backToCountdownBtn) {
-            backToCountdownBtn.addEventListener('click', function() {
-                stopCompetitionsRefresh();
-                const countdownTarget = startButton.dataset.eventEnd || startButton.dataset.countdown;
-                if (!countdownTarget) {
-                    return;
-                }
-
-                startCountdown(countdownTarget, currentAutoSwitch);
-                switchView('vep-countdown-view', 'vep-post-time-actions');
-                reportDisplayState('countdown', {});
-            });
-        }
-
-        // Close display
-        closeButton.addEventListener('click', closeDisplay);
-        
-        // ESC key to close
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape' && displayModal.style.display === 'flex') {
+        closeButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (closeArmedTimeout) {
+                disarmClose();
                 closeDisplay();
+                return;
+            }
+            if (!closeHintEl) {
+                closeHintEl = document.createElement('div');
+                closeHintEl.id = 'vep-close-display-hint';
+                closeHintEl.style.cssText = 'position:fixed;top:44px;right:104px;z-index:1000000;padding:8px 14px;border-radius:6px;background:rgba(0,0,0,0.75);color:#fff;font-size:16px;display:none;';
+                displayModal.appendChild(closeHintEl);
+            }
+            closeHintEl.textContent = dI18n.confirmCloseHint || 'Click again to close the display';
+            closeHintEl.style.display = '';
+            closeArmedTimeout = setTimeout(disarmClose, 4000);
+        });
+
+        // Swallow ESC while the display is open (the browser itself still leaves
+        // fullscreen on ESC; the re-enter button below handles that).
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && displayOpen) {
+                e.preventDefault();
             }
         });
-        
+
+        function isFullscreen() {
+            return !!(document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement);
+        }
+
+        function showFullscreenButton(show) {
+            ensureDisplayChrome();
+            fsButton.style.display = show ? '' : 'none';
+        }
+
+        function onFullscreenChange() {
+            if (!displayOpen) return;
+            showFullscreenButton(!isFullscreen());
+        }
+        document.addEventListener('fullscreenchange', onFullscreenChange);
+        document.addEventListener('webkitfullscreenchange', onFullscreenChange);
+
+        // Leaving/reloading the admin page while the display is open needs a confirmation.
+        window.addEventListener('beforeunload', function(e) {
+            if (!displayOpen) return undefined;
+            e.preventDefault();
+            e.returnValue = '';
+            return '';
+        });
+
+        // Remove only THIS screen's presence when the page goes away.
+        window.addEventListener('pagehide', function() {
+            if (displayOpen) sendScreenLeave();
+        });
+
+        function sendScreenLeave() {
+            try {
+                const data = new FormData();
+                data.append('action', 'vep_display_screen_leave');
+                data.append('nonce', vepAdmin.nonce);
+                data.append('event_id', startButton.dataset.eventId);
+                data.append('screen_id', getScreenId());
+                if (navigator.sendBeacon) {
+                    navigator.sendBeacon(vepAdmin.ajaxUrl, data);
+                } else {
+                    fetch(vepAdmin.ajaxUrl, { method: 'POST', body: data, credentials: 'same-origin', keepalive: true }).catch(function() {});
+                }
+            } catch (e) { /* ignore */ }
+        }
+
         function requestFullscreen(element) {
-            if (element.requestFullscreen) {
-                element.requestFullscreen();
-            } else if (element.webkitRequestFullscreen) {
-                element.webkitRequestFullscreen();
-            } else if (element.msRequestFullscreen) {
-                element.msRequestFullscreen();
+            let result;
+            try {
+                if (element.requestFullscreen) {
+                    result = element.requestFullscreen();
+                } else if (element.webkitRequestFullscreen) {
+                    result = element.webkitRequestFullscreen();
+                } else if (element.msRequestFullscreen) {
+                    result = element.msRequestFullscreen();
+                }
+            } catch (e) {
+                showFullscreenButton(true);
+                return;
+            }
+            if (result && typeof result.catch === 'function') {
+                result.catch(function() { if (displayOpen) showFullscreenButton(true); });
             }
         }
-        
+
         function exitFullscreen() {
+            if (!isFullscreen()) return;
+            let result;
             if (document.exitFullscreen) {
-                document.exitFullscreen();
+                result = document.exitFullscreen();
             } else if (document.webkitExitFullscreen) {
-                document.webkitExitFullscreen();
+                result = document.webkitExitFullscreen();
             } else if (document.msExitFullscreen) {
-                document.msExitFullscreen();
+                result = document.msExitFullscreen();
             }
+            if (result && typeof result.catch === 'function') result.catch(function() {});
         }
-        
+
+        /**
+         * Close this screen only. Shared presentation state is NEVER cleared
+         * here (only the explicit admin reset does that), so reopening resumes
+         * exactly where the presentation was.
+         */
         function closeDisplay() {
-            // Stop intervals
-            if (countdownInterval) clearInterval(countdownInterval);
+            displayOpen = false;
+            setDisplayOpenFlag(false);
+            sendScreenLeave();
+
+            cleanupCountdownTimers();
             stopFireworks();
-            if (pollingInterval) clearInterval(pollingInterval);
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
+                pollingInterval = null;
+            }
             stopCommandPolling();
             stopCompetitionsRefresh();
-            // Immediately clear display state so the admin nav box hides on its next poll.
-            const clearData = new FormData();
-            clearData.append('action', 'vep_display_clear_state');
-            clearData.append('nonce', vepAdmin.nonce);
-            clearData.append('event_id', startButton.dataset.eventId);
-            fetch(vepAdmin.ajaxUrl, { method: 'POST', body: clearData, credentials: 'same-origin' }).catch(() => {});
-            if (postTimeRevealTimeout) {
-                clearTimeout(postTimeRevealTimeout);
-                postTimeRevealTimeout = null;
-            }
+            applyToken++;
 
             // Cancel any pending winner reveal
             if (winnerRevealTimeout) {
@@ -1452,15 +1773,22 @@
             const winnerHeadingEl = document.getElementById('vep-display-winner-heading');
             if (winnerHeadingEl) winnerHeadingEl.style.display = 'none';
 
-            // Switch back to countdown view
-            switchView('vep-countdown-view', null);
-            
-            // Exit fullscreen
+            showDisplayNotice('');
+            showFullscreenButton(false);
             exitFullscreen();
-            
+
             // Hide modal
             displayModal.style.display = 'none';
         }
+
+        // Re-open automatically after an (accepted) page reload.
+        setTimeout(function() {
+            try {
+                if (window.sessionStorage.getItem('vep_display_open_' + startButton.dataset.eventId) === '1') {
+                    openDisplay({ restore: true });
+                }
+            } catch (e) { /* ignore */ }
+        }, 0);
 
         function applyDisplayBackground(modal, backgroundType, solidColor, color1, color2, color3, stop1, stop2, stop3, angle) {
             const clamp = (value) => Math.min(100, Math.max(0, value));
@@ -1504,125 +1832,167 @@
             syncRightPanelHeight();
         }
         
-        function startCountdown(targetDatetime, autoSwitchStats) {
-            const targetTimestamp = Math.floor(new Date(targetDatetime).getTime() / 1000);
-            const timerElement = displayModal.querySelector('.vep-countdown-timer');
-            const expiredElement = displayModal.querySelector('.vep-countdown-expired');
-            let alreadyExpiredAtStart = false;
+        // ---------------------------------------------------------------
+        // Countdown view (display only: the "ended" decision comes from the server)
+        // ---------------------------------------------------------------
 
+        function cleanupCountdownTimers() {
             if (countdownInterval) {
                 clearInterval(countdownInterval);
                 countdownInterval = null;
             }
-
             if (postTimeRevealTimeout) {
                 clearTimeout(postTimeRevealTimeout);
                 postTimeRevealTimeout = null;
             }
+        }
 
-            stopFireworks();
-            
-            // Reset display states
-            timerElement.style.display = '';
-            expiredElement.style.display = 'none';
-            if (postTimeActions) {
-                postTimeActions.style.display = 'none';
-            }
-            const timeUpEl = document.getElementById('vep-display-time-up');
-            if (timeUpEl) timeUpEl.style.display = 'none';
-
-            // Detect immediately if the event is already over before we start.
-            if (Math.floor(Date.now() / 1000) >= targetTimestamp) {
-                alreadyExpiredAtStart = true;
-            }
-            
-            function updateCountdown() {
-                const now = Math.floor(Date.now() / 1000);
-                const difference = targetTimestamp - now;
-                
-                if (difference <= 0) {
-                    timerElement.style.display = 'none';
-                    expiredElement.style.display = 'block';
-                    if (countdownInterval) clearInterval(countdownInterval);
-
-                    syncRightPanelHeight();
-
-                    // Stop polling for agreement count — event is over.
-                    if (pollingInterval) {
-                        clearInterval(pollingInterval);
-                        pollingInterval = null;
-                    }
-
-                    startFireworks();
-                    prefetchCompetitions(startButton.dataset.eventId);
-
-                    if (postTimeRevealTimeout) {
-                        clearTimeout(postTimeRevealTimeout);
-                    }
-
-                    // Auto-switch skips the delay entirely; action buttons keep the
-                    // 10-second grace period (0 if event was already over at start).
-                    const delay = autoSwitchStats ? 0 : (alreadyExpiredAtStart ? 0 : 10000);
-                    postTimeRevealTimeout = setTimeout(() => {
-                        if (displayModal.style.display !== 'flex') return;
-                        if (autoSwitchStats) {
-                            // Activate competition winners before showing statistics
-                            const winnerFormData = new FormData();
-                            winnerFormData.append('action', 'vep_activate_competition_winners');
-                            winnerFormData.append('nonce', vepAdmin.nonce);
-                            winnerFormData.append('event_id', startButton.dataset.eventId);
-
-                            fetch(vepAdmin.ajaxUrl, {
-                                method: 'POST',
-                                body: winnerFormData,
-                                credentials: 'same-origin'
-                            })
-                            .then(response => response.json())
-                            .catch(error => console.error('Error activating winners:', error));
-
-                            showStatisticsView(startButton.dataset.eventId, true);
-                        } else {
-                            if (postTimeActions && !(vepAdmin && vepAdmin.hideButtons)) postTimeActions.style.display = 'flex';
-                            updateCompetitionButtonVisibility();
-                        }
-                    }, delay);
-                    return;
-                }
-                
-                // Calculate time units (no days, just hours:minutes:seconds)
-                const totalHours = Math.floor(difference / 3600);
-                const minutes = Math.floor((difference % 3600) / 60);
-                const seconds = difference % 60;
-
-                const timeText = `${String(totalHours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-                const timeEl = document.getElementById('vep-display-timer-time');
-                if (timeEl) timeEl.textContent = timeText;
-
+        function updateTicker() {
+            // Remaining time against SERVER time; clamped at zero. The local clock
+            // reaching zero does not end anything — the server phase does.
+            const remainingSeconds = Math.max(0, Math.ceil((endTsMs - serverNow()) / 1000));
+            const totalHours = Math.floor(remainingSeconds / 3600);
+            const minutes = Math.floor((remainingSeconds % 3600) / 60);
+            const seconds = remainingSeconds % 60;
+            const timeText = `${String(totalHours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            const timeEl = document.getElementById('vep-display-timer-time');
+            if (timeEl && timeEl.textContent !== timeText) {
+                timeEl.textContent = timeText;
                 syncRightPanelHeight();
             }
-            
-            // Initial update
-            updateCountdown();
-            
-            // Update every second
-            countdownInterval = setInterval(updateCountdown, 1000);
         }
-        
+
+        function startTicker() {
+            if (countdownInterval) clearInterval(countdownInterval);
+            updateTicker();
+            countdownInterval = setInterval(updateTicker, 250);
+        }
+
+        function setCountdownExpiredUI(expired) {
+            const timerElement = displayModal.querySelector('.vep-countdown-timer');
+            const expiredElement = displayModal.querySelector('.vep-countdown-expired');
+            if (timerElement) timerElement.style.display = expired ? 'none' : '';
+            if (expiredElement) expiredElement.style.display = expired ? 'block' : 'none';
+            syncRightPanelHeight();
+        }
+
+        function showRunningCountdownUI() {
+            stopFireworks();
+            if (postTimeRevealTimeout) {
+                clearTimeout(postTimeRevealTimeout);
+                postTimeRevealTimeout = null;
+            }
+            setCountdownExpiredUI(false);
+            if (postTimeActions) postTimeActions.style.display = 'none';
+            const timeUpEl = document.getElementById('vep-display-time-up');
+            if (timeUpEl) timeUpEl.style.display = 'none';
+        }
+
+        /** Fireworks for the live "time's up" moment — once per open, never on restore. */
+        function startEndFireworksOnce() {
+            if (endedLive && !endedHandled) {
+                endedHandled = true;
+                startFireworks();
+                return true;
+            }
+            return false;
+        }
+
+        function showCountdownView(opts) {
+            stopCompetitionsRefresh();
+            if (winnerRevealTimeout) {
+                clearTimeout(winnerRevealTimeout);
+                winnerRevealTimeout = null;
+            }
+            cleanupCountdownTimers();
+
+            ['vep-display-time-up', 'vep-display-competitions-heading', 'vep-display-winner-heading'].forEach(function(id) {
+                const el = document.getElementById(id);
+                if (el) el.style.display = 'none';
+            });
+
+            currentDisplayView = 'countdown';
+            switchView('vep-countdown-view', null);
+            if (postTimeActions) postTimeActions.style.display = 'none';
+            startTicker();
+
+            if (phase === 'ended') {
+                enterEndedCountdown();
+            } else {
+                stopFireworks();
+                setCountdownExpiredUI(false);
+            }
+        }
+
+        /** Countdown view after the server says the event has ended. */
+        function enterEndedCountdown() {
+            if (currentDisplayView !== 'countdown') return;
+
+            setCountdownExpiredUI(true);
+            const justEnded = startEndFireworksOnce();
+            prefetchCompetitions();
+
+            // One-time automatic switch to statistics (server compare-and-set).
+            // A manual "back to countdown" after the end is never bounced.
+            const auto = maybeAutoTransition();
+
+            if (postTimeRevealTimeout) clearTimeout(postTimeRevealTimeout);
+            // Live end: 10 s grace before the buttons appear. Already ended when
+            // (re)opened: immediately. If an automatic switch is pending, the
+            // buttons are only a fallback in case it fails.
+            const delay = (justEnded || auto) ? 10000 : 0;
+            postTimeRevealTimeout = setTimeout(function() {
+                postTimeRevealTimeout = null;
+                if (!displayOpen || currentDisplayView !== 'countdown' || phase !== 'ended') return;
+                if (postTimeActions && !(vepAdmin && vepAdmin.hideButtons)) postTimeActions.style.display = 'flex';
+                updateCompetitionButtonVisibility();
+            }, delay);
+        }
+
+        /**
+         * Ask the server to perform the automatic end transition. Allowed only
+         * when no explicit navigation happened after the countdown was set up
+         * before the end; N screens produce exactly one transition.
+         *
+         * @return {boolean} whether an automatic transition is (or was just) pending.
+         */
+        function maybeAutoTransition() {
+            if (!currentAutoSwitch || phase !== 'ended' || currentDisplayView !== 'countdown') return false;
+            const st = serverState;
+            const eligible = !st || (st.view === 'countdown' && (parseInt(st.updated_at, 10) || 0) * 1000 < endTsMs);
+            if (!eligible) return false;
+            if (autoRequested) return true;
+            autoRequested = true;
+            const reqId = ++reqCounter;
+
+            displayAjax('vep_display_auto_transition', {
+                event_id: startButton.dataset.eventId,
+                screen_id: getScreenId()
+            }).then(function(resp) {
+                if (resp && resp.success && resp.data) {
+                    applySync(resp.data, reqId);
+                } else {
+                    autoRequested = false;
+                }
+            }).catch(function() {
+                autoRequested = false;
+            });
+            return true;
+        }
+
         function startPolling(eventId, displayMode) {
+            if (pollingInterval) clearInterval(pollingInterval);
+
             function fetchAgreementCount() {
-                const formData = new FormData();
-                formData.append('action', 'vep_get_agreement_count');
-                formData.append('nonce', vepAdmin.nonce);
-                formData.append('event_id', eventId);
-                formData.append('display_mode', displayMode);
-                
-                fetch(vepAdmin.ajaxUrl, {
-                    method: 'POST',
-                    body: formData
+                if (!displayOpen || countPollInFlight) return;
+                countPollInFlight = true;
+
+                displayAjax('vep_get_agreement_count', {
+                    event_id: eventId,
+                    display_mode: displayMode
                 })
-                .then(response => response.json())
                 .then(data => {
-                    if (data.success) {
+                    if (data.success && displayOpen) {
                         document.getElementById('vep-agreements-count').textContent = data.data.count;
 
                         if (data.data.display_mode === 'none') {
@@ -1636,16 +2006,19 @@
                         }
                     }
                 })
-                .catch(error => console.error('Error fetching agreement count:', error));
+                .catch(() => {})
+                .then(() => { countPollInFlight = false; });
             }
-            
+
             // Initial fetch
             fetchAgreementCount();
-            
-            // Poll every 3 seconds
+
+            // Poll every 3 seconds. Polling is NOT stopped when the countdown
+            // reaches zero (counts are capped server-side at the event end, and
+            // an edited end date must be picked up).
             pollingInterval = setInterval(fetchAgreementCount, 3000);
         }
-        
+
         function updateLeaderboard(leaderboard) {
             const listElement = document.getElementById('vep-leaderboard-list');
             const titleElement = document.getElementById('vep-display-right-panel-title');
@@ -1660,7 +2033,7 @@
             }
             
             if (!leaderboard || leaderboard.length === 0) {
-                listElement.innerHTML = '<p class="vep-leaderboard-empty">' + vepAdmin.i18n.noAgreementsYet + '</p>';
+                listElement.innerHTML = '<p class="vep-leaderboard-empty">' + escapeHtml(vepAdmin.i18n.noAgreementsYet) + '</p>';
                 return;
             }
             
@@ -1669,7 +2042,7 @@
                 const position = index + 1;
                 const medal = position === 1 ? '🥇' : position === 2 ? '🥈' : position === 3 ? '🥉' : position + '.';
                 const logoHtml = participant.logo_url 
-                    ? `<img src="${participant.logo_url}" alt="${participant.organization_name}" class="vep-leaderboard-logo">`
+                    ? `<img src="${escapeHtml(participant.logo_url)}" alt="${escapeHtml(participant.organization_name)}" class="vep-leaderboard-logo">`
                     : '<div class="vep-leaderboard-logo-placeholder"></div>';
                 
                 html += `
@@ -1677,8 +2050,8 @@
                         <div class="vep-leaderboard-position">${medal}</div>
                         ${logoHtml}
                         <div class="vep-leaderboard-info">
-                            <div class="vep-leaderboard-name">${participant.organization_name}</div>
-                            <div class="vep-leaderboard-count">${participant.agreement_count} ${participant.agreement_count > 1 ? vepAdmin.i18n.agreementPlural : vepAdmin.i18n.agreementSingular}</div>
+                            <div class="vep-leaderboard-name">${escapeHtml(participant.organization_name)}</div>
+                            <div class="vep-leaderboard-count">${escapeHtml(participant.agreement_count)} ${participant.agreement_count > 1 ? vepAdmin.i18n.agreementPlural : vepAdmin.i18n.agreementSingular}</div>
                         </div>
                     </div>
                 `;
@@ -1702,7 +2075,7 @@
             }
 
             if (!recentAgreements || recentAgreements.length === 0) {
-                listElement.innerHTML = '<p class="vep-leaderboard-empty">' + vepAdmin.i18n.noRecentAgreementsYet + '</p>';
+                listElement.innerHTML = '<p class="vep-leaderboard-empty">' + escapeHtml(vepAdmin.i18n.noRecentAgreementsYet) + '</p>';
                 syncRightPanelHeight();
                 return;
             }
@@ -1722,11 +2095,11 @@
                         <div class="vep-recent-agreement-info">
                             <div class="vep-recent-agreement-actor-row">
                                 <span class="vep-recent-agreement-check ${participant1IsInitiator ? 'is-visible' : ''}">${participant1IsInitiator ? '&#10003;' : ''}</span>
-                                <span class="vep-recent-agreement-actor-name">${participant1}</span>
+                                <span class="vep-recent-agreement-actor-name">${escapeHtml(participant1)}</span>
                             </div>
                             <div class="vep-recent-agreement-actor-row">
                                 <span class="vep-recent-agreement-check ${participant2IsInitiator ? 'is-visible' : ''}">${participant2IsInitiator ? '&#10003;' : ''}</span>
-                                <span class="vep-recent-agreement-actor-name">${participant2}</span>
+                                <span class="vep-recent-agreement-actor-name">${escapeHtml(participant2)}</span>
                             </div>
                         </div>
                     </div>
@@ -1745,23 +2118,29 @@
             }
         });
         
-        function showStatisticsView(eventId, showTimeUp) {
+        function showStatisticsView(opts) {
+            opts = opts || {};
+            const showTimeUp = opts.auto === true;
+            const eventId = startButton.dataset.eventId;
+
             stopCompetitionsRefresh();
-            // Stop fireworks only if this is a manual button click (not automatic switch)
-            if (showTimeUp !== true) {
-                stopFireworks();
+            cleanupCountdownTimers();
+            if (winnerRevealTimeout) {
+                clearTimeout(winnerRevealTimeout);
+                winnerRevealTimeout = null;
             }
 
-            // Stop countdown interval (polling continues for potential future use).
-            if (countdownInterval) clearInterval(countdownInterval);
-            if (postTimeRevealTimeout) {
-                clearTimeout(postTimeRevealTimeout);
-                postTimeRevealTimeout = null;
+            // The automatic end transition keeps the "time's up" fireworks running;
+            // any manual navigation stops them.
+            if (showTimeUp) {
+                startEndFireworksOnce();
+            } else {
+                stopFireworks();
             }
 
             // Show/hide the header subheadings
             const timeUpEl = document.getElementById('vep-display-time-up');
-            if (timeUpEl) timeUpEl.style.display = showTimeUp === true ? '' : 'none';
+            if (timeUpEl) timeUpEl.style.display = showTimeUp ? '' : 'none';
             const compHeadingEl = document.getElementById('vep-display-competitions-heading');
             if (compHeadingEl) compHeadingEl.style.display = 'none';
             const winnerHeadingElStat = document.getElementById('vep-display-winner-heading');
@@ -1771,28 +2150,20 @@
             const backToCountdownBtn = document.getElementById('vep-back-to-countdown');
             if (backToCountdownBtn) backToCountdownBtn.style.display = '';
 
+            currentDisplayView = 'statistics';
+
             // Switch to statistics view with action buttons (switchView handles hiding all other views)
             switchView('vep-statistics-view', 'vep-statistics-actions');
             updateCompetitionButtonVisibility();
-            reportDisplayState('statistics', {
-                auto_switch: showTimeUp === true,
-                competitions: winnersForDisplay.map((c, i) => ({ title: c.title || '', index: i }))
-            });
+            prefetchCompetitions();
 
-            // Fetch statistics from server
-            const formData = new FormData();
-            formData.append('action', 'vep_get_event_statistics');
-            formData.append('nonce', vepAdmin.nonce);
-            formData.append('event_id', eventId);
-
-            fetch(vepAdmin.ajaxUrl, {
-                method: 'POST',
-                body: formData,
-                credentials: 'same-origin'
-            })
-            .then(response => response.json())
+            // Fetch statistics from server (only agreements up to the event end count)
+            displayAjax('vep_get_event_statistics', { event_id: eventId })
             .then(data => {
                 if (!data.success) throw new Error(data.data && data.data.message);
+                const statisticsView = document.getElementById('vep-statistics-view');
+                const errorEl = statisticsView ? statisticsView.querySelector('.vep-statistics-error') : null;
+                if (errorEl) errorEl.style.display = 'none';
                 renderStatistics(data.data);
             })
             .catch(() => {
@@ -1803,6 +2174,10 @@
                     errorEl.style.display = 'block';
                 }
             });
+        }
+
+        function formatShortDuration(template, value) {
+            return String(template).replace('%d', String(value));
         }
 
         function renderStatistics(stats) {
@@ -1822,11 +2197,9 @@
                 if (s === null || s === undefined || s < 0) {
                     firstEl.textContent = '—';
                 } else if (s < 60) {
-                    firstEl.textContent = '< 1 min.';
-                } else if (s < 120) {
-                    firstEl.textContent = s + ' sek.';
+                    firstEl.textContent = formatShortDuration(dI18n.secondsShort || '%d sec.', Math.round(s));
                 } else {
-                    firstEl.textContent = Math.round(s / 60) + ' min.';
+                    firstEl.textContent = formatShortDuration(dI18n.minutesShort || '%d min.', Math.round(s / 60));
                 }
             }
 
@@ -1917,8 +2290,15 @@
             }
         }
 
-        function showCompetitionsView(eventId) {
-            // Stop fireworks (manual button click)
+        function showCompetitionsView() {
+            const eventId = startButton.dataset.eventId;
+
+            cleanupCountdownTimers();
+            if (winnerRevealTimeout) {
+                clearTimeout(winnerRevealTimeout);
+                winnerRevealTimeout = null;
+            }
+            // Stop fireworks (manual navigation)
             stopFireworks();
 
             // Show competitions subheading, hide others
@@ -1929,29 +2309,18 @@
             const winnerHeadingElComp = document.getElementById('vep-display-winner-heading');
             if (winnerHeadingElComp) winnerHeadingElComp.style.display = 'none';
 
+            currentDisplayView = 'competitions';
+
             // Switch to competitions view with action buttons
             switchView('vep-competitions-view', 'vep-competitions-actions');
 
             // Fetch competitions from server
-            const formData = new FormData();
-            formData.append('action', 'vep_get_event_competitions');
-            formData.append('nonce', vepAdmin.nonce);
-            formData.append('event_id', eventId);
-
-            fetch(vepAdmin.ajaxUrl, {
-                method: 'POST',
-                body: formData,
-                credentials: 'same-origin'
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (!data.success) throw new Error(data.data && data.data.message);
-                loadedCompetitions = data.data.competitions;
+            loadCompetitions()
+            .then(() => {
+                const compView = document.getElementById('vep-competitions-view');
+                const errorEl = compView ? compView.querySelector('.vep-competitions-error') : null;
+                if (errorEl) errorEl.style.display = 'none';
                 renderCompetitions(loadedCompetitions);
-                // Report updated state so nav box gets the fresh competition list
-                reportDisplayState('competitions', {
-                    competitions: winnersForDisplay.map((c, i) => ({ title: c.title || '', index: i }))
-                });
             })
             .catch(() => {
                 const compView = document.getElementById('vep-competitions-view');
@@ -1965,25 +2334,29 @@
             // Background refresh: re-check for winner changes every 10 seconds
             stopCompetitionsRefresh();
             competitionsRefreshInterval = setInterval(function() {
-                const refreshData = new FormData();
-                refreshData.append('action', 'vep_get_event_competitions');
-                refreshData.append('nonce', vepAdmin.nonce);
-                refreshData.append('event_id', eventId);
-                fetch(vepAdmin.ajaxUrl, { method: 'POST', body: refreshData, credentials: 'same-origin' })
-                    .then(r => r.json())
+                displayAjax('vep_get_event_competitions', { event_id: eventId })
                     .then(data => {
                         if (!data.success) return;
                         const newFingerprint = generateCompetitionsFingerprint(data.data.competitions);
                         if (newFingerprint !== competitionsFingerprint) {
                             loadedCompetitions = data.data.competitions;
                             renderCompetitions(loadedCompetitions);
-                            reportDisplayState('competitions', {
-                                competitions: winnersForDisplay.map((c, i) => ({ title: c.title || '', index: i }))
-                            });
                         }
                     })
                     .catch(() => {});
             }, 10000);
+        }
+
+        /** Fetch the event competitions and refresh winnersForDisplay. */
+        function loadCompetitions() {
+            return displayAjax('vep_get_event_competitions', { event_id: startButton.dataset.eventId })
+                .then(data => {
+                    if (!data.success) throw new Error(data.data && data.data.message);
+                    loadedCompetitions = data.data.competitions;
+                    winnersForDisplay = (loadedCompetitions || []).filter(c => c.winner_name);
+                    updateCompetitionButtonVisibility();
+                    return loadedCompetitions;
+                });
         }
 
         function renderCompetitions(competitions) {
@@ -1998,7 +2371,7 @@
             updateCompetitionButtonVisibility();
 
             if (winnersOnly.length === 0) {
-                listElement.innerHTML = '<p class="vep-competitions-empty">' + (vepAdmin.i18n.noCompetitionsAvailable || 'No competitions available.') + '</p>';
+                listElement.innerHTML = '<p class="vep-competitions-empty">' + escapeHtml(vepAdmin.i18n.noCompetitionsAvailable || 'No competitions available.') + '</p>';
                 return;
             }
 
@@ -2007,9 +2380,9 @@
                 const winnerIndex = winnersForDisplay.findIndex(c => c.id === competition.id);
                 const clickable  = winnerIndex !== -1;
                 html += `
-                    <div class="vep-competition-card vep-competition-display-card${clickable ? ' vep-competition-clickable' : ''}" data-competition-id="${competition.id}">
-                        <div class="vep-competition-display-title">${competition.title || ''}</div>
-                        ${competition.description ? '<div class="vep-competition-display-description">' + competition.description + '</div>' : ''}
+                    <div class="vep-competition-card vep-competition-display-card${clickable ? ' vep-competition-clickable' : ''}" data-competition-id="${escapeHtml(competition.id)}">
+                        <div class="vep-competition-display-title">${escapeHtml(competition.title || '')}</div>
+                        ${competition.description ? '<div class="vep-competition-display-description">' + escapeHtml(competition.description) + '</div>' : ''}
                     </div>
                 `;
             });
@@ -2023,22 +2396,28 @@
                 const cols = Math.min(winnersOnly.length, 4);
                 grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
             }
+        }
 
-            listElement.addEventListener('click', function handler(e) {
+        // Single delegated click handler (attached once, not per render).
+        const competitionsListEl = document.getElementById('vep-competitions-list');
+        if (competitionsListEl) {
+            competitionsListEl.addEventListener('click', function(e) {
                 const card = e.target.closest('.vep-competition-clickable');
                 if (!card) return;
-                const competitionId = card.dataset.competitionId;
-                const idx = winnersForDisplay.findIndex(c => String(c.id) === competitionId);
-                if (idx !== -1) showWinnerView(idx);
+                const idx = winnersForDisplay.findIndex(c => String(c.id) === card.dataset.competitionId);
+                if (idx !== -1) navigate('showWinner', idx);
             });
         }
 
-        function showWinnerView(index) {
+        function showWinnerView(index, opts) {
+            opts = opts || {};
             const competition = winnersForDisplay[index];
             if (!competition) return;
 
             currentWinnerIndex = index;
+            currentDisplayView = 'winner';
             stopCompetitionsRefresh();
+            cleanupCountdownTimers();
             stopFireworks();
 
             if (winnerRevealTimeout) {
@@ -2059,20 +2438,32 @@
 
             // Switch to winner view
             switchView('vep-winner-view', 'vep-winner-actions');
-            reportDisplayState('winner', { winner_index: index, total_winners: winnersForDisplay.length });
 
             // Update navigation buttons for this position
             updateWinnerButtons(index, winnersForDisplay.length);
 
-            // Set winner name hidden initially
             const winnerNameEl = document.getElementById('vep-winner-name');
             if (winnerNameEl) {
                 winnerNameEl.textContent = competition.winner_name || '';
+            }
+
+            // Restoring a view (reopened screen): show the name directly, no
+            // reveal delay and no fireworks.
+            if (opts.instant) {
+                if (winnerNameEl) {
+                    winnerNameEl.style.transition = 'none';
+                    winnerNameEl.style.opacity = '1';
+                }
+                return;
+            }
+
+            // Set winner name hidden initially
+            if (winnerNameEl) {
                 winnerNameEl.style.opacity = '0';
                 winnerNameEl.style.transition = 'none';
             }
 
-            // Fade in winner name after 3 seconds
+            // Fade in winner name after 2 seconds
             winnerRevealTimeout = setTimeout(() => {
                 winnerRevealTimeout = null;
                 if (winnerNameEl) {
@@ -2103,7 +2494,9 @@
 
         function showClosingView() {
             stopCompetitionsRefresh();
+            cleanupCountdownTimers();
             stopFireworks();
+            currentDisplayView = 'closing';
 
             if (winnerRevealTimeout) {
                 clearTimeout(winnerRevealTimeout);
@@ -2134,7 +2527,6 @@
             if (backToCompsBtn) backToCompsBtn.style.display = compsEnabled ? '' : 'none';
             if (backToStatsBtn) backToStatsBtn.style.display = !compsEnabled ? '' : 'none';
 
-            reportDisplayState('closing', {});
         }
 
         function updateCompetitionButtonVisibility() {
@@ -2156,35 +2548,9 @@
             if (closingFromStatsBtn) closingFromStatsBtn.style.display = !visible ? '' : 'none';
         }
 
-        function prefetchCompetitions(eventId) {
-            const formData = new FormData();
-            formData.append('action', 'vep_get_event_competitions');
-            formData.append('nonce', vepAdmin.nonce);
-            formData.append('event_id', eventId);
-            fetch(vepAdmin.ajaxUrl, {
-                method: 'POST',
-                body: formData,
-                credentials: 'same-origin'
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (!data.success) return;
-                loadedCompetitions = data.data.competitions;
-                winnersForDisplay = (loadedCompetitions || []).filter(c => c.winner_name);
-                updateCompetitionButtonVisibility();
-                if (currentDisplayView === 'countdown') {
-                    reportDisplayState('countdown', {
-                        competitions: winnersForDisplay.map((c, i) => ({ title: c.title || '', index: i }))
-                    });
-                }
-                if (currentDisplayView === 'statistics') {
-                    reportDisplayState('statistics', {
-                        auto_switch: currentAutoSwitch,
-                        competitions: winnersForDisplay.map((c, i) => ({ title: c.title || '', index: i }))
-                    });
-                }
-            })
-            .catch(() => {});
+        function prefetchCompetitions() {
+            // Refreshes winnersForDisplay (button visibility) in the background.
+            loadCompetitions().catch(() => {});
         }
 
         function stopFireworks() {
@@ -2993,7 +3359,8 @@
 
     /**
      * Visningsnavigation — admin-side polling and button handlers.
-     * Polls the display state every 2s and shows/hides the nav box accordingly.
+     * Polls the (read-only) presentation state every 1s and shows/hides the nav box
+     * depending on whether any display screen has a recent heartbeat.
      */
     function initDisplayNavBox() {
         const navBox = document.getElementById('vep-nav-box');
@@ -3079,7 +3446,7 @@
             if (compListEl) {
                 if (state.view === 'competitions' && Array.isArray(state.competitions) && state.competitions.length > 0) {
                     compListEl.innerHTML = state.competitions.map(c =>
-                        `<button type="button" class="button vep-nav-btn vep-nav-competition-item" data-nav-action="showWinner" data-winner-index="${c.index}">${c.title}</button>`
+                        `<button type="button" class="button vep-nav-btn vep-nav-competition-item" data-nav-action="showWinner" data-winner-index="${parseInt(c.index, 10) || 0}">${escapeHtml(c.title)}</button>`
                     ).join('');
                     compListEl.style.display = '';
                 } else {
@@ -3142,14 +3509,28 @@
             }
         }
 
-        function pollState() {
-            const data = new FormData();
-            data.append('action', 'vep_display_get_state');
-            data.append('nonce', vepAdmin.nonce);
-            data.append('event_id', eventId);
+        // Visible notice when the nonce/session expired (instead of silently freezing).
+        let authNoticeEl = null;
+        document.addEventListener('vep:auth-expired', function() {
+            if (authNoticeEl) return;
+            const i18n = window.vepDisplayI18n || {};
+            authNoticeEl = document.createElement('div');
+            authNoticeEl.className = 'notice notice-error inline';
+            const text = document.createElement('p');
+            text.textContent = i18n.sessionExpired || 'Your session has expired. Please reload the page to continue.';
+            const reloadBtn = document.createElement('button');
+            reloadBtn.type = 'button';
+            reloadBtn.className = 'button';
+            reloadBtn.style.marginLeft = '10px';
+            reloadBtn.textContent = i18n.reload || 'Reload';
+            reloadBtn.addEventListener('click', function() { window.location.reload(); });
+            text.appendChild(reloadBtn);
+            authNoticeEl.appendChild(text);
+            navBox.parentNode.insertBefore(authNoticeEl, navBox);
+        });
 
-            fetch(vepAdmin.ajaxUrl, { method: 'POST', body: data, credentials: 'same-origin' })
-                .then(r => r.json())
+        function pollState() {
+            vepAjax('vep_display_get_state', { event_id: eventId })
                 .then(resp => {
                     if (!resp.success) return;
                     const state = resp.data;
@@ -3176,15 +3557,13 @@
             const navAction = btn.dataset.navAction;
             if (!navAction) return;
 
-            const data = new FormData();
-            data.append('action', 'vep_display_send_command');
-            data.append('nonce', vepAdmin.nonce);
-            data.append('event_id', eventId);
-            data.append('nav_action', navAction);
+            const fields = { event_id: eventId, nav_action: navAction };
             if (btn.dataset.winnerIndex !== undefined) {
-                data.append('winner_index', btn.dataset.winnerIndex);
+                fields.winner_index = btn.dataset.winnerIndex;
             }
-            fetch(vepAdmin.ajaxUrl, { method: 'POST', body: data, credentials: 'same-origin' }).catch(() => {});
+            // The server increments the shared state's seq; refresh right away so
+            // the box reflects the new view without waiting for the next poll.
+            vepAjax('vep_display_send_command', fields).then(pollState).catch(() => {});
         });
 
         navPollInterval = setInterval(pollState, 1000);
@@ -3196,11 +3575,7 @@
             resetBtn.addEventListener('click', function() {
                 const confirmMsg = resetBtn.dataset.confirm || 'Are you sure?';
                 if (!window.confirm(confirmMsg)) { return; }
-                const data = new FormData();
-                data.append('action', 'vep_display_clear_state');
-                data.append('nonce', vepAdmin.nonce);
-                data.append('event_id', eventId);
-                fetch(vepAdmin.ajaxUrl, { method: 'POST', body: data, credentials: 'same-origin' })
+                vepAjax('vep_display_clear_state', { event_id: eventId })
                     .then(() => {
                         navBox.style.display = 'none';
                         hideAllGroups();

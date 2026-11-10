@@ -259,6 +259,12 @@ class ParticipantTypesPage {
                 }
             }
 
+            // Document-level listeners are re-bound on every AJAX tab load: drop the previous ones first.
+            var docReg = window._vepTypesDocHandlers = window._vepTypesDocHandlers || [];
+            docReg.forEach(function (h) { document.removeEventListener(h[0], h[1]); });
+            docReg.length = 0;
+            function bindDoc(type, fn) { document.addEventListener(type, fn); docReg.push([type, fn]); }
+
             function openModal(type) {
                 if (type) {
                     modalTitle.textContent = labelEdit;
@@ -298,7 +304,7 @@ class ParticipantTypesPage {
             });
 
             // Edit buttons (delegated).
-            document.addEventListener('click', function (e) {
+            bindDoc('click', function (e) {
                 var btn = e.target.closest('.vep-type-edit-btn');
                 if (!btn) return;
                 e.preventDefault();
@@ -362,12 +368,12 @@ class ParticipantTypesPage {
             });
 
             // ESC key.
-            document.addEventListener('keydown', function (e) {
+            bindDoc('keydown', function (e) {
                 if (e.key === 'Escape' && overlay.style.display !== 'none') closeModal();
             });
 
             // Table navigation (pagination + sort) via AJAX — no page reload.
-            document.addEventListener('click', function (e) {
+            bindDoc('click', function (e) {
                 var wrap = document.getElementById('vep-types-table-wrap');
                 if (!wrap) return;
                 var link = e.target.closest('a');
@@ -534,11 +540,15 @@ class ParticipantTypesPage {
         }
 
         if ( $type_id > 0 ) {
-            $this->service->update_type( $type_id, $data );
+            $ok      = false !== $this->service->update_type( $type_id, $data );
             $message = __( 'Type updated successfully.', 'volunteer-exchange-platform' );
         } else {
-            $this->service->create( $data );
+            $ok      = (bool) $this->service->create( $data );
             $message = __( 'Type created successfully.', 'volunteer-exchange-platform' );
+        }
+
+        if ( ! $ok ) {
+            wp_send_json_error( array( 'message' => __( 'Could not save the type. The name may already be in use.', 'volunteer-exchange-platform' ) ) );
         }
 
         wp_send_json_success( array( 'message' => $message ) );
@@ -615,7 +625,26 @@ class ParticipantTypesPage {
             exit;
         }
 
-        $this->service->delete_type($type_id);
+        $in_use = $this->service->count_participants_using_type( $type_id );
+        if ( $in_use > 0 ) {
+            $message = sprintf(
+                /* translators: %d: number of participants using the type */
+                _n(
+                    'This type cannot be deleted because %d participant uses it.',
+                    'This type cannot be deleted because %d participants use it.',
+                    $in_use,
+                    'volunteer-exchange-platform'
+                ),
+                $in_use
+            );
+            wp_safe_redirect( esc_url_raw( self::get_admin_url( array( 'notice' => 'error', 'message' => $message ) ) ) );
+            exit;
+        }
+
+        if ( false === $this->service->delete_type( $type_id ) ) {
+            wp_safe_redirect( esc_url_raw( self::get_admin_url( array( 'notice' => 'error', 'message' => __( 'Could not delete type.', 'volunteer-exchange-platform' ) ) ) ) );
+            exit;
+        }
 
         wp_safe_redirect( esc_url_raw( self::get_admin_url( array( 'notice' => 'success', 'message' => __( 'Type deleted.', 'volunteer-exchange-platform' ) ) ) ) );
         exit;

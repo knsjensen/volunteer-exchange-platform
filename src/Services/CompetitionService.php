@@ -539,7 +539,8 @@ class CompetitionService extends AbstractService {
         }
 
         $timezone = wp_timezone();
-        $current_time = current_datetime()->getTimestamp();
+        // SERVER time (epoch); event dates are parsed as WP-local wall time below.
+        $current_time = time();
 
         $to_timestamp = static function ( $value ) use ( $timezone ) {
             $value = trim( (string) $value );

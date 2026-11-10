@@ -3,11 +3,11 @@
  * Plugin Name: Volunteer Exchange Platform
  * Plugin URI: https://www.noergaardsmidt.dk
  * Description: A comprehensive platform for managing volunteer exchanges between actors/organizations with events, participants, and agreements.
- * Version: 1.0.0
- * Requires at least: 5.0
+ * Version: 1.1.0
+ * Requires at least: 5.9
  * Tested up to: 6.8
- * Requires PHP: 7.0
- * Author: Kim Nørgaard Smidt Jensen
+ * Requires PHP: 7.4
+ * Author: Nørgaard Smidt
  * Author URI: https://www.noergaardsmidt.dk
  * Text Domain: volunteer-exchange-platform
  * Domain Path: /languages
@@ -24,10 +24,10 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('VEP_VERSION', '1.0.0');
-define('VEP_DB_VERSION', '1.0.0');
-define('VEP_MIN_PHP_VERSION', '7.0');
-define('VEP_MIN_WP_VERSION', '5.0');
+define('VEP_VERSION', '1.1.0');
+define('VEP_DB_VERSION', '1.1.0');
+define('VEP_MIN_PHP_VERSION', '7.4');
+define('VEP_MIN_WP_VERSION', '5.9');
 define('VEP_TESTED_UP_TO_WP_VERSION', '6.8');
 define('VEP_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('VEP_PLUGIN_URL', plugin_dir_url(__FILE__));
@@ -49,6 +49,7 @@ require_once VEP_PLUGIN_DIR . 'src/Services/AgreementStatus.php';
 require_once VEP_PLUGIN_DIR . 'src/Services/CompetitionService.php';
 require_once VEP_PLUGIN_DIR . 'src/Services/EventService.php';
 require_once VEP_PLUGIN_DIR . 'src/Services/ParticipantService.php';
+require_once VEP_PLUGIN_DIR . 'src/Services/ParticipantEmailService.php';
 require_once VEP_PLUGIN_DIR . 'src/Services/ParticipantTypeService.php';
 require_once VEP_PLUGIN_DIR . 'src/Services/TagService.php';
 

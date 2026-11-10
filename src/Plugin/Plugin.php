@@ -152,7 +152,7 @@ class Plugin {
         $tags_page = new TagsPage( $services['tag'] );
         $event_display_page = new EventDisplayPage( $services['event'] );
         $competitions_page   = new CompetitionsPage( $services['competition'], $services['event'], $services['participant'] );
-        $settings_page = new SettingsPage();
+        $settings_page = new SettingsPage( $participant_types_page, $tags_page );
         new ParticipantPrintPage( $services['participant'] );
 
         new Menu(
@@ -201,6 +201,16 @@ class Plugin {
         add_action( 'admin_enqueue_scripts', array( $this, 'admin_enqueue_scripts' ) );
         add_action( 'wp_enqueue_scripts', array( $this, 'frontend_enqueue_scripts' ) );
         add_action( 'init', array( $this, 'maybe_flush_rewrite_rules' ), 999 );
+        add_action( 'init', array( $this, 'load_textdomain' ) );
+    }
+
+    /**
+     * Load plugin translations.
+     *
+     * @return void
+     */
+    public function load_textdomain() {
+        load_plugin_textdomain( 'volunteer-exchange-platform', false, dirname( VEP_PLUGIN_BASENAME ) . '/languages' );
     }
 
     /**
@@ -275,6 +285,8 @@ class Plugin {
                 'competitionNonce' => wp_create_nonce( 'vep_competitions_nonce' ),
                 'placeholderText' => __( 'Please select icon', 'volunteer-exchange-platform' ),
                 'i18n' => array(
+                    'namePlaceholder'         => __( 'e.g., Jane Doe', 'volunteer-exchange-platform' ),
+                    'remove'                  => __( 'Remove', 'volunteer-exchange-platform' ),
                     'agreementSingular'       => __( 'agreement', 'volunteer-exchange-platform' ),
                     'agreementPlural'         => __( 'agreements', 'volunteer-exchange-platform' ),
                     'noAgreementsYet'         => __( 'No agreements yet...', 'volunteer-exchange-platform' ),
@@ -391,6 +403,8 @@ class Plugin {
                     'saving'        => __( 'Saving…', 'volunteer-exchange-platform' ),
                     'saved'         => __( 'Saved ✓', 'volunteer-exchange-platform' ),
                     'saveError'     => __( 'Error', 'volunteer-exchange-platform' ),
+                    'namePlaceholder' => __( 'e.g., Jane Doe', 'volunteer-exchange-platform' ),
+                    'remove'        => __( 'Remove', 'volunteer-exchange-platform' ),
                 ),
                 'choicesI18n' => array(
                     'searchPlaceholderValue' => __( 'Search...', 'volunteer-exchange-platform' ),

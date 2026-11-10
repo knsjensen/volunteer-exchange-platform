@@ -66,7 +66,7 @@ class Registration {
         $active_event = $this->event_service->get_active_event();
         
         if (!$active_event) {
-            return '<div class="vep-message vep-error">' . __('No active event at the moment.', 'volunteer-exchange-platform') . '</div>';
+            return '<div class="vep-message vep-error">' . esc_html__('No active event at the moment.', 'volunteer-exchange-platform') . '</div>';
         }
 
         $event_end_ts = isset( $active_event->end_date ) ? strtotime( (string) $active_event->end_date ) : false;
@@ -74,6 +74,7 @@ class Registration {
             $event_name = isset( $active_event->name ) ? (string) $active_event->name : '';
 
             return '<div class="vep-message vep-info">' . sprintf(
+                /* translators: %s: event name */
                 esc_html__( '%s is over for this time.', 'volunteer-exchange-platform' ),
                 esc_html( $event_name )
             ) . '</div>';
@@ -88,6 +89,9 @@ class Registration {
             <form id="vep-registration-form" class="vep-form<?php echo $is_multistep ? ' vep-registration-multistep' : ''; ?>" enctype="multipart/form-data">
                 <?php wp_nonce_field('vep_registration', 'vep_registration_nonce', false); ?>
                 <input type="hidden" name="event_id" value="<?php echo esc_attr($active_event->id); ?>">
+                <div style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden;" aria-hidden="true">
+                    <input type="text" name="vep_hp_field" value="" tabindex="-1" autocomplete="new-password" aria-hidden="true">
+                </div>
 
                 <?php if (!$is_multistep): ?>
                     <div class="vep-form-group">
@@ -156,7 +160,7 @@ class Registration {
 
                     <div class="vep-step" data-vep-step="2">
                         <div class="vep-form-group">
-                            <label for="contact_person_name"><?php esc_html_e('Dit navn', 'volunteer-exchange-platform'); ?> <span class="required">*</span></label>
+                            <label for="contact_person_name"><?php esc_html_e('Your name', 'volunteer-exchange-platform'); ?> <span class="required">*</span></label>
                             <input type="text" id="contact_person_name" name="contact_person_name" required>
                         </div>
                         

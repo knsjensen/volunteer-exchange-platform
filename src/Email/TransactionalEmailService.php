@@ -75,6 +75,7 @@ class TransactionalEmailService {
         // ── Subject ────────────────────────────────────────────────────
         $subject = isset( $message['subject'] ) ? sanitize_text_field( $message['subject'] ) : $profile_subject;
         if ( empty( $subject ) ) {
+            error_log( sprintf( 'VEP: transactional email not queued - no subject (template "%s" has no default_subject).', $template_key ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
             return false;
         }
 

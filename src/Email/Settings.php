@@ -250,10 +250,12 @@ class Settings {
         }
 
         // Template profiles come in as parallel arrays.
-        if ( isset( $raw['profile_key'] ) && is_array( $raw['profile_key'] ) ) {
+        // profile_section marks that the profile list was part of the submitted form, so an
+        // empty list (all rows removed, nothing posted) is saved as empty.
+        if ( ( isset( $raw['profile_key'] ) && is_array( $raw['profile_key'] ) ) || ! empty( $raw['profile_section'] ) ) {
             $settings['template_profiles'] = array();
 
-            $keys        = $raw['profile_key'];
+            $keys        = isset( $raw['profile_key'] ) && is_array( $raw['profile_key'] ) ? $raw['profile_key'] : array();
             $tpl_ids     = isset( $raw['profile_template_id'] ) && is_array( $raw['profile_template_id'] ) ? $raw['profile_template_id'] : array();
             $subjects    = isset( $raw['profile_subject'] ) && is_array( $raw['profile_subject'] ) ? $raw['profile_subject'] : array();
             $html_bodies = isset( $raw['profile_html_body'] ) && is_array( $raw['profile_html_body'] ) ? $raw['profile_html_body'] : array();

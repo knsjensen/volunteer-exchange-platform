@@ -409,6 +409,8 @@ class EventService extends AbstractService {
                 $participant_ids = $this->repository->get_participant_ids_for_event( $event_id );
                 $this->repository->delete_participant_tags_by_participant_ids( $participant_ids );
                 $this->repository->delete_agreements_for_event( $event_id );
+                $this->repository->delete_competition_winners_for_event( $event_id );
+                $this->repository->delete_reminders_by_participant_ids( $participant_ids );
                 $this->repository->delete_participants_for_event( $event_id );
                 return $this->repository->delete_event( $event_id );
             },
@@ -566,9 +568,10 @@ class EventService extends AbstractService {
                 $start_dt            = new \DateTimeImmutable( $event->start_date, $timezone );
                 $end_dt              = new \DateTimeImmutable( $event->end_date, $timezone );
                 $pre_window_minutes  = 10;
-                $post_window_minutes = 30;
                 $window_start_dt     = $start_dt->modify( sprintf( '-%d minutes', $pre_window_minutes ) );
-                $window_end_dt       = $end_dt->modify( sprintf( '+%d minutes', $post_window_minutes ) );
+                // The event end_date is final: agreements registered during the
+                // registration grace window after it must NOT count in statistics.
+                $window_end_dt       = $end_dt;
                 $duration_seconds    = max( 1, $end_dt->getTimestamp() - $start_dt->getTimestamp() );
                 $duration_minutes    = max( 1, (int) ceil( $duration_seconds / 60 ) );
 
@@ -668,6 +671,24 @@ class EventService extends AbstractService {
                 return $this->repository->get_agreements_for_participant_on_event( (int) $participant_id, (int) $event_id );
             },
             array()
+        );
+    }
+
+    /**
+     * Atomically claim the agreement overview send for an event.
+     *
+     * @param int $event_id Event ID.
+     * @return bool True when claimed by this call, false when already sent/claimed.
+     */
+    public function claim_agreement_overview_sent( $event_id ) {
+        if ( ! $this->is_valid_id( $event_id ) ) {
+            return false;
+        }
+        return $this->run_guarded(
+            function () use ( $event_id ) {
+                return $this->repository->claim_agreement_overview_sent( (int) $event_id );
+            },
+            false
         );
     }
 }

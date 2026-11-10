@@ -10,6 +10,7 @@
 namespace VolunteerExchangePlatform\Ajax;
 
 use VolunteerExchangePlatform\Services\EventService;
+use VolunteerExchangePlatform\Services\ParticipantEmailService;
 use VolunteerExchangePlatform\Services\ParticipantService;
 use VolunteerExchangePlatform\Email\Settings as EmailSettings;
 
@@ -34,6 +35,11 @@ class AgreementOverviewHandler {
     private $participant_service;
 
     /**
+     * @var ParticipantEmailService
+     */
+    private $participant_email_service;
+
+    /**
      * Constructor
      *
      * @param EventService|null       $event_service
@@ -41,10 +47,12 @@ class AgreementOverviewHandler {
      */
     public function __construct(
         ?EventService $event_service = null,
-        ?ParticipantService $participant_service = null
+        ?ParticipantService $participant_service = null,
+        ?ParticipantEmailService $participant_email_service = null
     ) {
-        $this->event_service       = $event_service       ?: new EventService();
-        $this->participant_service = $participant_service ?: new ParticipantService();
+        $this->event_service            = $event_service       ?: new EventService();
+        $this->participant_service      = $participant_service ?: new ParticipantService();
+        $this->participant_email_service = $participant_email_service ?: new ParticipantEmailService( $this->participant_service );
 
         add_action( 'wp_ajax_vep_send_agreement_overview',        array( $this, 'send_agreement_overview_ajax' ) );
         add_action( 'wp_ajax_vep_send_single_agreement_overview', array( $this, 'send_single_agreement_overview_ajax' ) );
@@ -77,6 +85,19 @@ class AgreementOverviewHandler {
             wp_send_json_error( array( 'message' => __( 'Agreement overview has already been sent for this event.', 'volunteer-exchange-platform' ) ) );
         }
 
+        // The overview may only be sent once the event has ended (event dates are WP-local time).
+        $end_date = isset( $event->end_date ) ? trim( (string) $event->end_date ) : '';
+        if ( '' !== $end_date ) {
+            try {
+                $event_end = new \DateTimeImmutable( $end_date, wp_timezone() );
+            } catch ( \Exception $e ) {
+                $event_end = null;
+            }
+            if ( $event_end && current_datetime() < $event_end ) {
+                wp_send_json_error( array( 'message' => __( 'The agreement overview can only be sent after the event has ended.', 'volunteer-exchange-platform' ) ) );
+            }
+        }
+
         // Pre-flight: verify SMTP2GO is configured.
         if ( '' === EmailSettings::api_key() ) {
             wp_send_json_error( array( 'message' => __( 'SMTP2GO API key is not configured. Please check Email Settings.', 'volunteer-exchange-platform' ) ) );
@@ -85,7 +106,13 @@ class AgreementOverviewHandler {
             wp_send_json_error( array( 'message' => __( 'No email template profile is configured for "indgaaede_aftale_oversigt". Please add it in Email Settings.', 'volunteer-exchange-platform' ) ) );
         }
 
-        $participants = $this->event_service->get_participants_with_agreements_for_overview( $event_id );
+        // Claim the send atomically BEFORE queueing so a double click / concurrent request cannot queue twice.
+        if ( ! $this->event_service->claim_agreement_overview_sent( $event_id ) ) {
+            wp_send_json_error( array( 'message' => __( 'Agreement overview has already been sent for this event.', 'volunteer-exchange-platform' ) ) );
+        }
+
+        $participants          = $this->event_service->get_participants_with_agreements_for_overview( $event_id );
+        $total_agreement_count = count( $this->event_service->get_agreements_for_event( $event_id ) );
 
         $sent_count = 0;
         foreach ( $participants as $participant ) {
@@ -93,19 +120,18 @@ class AgreementOverviewHandler {
             if ( empty( $agreements ) ) {
                 continue;
             }
-            $queued = $this->participant_service->queue_agreement_overview_or_reminder_email(
+            $queued = $this->participant_email_service->queue_agreement_overview_email(
                 (int) $participant->id,
                 $event_id,
                 $agreements,
-                false
+                $total_agreement_count
             );
             if ( $queued ) {
                 $sent_count++;
             }
         }
 
-        // Mark event as sent regardless of partial failures so the button is disabled.
-        $this->event_service->set_agreement_overview_sent( $event_id, 1 );
+        // The event was already marked as sent by the atomic claim above, regardless of partial failures.
 
         wp_send_json_success( array(
             /* translators: %d: number of emails queued */
@@ -134,6 +160,11 @@ class AgreementOverviewHandler {
             wp_send_json_error( array( 'message' => __( 'Invalid participant or event.', 'volunteer-exchange-platform' ) ) );
         }
 
+        $single_participant = $this->participant_service->get_by_id( $participant_id );
+        if ( $single_participant && ! empty( $single_participant->agreement_overview_unsubscribed ) ) {
+            wp_send_json_error( array( 'message' => __( 'This participant has unsubscribed from agreement overview emails.', 'volunteer-exchange-platform' ) ) );
+        }
+
         $agreements = $this->event_service->get_agreements_for_participant_on_event( $participant_id, $event_id );
         if ( empty( $agreements ) ) {
             wp_send_json_error( array( 'message' => __( 'No agreements found for this participant.', 'volunteer-exchange-platform' ) ) );
@@ -147,7 +178,8 @@ class AgreementOverviewHandler {
             wp_send_json_error( array( 'message' => __( 'No email template profile is configured for "indgaaede_aftale_oversigt". Please add it in Email Settings.', 'volunteer-exchange-platform' ) ) );
         }
 
-        $queued = $this->participant_service->queue_agreement_overview_or_reminder_email( $participant_id, $event_id, $agreements, false );
+        $total_agreement_count = count( $this->event_service->get_agreements_for_event( $event_id ) );
+        $queued = $this->participant_email_service->queue_agreement_overview_email( $participant_id, $event_id, $agreements, $total_agreement_count );
 
         if ( $queued ) {
             wp_send_json_success( array(

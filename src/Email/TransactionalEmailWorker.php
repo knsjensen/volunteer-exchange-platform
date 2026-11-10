@@ -62,6 +62,18 @@ class TransactionalEmailWorker {
     public function process_queue() {
         $max_jobs = (int) apply_filters( 'vep_transactional_email_max_jobs_per_run', 5 );
 
+        // Release jobs left in 'processing' by a crashed run before claiming new ones.
+        $this->queue_repository->recover_stuck_jobs( 600 );
+
+        // Without an API key nothing can be sent: leave jobs pending and do not burn attempts.
+        if ( '' === \VolunteerExchangePlatform\Email\Settings::api_key() ) {
+            if ( ! get_transient( 'vep_email_missing_api_key_logged' ) ) {
+                error_log( 'VEP: SMTP2GO API key is not configured; transactional emails stay queued.' ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+                set_transient( 'vep_email_missing_api_key_logged', 1, HOUR_IN_SECONDS );
+            }
+            return;
+        }
+
         for ( $i = 0; $i < $max_jobs; $i++ ) {
             $job = $this->queue_repository->claim_next();
 

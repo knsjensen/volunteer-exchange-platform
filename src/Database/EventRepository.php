@@ -173,6 +173,35 @@ class EventRepository extends AbstractRepository {
     }
 
     /**
+     * Delete competition winners for event.
+     *
+     * @param int $event_id Event ID.
+     * @return int|false
+     */
+    public function delete_competition_winners_for_event( $event_id ) {
+        $winners_table = $this->wpdb->prefix . 'vep_competition_winners';
+        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Uses wpdb::delete with controlled table name and where format.
+        return $this->wpdb->delete( $winners_table, array( 'event_id' => $event_id ), array( '%d' ) );
+    }
+
+    /**
+     * Delete reminder rows for the given participants.
+     *
+     * @param array $participant_ids Participant IDs.
+     * @return void
+     */
+    public function delete_reminders_by_participant_ids( $participant_ids ) {
+        $participant_ids = array_filter( array_map( 'intval', (array) $participant_ids ) );
+        if ( empty( $participant_ids ) ) {
+            return;
+        }
+        $reminders_table = $this->wpdb->prefix . 'vep_participant_reminders';
+        $placeholders    = implode( ',', array_fill( 0, count( $participant_ids ), '%d' ) );
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared -- Controlled table name and generated placeholders.
+        $this->wpdb->query( $this->wpdb->prepare( "DELETE FROM {$reminders_table} WHERE participant_id IN ($placeholders)", ...$participant_ids ) );
+    }
+
+    /**
      * Delete participants for event.
      *
      * @param int $event_id Event ID.
@@ -376,9 +405,14 @@ class EventRepository extends AbstractRepository {
      */
     public function count_agreements_for_event( $event_id ) {
         $agreements_table = $this->wpdb->prefix . 'vep_agreements';
+        $events_table     = $this->table();
 
+        // Event end_date is final: agreements registered after it (grace window) never count.
         return (int) $this->get_var(
-            "SELECT COUNT(*) FROM {$agreements_table} WHERE event_id = %d",
+            "SELECT COUNT(*)
+             FROM {$agreements_table} a
+             INNER JOIN {$events_table} e ON e.id = a.event_id
+             WHERE a.event_id = %d AND a.created_at <= e.end_date",
             array( $event_id )
         );
     }
@@ -393,11 +427,13 @@ class EventRepository extends AbstractRepository {
     public function get_event_leaderboard( $event_id, $limit = 10 ) {
         $agreements_table = $this->wpdb->prefix . 'vep_agreements';
         $participants_table = $this->wpdb->prefix . 'vep_participants';
+        $events_table = $this->table();
 
         return $this->get_results(
             "SELECT p.id, p.organization_name, p.logo_url, COUNT(DISTINCT a.id) as agreement_count
              FROM {$participants_table} p
-             LEFT JOIN {$agreements_table} a ON (a.participant1_id = p.id OR a.participant2_id = p.id) AND a.event_id = %d
+             INNER JOIN {$events_table} e ON e.id = p.event_id
+             LEFT JOIN {$agreements_table} a ON (a.participant1_id = p.id OR a.participant2_id = p.id) AND a.event_id = %d AND a.created_at <= e.end_date
              WHERE p.event_id = %d AND p.is_approved = 1
              GROUP BY p.id, p.organization_name, p.logo_url
              HAVING agreement_count > 0
@@ -420,14 +456,18 @@ class EventRepository extends AbstractRepository {
      */
     public function get_agreements_over_time( $event_id, $start_date, $window_start_date, $window_end_date ) {
         $agreements_table = $this->wpdb->prefix . 'vep_agreements';
+        $events_table     = $this->table();
 
+        // The window end is additionally capped at the event end_date (final).
         return $this->get_results(
             "SELECT FLOOR( TIMESTAMPDIFF( SECOND, %s, a.created_at ) / 60 ) AS minute_offset,
                     COUNT(*) AS cnt
              FROM {$agreements_table} a
+             INNER JOIN {$events_table} e ON e.id = a.event_id
              WHERE a.event_id = %d
                AND a.created_at >= %s
                AND a.created_at <= %s
+               AND a.created_at <= e.end_date
              GROUP BY minute_offset
              ORDER BY minute_offset ASC",
             array( $start_date, (int) $event_id, $window_start_date, $window_end_date )
@@ -444,12 +484,15 @@ class EventRepository extends AbstractRepository {
      */
     public function get_first_agreement_offset_seconds( $event_id, $start_date, $window_start_date ) {
         $agreements_table = $this->wpdb->prefix . 'vep_agreements';
+        $events_table     = $this->table();
 
         $row = $this->get_row(
             "SELECT TIMESTAMPDIFF( SECOND, %s, MIN(a.created_at) ) AS first_offset
              FROM {$agreements_table} a
+             INNER JOIN {$events_table} e ON e.id = a.event_id
              WHERE a.event_id = %d
-               AND a.created_at >= %s",
+               AND a.created_at >= %s
+               AND a.created_at <= e.end_date",
             array( $start_date, (int) $event_id, $window_start_date )
         );
 
@@ -470,6 +513,7 @@ class EventRepository extends AbstractRepository {
     public function get_recent_agreements( $event_id, $limit = 10 ) {
         $agreements_table = $this->wpdb->prefix . 'vep_agreements';
         $participants_table = $this->wpdb->prefix . 'vep_participants';
+        $events_table = $this->table();
 
         return $this->get_results(
             "SELECT
@@ -483,7 +527,8 @@ class EventRepository extends AbstractRepository {
              FROM {$agreements_table} a
              LEFT JOIN {$participants_table} p1 ON a.participant1_id = p1.id
              LEFT JOIN {$participants_table} p2 ON a.participant2_id = p2.id
-             WHERE a.event_id = %d
+             INNER JOIN {$events_table} e ON e.id = a.event_id
+             WHERE a.event_id = %d AND a.created_at <= e.end_date
              ORDER BY a.created_at DESC
              LIMIT %d",
             array( $event_id, (int) $limit )
@@ -499,13 +544,15 @@ class EventRepository extends AbstractRepository {
     public function get_first_agreement( $event_id ) {
         $agreements_table = $this->wpdb->prefix . 'vep_agreements';
         $participants_table = $this->wpdb->prefix . 'vep_participants';
+        $events_table = $this->table();
 
         return $this->get_row(
             "SELECT a.*, p1.organization_name as participant1_name, p2.organization_name as participant2_name
              FROM {$agreements_table} a
              LEFT JOIN {$participants_table} p1 ON a.participant1_id = p1.id
              LEFT JOIN {$participants_table} p2 ON a.participant2_id = p2.id
-             WHERE a.event_id = %d
+             INNER JOIN {$events_table} e ON e.id = a.event_id
+             WHERE a.event_id = %d AND a.created_at <= e.end_date
              ORDER BY a.created_at ASC LIMIT 1",
             array( $event_id )
         );
@@ -520,13 +567,15 @@ class EventRepository extends AbstractRepository {
     public function get_last_agreement( $event_id ) {
         $agreements_table = $this->wpdb->prefix . 'vep_agreements';
         $participants_table = $this->wpdb->prefix . 'vep_participants';
+        $events_table = $this->table();
 
         return $this->get_row(
             "SELECT a.*, p1.organization_name as participant1_name, p2.organization_name as participant2_name
              FROM {$agreements_table} a
              LEFT JOIN {$participants_table} p1 ON a.participant1_id = p1.id
              LEFT JOIN {$participants_table} p2 ON a.participant2_id = p2.id
-             WHERE a.event_id = %d
+             INNER JOIN {$events_table} e ON e.id = a.event_id
+             WHERE a.event_id = %d AND a.created_at <= e.end_date
              ORDER BY a.created_at DESC LIMIT 1",
             array( $event_id )
         );
@@ -566,11 +615,13 @@ class EventRepository extends AbstractRepository {
     public function get_participant_with_most_agreements( $event_id ) {
         $agreements_table = $this->wpdb->prefix . 'vep_agreements';
         $participants_table = $this->wpdb->prefix . 'vep_participants';
+        $events_table = $this->table();
 
         return $this->get_row(
             "SELECT p.*, COUNT(DISTINCT a.id) as agreement_count
              FROM {$participants_table} p
-             LEFT JOIN {$agreements_table} a ON (a.participant1_id = p.id OR a.participant2_id = p.id) AND a.event_id = %d
+             INNER JOIN {$events_table} e ON e.id = p.event_id
+             LEFT JOIN {$agreements_table} a ON (a.participant1_id = p.id OR a.participant2_id = p.id) AND a.event_id = %d AND a.created_at <= e.end_date
              WHERE p.event_id = %d AND p.is_approved = 1
              GROUP BY p.id
              ORDER BY agreement_count DESC LIMIT 1",
@@ -587,19 +638,21 @@ class EventRepository extends AbstractRepository {
     public function get_participant_shortest_time_between_agreements( $event_id ) {
         $agreements_table = $this->wpdb->prefix . 'vep_agreements';
         $participants_table = $this->wpdb->prefix . 'vep_participants';
+        $events_table = $this->table();
 
         return $this->get_row(
             "SELECT p.*
              FROM {$participants_table} p
+             INNER JOIN {$events_table} e ON e.id = p.event_id
              WHERE p.event_id = %d AND p.is_approved = 1
              AND p.id IN (
                 SELECT a1.participant1_id
                 FROM {$agreements_table} a1
-                WHERE a1.event_id = %d
+                WHERE a1.event_id = %d AND a1.created_at <= e.end_date
                 UNION
                 SELECT a2.participant2_id
                 FROM {$agreements_table} a2
-                WHERE a2.event_id = %d
+                WHERE a2.event_id = %d AND a2.created_at <= e.end_date
              )
              ORDER BY (
                 SELECT MIN(TIMESTAMPDIFF(SECOND, 
@@ -607,7 +660,7 @@ class EventRepository extends AbstractRepository {
                     a.created_at
                 ))
                 FROM {$agreements_table} a
-                WHERE a.event_id = %d AND (a.participant1_id = p.id OR a.participant2_id = p.id)
+                WHERE a.event_id = %d AND a.created_at <= e.end_date AND (a.participant1_id = p.id OR a.participant2_id = p.id)
              ) ASC
              LIMIT 1",
             array( $event_id, $event_id, $event_id, $event_id, $event_id )
@@ -653,6 +706,7 @@ class EventRepository extends AbstractRepository {
                AND a.event_id = %d
              WHERE p.event_id = %d
                AND p.is_approved = 1
+               AND COALESCE(p.agreement_overview_unsubscribed, 0) = 0
              ORDER BY p.organization_name ASC",
             (int) $event_id,
             (int) $event_id
@@ -666,13 +720,19 @@ class EventRepository extends AbstractRepository {
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Interpolated table names are controlled from $wpdb->prefix.
             $participant->agreements = $this->wpdb->get_results( $this->wpdb->prepare(
                 "SELECT a.*,
-                        CASE WHEN a.participant1_id = %d THEN p2.organization_name ELSE p1.organization_name END AS partner_name
+                        CASE WHEN a.participant1_id = %d THEN p2.organization_name    ELSE p1.organization_name    END AS organization_name,
+                        CASE WHEN a.participant1_id = %d THEN p2.contact_person_name  ELSE p1.contact_person_name  END AS contact_name,
+                        CASE WHEN a.participant1_id = %d THEN p2.contact_email        ELSE p1.contact_email        END AS contact_email,
+                        CASE WHEN a.participant1_id = %d THEN p2.contact_phone        ELSE p1.contact_phone        END AS contact_phone
                  FROM {$agreements_table} a
                  LEFT JOIN {$participants_table} p1 ON a.participant1_id = p1.id
                  LEFT JOIN {$participants_table} p2 ON a.participant2_id = p2.id
                  WHERE a.event_id = %d
                    AND (a.participant1_id = %d OR a.participant2_id = %d)
                  ORDER BY a.created_at ASC",
+                (int) $participant->id,
+                (int) $participant->id,
+                (int) $participant->id,
                 (int) $participant->id,
                 (int) $event_id,
                 (int) $participant->id,
@@ -697,7 +757,10 @@ class EventRepository extends AbstractRepository {
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Interpolated table names are controlled from $wpdb->prefix.
         return $this->wpdb->get_results( $this->wpdb->prepare(
             "SELECT a.*,
-                    CASE WHEN a.participant1_id = %d THEN p2.organization_name ELSE p1.organization_name END AS partner_name
+                    CASE WHEN a.participant1_id = %d THEN p2.organization_name    ELSE p1.organization_name    END AS organization_name,
+                    CASE WHEN a.participant1_id = %d THEN p2.contact_person_name  ELSE p1.contact_person_name  END AS contact_name,
+                    CASE WHEN a.participant1_id = %d THEN p2.contact_email        ELSE p1.contact_email        END AS contact_email,
+                    CASE WHEN a.participant1_id = %d THEN p2.contact_phone        ELSE p1.contact_phone        END AS contact_phone
              FROM {$agreements_table} a
              LEFT JOIN {$participants_table} p1 ON a.participant1_id = p1.id
              LEFT JOIN {$participants_table} p2 ON a.participant2_id = p2.id
@@ -705,9 +768,35 @@ class EventRepository extends AbstractRepository {
                AND (a.participant1_id = %d OR a.participant2_id = %d)
              ORDER BY a.created_at ASC",
             (int) $participant_id,
+            (int) $participant_id,
+            (int) $participant_id,
+            (int) $participant_id,
             (int) $event_id,
             (int) $participant_id,
             (int) $participant_id
         ) );
+    }
+
+    /**
+     * Atomically claim the agreement overview send for an event.
+     *
+     * Sets agreement_overview_sent = 1 only if it is currently 0/NULL, so two
+     * concurrent requests cannot both proceed.
+     *
+     * @param int $event_id Event ID.
+     * @return bool True when this call claimed the send, false when already claimed.
+     */
+    public function claim_agreement_overview_sent( $event_id ) {
+        $table = $this->wpdb->prefix . 'vep_events';
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Interpolated table name is controlled from $wpdb->prefix.
+        $affected = $this->wpdb->query(
+            $this->wpdb->prepare(
+                "UPDATE {$table} SET agreement_overview_sent = 1 WHERE id = %d AND COALESCE(agreement_overview_sent, 0) = 0",
+                (int) $event_id
+            )
+        );
+
+        return 1 === (int) $affected;
     }
 }

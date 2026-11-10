@@ -14,6 +14,7 @@ use VolunteerExchangePlatform\Admin\EventParticipantsListTable;
 use VolunteerExchangePlatform\Admin\ParticipantAgreementsListTable;
 use VolunteerExchangePlatform\Services\CompetitionService;
 use VolunteerExchangePlatform\Services\EventService;
+use VolunteerExchangePlatform\Services\ParticipantEmailService;
 use VolunteerExchangePlatform\Services\ParticipantService;
 use VolunteerExchangePlatform\Services\AgreementStatus;
 use VolunteerExchangePlatform\Services\ParticipantTypeService;
@@ -49,6 +50,11 @@ class EventsPage {
     private $participant_service;
 
     /**
+     * @var ParticipantEmailService
+     */
+    private $participant_email_service;
+
+    /**
      * @var TagService
      */
     private $tag_service;
@@ -68,12 +74,13 @@ class EventsPage {
      * @param CompetitionService|null     $competition_service Competition service instance.
      * @return void
      */
-    public function __construct( ?EventService $event_service = null, ?ParticipantService $participant_service = null, ?ParticipantTypeService $type_service = null, ?TagService $tag_service = null, ?CompetitionService $competition_service = null ) {
-        $this->event_service = $event_service ?: new EventService();
-        $this->participant_service = $participant_service ?: new ParticipantService();
-        $this->type_service = $type_service ?: new ParticipantTypeService();
-        $this->tag_service = $tag_service ?: new TagService();
-        $this->competition_service = $competition_service ?: new CompetitionService();
+    public function __construct( ?EventService $event_service = null, ?ParticipantService $participant_service = null, ?ParticipantTypeService $type_service = null, ?TagService $tag_service = null, ?CompetitionService $competition_service = null, ?ParticipantEmailService $participant_email_service = null ) {
+        $this->event_service             = $event_service ?: new EventService();
+        $this->participant_service       = $participant_service ?: new ParticipantService();
+        $this->type_service              = $type_service ?: new ParticipantTypeService();
+        $this->tag_service               = $tag_service ?: new TagService();
+        $this->competition_service       = $competition_service ?: new CompetitionService();
+        $this->participant_email_service = $participant_email_service ?: new ParticipantEmailService( $this->participant_service );
         add_action('admin_init', array($this, 'handle_form_submission'));
         add_action('admin_init', array($this, 'handle_quick_action'));
         add_action('admin_init', array($this, 'handle_bulk_action'));
@@ -855,8 +862,11 @@ class EventsPage {
                                 <td><input type="number" id="vep-modal-expected-count" name="expected_participants_count" class="small-text" min="0" step="1" value=""></td>
                             </tr>
                             <tr>
-                                <th><label for="vep-modal-expected-names"><?php esc_html_e( 'Participant Names', 'volunteer-exchange-platform' ); ?></label></th>
-                                <td><textarea id="vep-modal-expected-names" name="expected_participants_names" rows="3" class="large-text"></textarea></td>
+                                <th><label><?php esc_html_e( 'Participant Names', 'volunteer-exchange-platform' ); ?></label></th>
+                                <td>
+                                    <div id="vep-modal-names-list" style="margin-bottom:6px;"></div>
+                                    <button type="button" id="vep-modal-add-name-btn" class="button"><?php esc_html_e( '+ Add participant', 'volunteer-exchange-platform' ); ?></button>
+                                </td>
                             </tr>
                             <tr>
                                 <th><label for="vep-modal-type-id"><?php esc_html_e( 'Participant Type', 'volunteer-exchange-platform' ); ?></label></th>
@@ -945,9 +955,9 @@ class EventsPage {
             && strtotime( $participant_event->end_date ) < current_time( 'timestamp' );
         $event_has_started = $participant_event && ! empty( $participant_event->start_date )
             && strtotime( $participant_event->start_date ) < current_time( 'timestamp' );
-        $show_reminder_button = ! $participant_event_is_past && $this->participant_service->should_send_update_reminder( $participant_id );
+        $show_reminder_button = ! $participant_event_is_past && $this->participant_email_service->should_send_update_reminder( $participant_id );
         $tag_ids = $this->participant_service->get_tag_ids( $participant_id );
-        $missing_update_fields = $this->participant_service->get_update_reminder_missing_fields( $participant, $tag_ids );
+        $missing_update_fields = $this->participant_email_service->get_update_reminder_missing_fields( $participant, $tag_ids );
         $missing_count = count( $missing_update_fields );
         $total_part_two_fields = 5;
         if ( $missing_count <= 0 ) {
@@ -1078,8 +1088,15 @@ class EventsPage {
                                     </div>
                                     <?php endif; ?>
                                     <?php if ( ! empty( $participant->expected_participants_names ) ) : ?>
+                                    <?php
+                                    $_names_raw  = $participant->expected_participants_names;
+                                    $_names_arr  = json_decode( $_names_raw, true );
+                                    if ( ! is_array( $_names_arr ) ) {
+                                        $_names_arr = array_filter( array_map( 'trim', preg_split( '/[\r\n,]+/', (string) $_names_raw ) ), 'strlen' );
+                                    }
+                                    ?>
                                     <div class="misc-pub-section">
-                                        <b><?php esc_html_e( 'Names', 'volunteer-exchange-platform' ); ?>:</b><br><?php echo nl2br( esc_html( $participant->expected_participants_names ) ); ?>
+                                        <b><?php esc_html_e( 'Names', 'volunteer-exchange-platform' ); ?>:</b><br><?php foreach ( $_names_arr as $_n ) : ?><?php echo esc_html( trim( (string) $_n ) ); ?><br><?php endforeach; ?>
                                     </div>
                                     <?php endif; ?>
                                 </div>
@@ -1246,20 +1263,24 @@ class EventsPage {
 
             <hr style="margin: 24px 0;">
 
-            <h2 style="display:flex; align-items:center; gap:12px;">
-                <?php esc_html_e( 'Agreements', 'volunteer-exchange-platform' ); ?>
-                <button type="button" class="page-title-action" id="vep-open-add-agreement-modal"><?php esc_html_e( 'Add New', 'volunteer-exchange-platform' ); ?></button>
-            </h2>
-            <div id="vep-participant-agreements-section">
-                <?php $agreements_list_table->views(); ?>
-                <form method="get" id="vep-participant-agreements-form" action="<?php echo esc_url( admin_url( 'admin.php' ) ); ?>">
-                    <input type="hidden" name="page"      value="volunteer-exchange-events">
-                    <input type="hidden" name="action"    value="view-participant">
-                    <input type="hidden" name="id"        value="<?php echo esc_attr( (string) $participant_id ); ?>">
-                    <input type="hidden" name="return_id" value="<?php echo esc_attr( (string) $return_id ); ?>">
-                    <?php $agreements_list_table->display(); ?>
-                </form>
-            </div>
+            <details class="vep-collapsible-section" open>
+                <summary>
+                    <span class="vep-collapsible-heading"><?php esc_html_e( 'Agreements', 'volunteer-exchange-platform' ); ?></span>
+                    <button type="button" class="page-title-action" id="vep-open-add-agreement-modal" onclick="event.stopPropagation();"><?php esc_html_e( 'Add New', 'volunteer-exchange-platform' ); ?></button>
+                </summary>
+                <div class="vep-collapsible-content">
+                    <div id="vep-participant-agreements-section">
+                        <?php $agreements_list_table->views(); ?>
+                        <form method="get" id="vep-participant-agreements-form" action="<?php echo esc_url( admin_url( 'admin.php' ) ); ?>">
+                            <input type="hidden" name="page"      value="volunteer-exchange-events">
+                            <input type="hidden" name="action"    value="view-participant">
+                            <input type="hidden" name="id"        value="<?php echo esc_attr( (string) $participant_id ); ?>">
+                            <input type="hidden" name="return_id" value="<?php echo esc_attr( (string) $return_id ); ?>">
+                            <?php $agreements_list_table->display(); ?>
+                        </form>
+                    </div>
+                </div>
+            </details>
             <?php
             $modal_participants = $return_id > 0 ? $this->participant_service->get_for_event_select( $return_id ) : array();
             $this->render_agreement_modal( $return_id, $modal_participants );
@@ -1333,7 +1354,8 @@ class EventsPage {
                     <tr>
                         <th scope="row"><label for="expected_participants_names"><?php esc_html_e( 'Participant Names', 'volunteer-exchange-platform' ); ?></label></th>
                         <td>
-                            <textarea id="expected_participants_names" name="expected_participants_names" rows="3" class="large-text"><?php echo esc_textarea( $participant->expected_participants_names ?? '' ); ?></textarea>
+                            <textarea id="expected_participants_names" name="expected_participants_names" rows="3" class="large-text"><?php echo esc_textarea( $this->names_json_to_text( $participant->expected_participants_names ?? '' ) ); ?></textarea>
+                            <p class="description"><?php esc_html_e( 'One name per line.', 'volunteer-exchange-platform' ); ?></p>
                             <p class="description"><?php esc_html_e( 'The names of the participants expected to attend the event.', 'volunteer-exchange-platform' ); ?></p>
                         </td>
                     </tr>
@@ -1442,13 +1464,12 @@ class EventsPage {
             'vep_agreement_delete_' . (int) $agreement->id
         );
 
-        $status = isset( $agreement->status ) ? sanitize_key( (string) $agreement->status ) : 'active';
-        $status_labels = array(
-            'active'    => __( 'Awaiting', 'volunteer-exchange-platform' ),
-            'completed' => __( 'Completed', 'volunteer-exchange-platform' ),
-            'cancelled' => __( 'Cancelled', 'volunteer-exchange-platform' ),
-        );
-        $status_label = isset( $status_labels[ $status ] ) ? $status_labels[ $status ] : $status;
+        $status = isset( $agreement->status ) ? sanitize_key( (string) $agreement->status ) : AgreementStatus::AGREED;
+        if ( 'active' === $status ) {
+            // Legacy status value.
+            $status = AgreementStatus::AGREED;
+        }
+        $status_label = AgreementStatus::label( $status );
         ?>
         <div class="wrap">
             <h1><?php esc_html_e( 'View Agreement', 'volunteer-exchange-platform' ); ?></h1>
@@ -1655,11 +1676,47 @@ class EventsPage {
     }
 
     /**
+     * Convert the stored names value (JSON list or legacy text) into one-name-per-line text.
+     *
+     * @param string $raw Stored value.
+     * @return string
+     */
+    private function names_json_to_text( $raw ) {
+        $raw = (string) $raw;
+        $decoded = json_decode( $raw, true );
+        if ( is_array( $decoded ) ) {
+            return implode( "\n", array_map( 'strval', $decoded ) );
+        }
+        return $raw;
+    }
+
+    /**
+     * Convert one-name-per-line text into the stored JSON list ('' when empty).
+     *
+     * @param string $text Names, one per line.
+     * @return string
+     */
+    private function names_text_to_json( $text ) {
+        $text = trim( (string) $text );
+        if ( '' === $text ) {
+            return '';
+        }
+        $decoded = json_decode( $text, true );
+        if ( is_array( $decoded ) ) {
+            $names = $decoded;
+        } else {
+            $names = preg_split( '/\r\n|\r|\n/', $text );
+        }
+        $names = array_values( array_filter( array_map( 'trim', array_map( 'strval', $names ) ), 'strlen' ) );
+        return empty( $names ) ? '' : wp_json_encode( $names );
+    }
+
+    /**
      * Handle form submission for creating or updating an event
-     * 
+     *
      * Validates nonce, checks permissions, and saves the event data.
      * New events are automatically set as active and deactivate other events.
-     * 
+     *
      * @return void
      */
     public function handle_form_submission() {
@@ -1696,14 +1753,14 @@ class EventsPage {
                 'organization_name'            => isset( $_POST['organization_name'] ) ? sanitize_text_field( wp_unslash( $_POST['organization_name'] ) ) : '',
                 'description'                  => isset( $_POST['description'] ) ? sanitize_textarea_field( wp_unslash( $_POST['description'] ) ) : '',
                 'expected_participants_count'  => $expected_count,
-                'expected_participants_names'  => isset( $_POST['expected_participants_names'] ) ? sanitize_textarea_field( wp_unslash( $_POST['expected_participants_names'] ) ) : '',
+                'expected_participants_names'  => $this->names_text_to_json( isset( $_POST['expected_participants_names'] ) ? sanitize_textarea_field( wp_unslash( $_POST['expected_participants_names'] ) ) : '' ),
                 'participant_type_id'          => isset( $_POST['participant_type_id'] ) ? absint( wp_unslash( $_POST['participant_type_id'] ) ) : 0,
                 'contact_person_name'          => isset( $_POST['contact_person_name'] ) ? sanitize_text_field( wp_unslash( $_POST['contact_person_name'] ) ) : '',
                 'contact_email'                => isset( $_POST['contact_email'] ) ? sanitize_email( wp_unslash( $_POST['contact_email'] ) ) : '',
                 'contact_phone'                => isset( $_POST['contact_phone'] ) ? sanitize_text_field( wp_unslash( $_POST['contact_phone'] ) ) : '',
                 'link'                         => isset( $_POST['link'] ) ? esc_url_raw( wp_unslash( $_POST['link'] ) ) : '',
-                'is_approved'                  => isset( $_POST['is_approved'] ) ? 1 : 0,
             );
+            $want_approved = isset( $_POST['is_approved'] );
 
             $logo_name = isset( $_FILES['logo']['name'] ) ? sanitize_file_name( wp_unslash( $_FILES['logo']['name'] ) ) : '';
             if ( '' !== $logo_name ) {
@@ -1716,7 +1773,8 @@ class EventsPage {
 
             $saved_participant_id = $participant_id;
             if ( $participant_id > 0 ) {
-                $saved = $this->participant_service->update_participant( $participant_id, $data );
+                // wpdb::update returns 0 when nothing changed: only false is a failure.
+                $saved = false !== $this->participant_service->update_participant( $participant_id, $data );
             } else {
                 $saved_participant_id = $this->participant_service->create( $data );
                 $saved = false !== $saved_participant_id;
@@ -1738,6 +1796,15 @@ class EventsPage {
                 $tag_ids = array_map( 'absint', wp_unslash( $_POST['tags'] ) );
             }
             $this->participant_service->replace_tags( $saved_participant_id, $tag_ids );
+
+            // Approval goes through the service so participant numbers and approval emails are handled.
+            $current_participant = $this->participant_service->get_by_id( $saved_participant_id );
+            $was_approved        = $current_participant && ! empty( $current_participant->is_approved );
+            if ( $want_approved && ! $was_approved ) {
+                $this->participant_service->approve_participant( $saved_participant_id );
+            } elseif ( ! $want_approved && $was_approved ) {
+                $this->participant_service->unapprove_participant( $saved_participant_id );
+            }
 
             $this->redirect_with_notice(
                 'success',
@@ -1772,7 +1839,8 @@ class EventsPage {
                 );
                 if ( isset( $_POST['initiator_id'] ) ) {
                     $initiator_id = absint( wp_unslash( $_POST['initiator_id'] ) );
-                    if ( $initiator_id > 0 ) {
+                    $legacy_agreement = $initiator_id > 0 ? $this->event_service->get_agreement_by_id( $agreement_id ) : null;
+                    if ( $legacy_agreement && ( $initiator_id === (int) $legacy_agreement->participant1_id || $initiator_id === (int) $legacy_agreement->participant2_id ) ) {
                         $update_data['initiator_id'] = $initiator_id;
                     }
                 }
@@ -1938,6 +2006,10 @@ class EventsPage {
             return;
         }
 
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_die( esc_html__( 'You do not have permission to perform this action.', 'volunteer-exchange-platform' ) );
+        }
+
         $action = sanitize_key( wp_unslash( $_GET['action'] ) );
         $object_id = absint( wp_unslash( $_GET['id'] ) );
         $message = '';
@@ -1971,7 +2043,7 @@ class EventsPage {
                     $message = $result ? __( 'Participant unapproved. Note: Participant number is retained.', 'volunteer-exchange-platform' ) : __( 'Could not unapprove participant.', 'volunteer-exchange-platform' );
                     $notice = $result ? 'success' : 'error';
                 } elseif ( 'send_reminder' === $participant_action ) {
-                    $result = $this->participant_service->queue_update_participant_reminder( $participant_id );
+                    $result = $this->participant_email_service->queue_update_participant_reminder( $participant_id );
                     $message = $result ? __( 'Reminder queued for sending.', 'volunteer-exchange-platform' ) : __( 'Reminder was not sent (participant may already be fully updated or missing required data).', 'volunteer-exchange-platform' );
                     $notice = $result ? 'success' : 'error';
                 } else {
@@ -2222,11 +2294,10 @@ class EventsPage {
         }
 
         $status = (string) ( $agreement->status ?? '' );
-        $status_labels = array(
-            'active'    => __( 'Awaiting', 'volunteer-exchange-platform' ),
-            'completed' => __( 'Completed', 'volunteer-exchange-platform' ),
-            'cancelled' => __( 'Cancelled', 'volunteer-exchange-platform' ),
-        );
+        if ( 'active' === $status ) {
+            // Legacy status value.
+            $status = AgreementStatus::AGREED;
+        }
         $created_at_raw = (string) ( $agreement->created_at ?? '' );
         $timestamp = $created_at_raw ? strtotime( $created_at_raw ) : false;
         $created_at_formatted = $timestamp
@@ -2242,7 +2313,7 @@ class EventsPage {
             'initiator_name'       => $agreement->initiator_name ?? '',
             'description'          => $agreement->description ?? '',
             'status'               => $status,
-            'status_label'         => $status_labels[ $status ] ?? $status,
+            'status_label'         => AgreementStatus::label( $status ),
             'created_at'           => $created_at_raw,
             'created_at_formatted' => $created_at_formatted,
         ) );
@@ -2271,6 +2342,13 @@ class EventsPage {
 
         if ( $agreement_id > 0 ) {
             $initiator_id = isset( $_POST['initiator_id'] ) ? (int) $_POST['initiator_id'] : 0;
+            $existing_agreement = $this->event_service->get_agreement_by_id( $agreement_id );
+            if ( ! $existing_agreement ) {
+                wp_send_json_error( array( 'message' => esc_html__( 'Agreement not found', 'volunteer-exchange-platform' ) ) );
+            }
+            if ( $initiator_id !== (int) $existing_agreement->participant1_id && $initiator_id !== (int) $existing_agreement->participant2_id ) {
+                wp_send_json_error( array( 'message' => esc_html__( 'The initiator must be one of the two participants.', 'volunteer-exchange-platform' ) ) );
+            }
             $result = $this->event_service->update_agreement( $agreement_id, array(
                 'initiator_id' => $initiator_id,
                 'description'  => $description,
@@ -2369,7 +2447,13 @@ class EventsPage {
         $contact_phone  = isset( $_POST['contact_phone'] ) ? sanitize_text_field( wp_unslash( $_POST['contact_phone'] ) ) : '';
         $link           = isset( $_POST['link'] ) ? esc_url_raw( wp_unslash( $_POST['link'] ) ) : '';
         $expected_count = isset( $_POST['expected_participants_count'] ) && '' !== $_POST['expected_participants_count'] ? (int) $_POST['expected_participants_count'] : null;
-        $expected_names = isset( $_POST['expected_participants_names'] ) ? sanitize_textarea_field( wp_unslash( $_POST['expected_participants_names'] ) ) : '';
+        if ( isset( $_POST['expected_participants_names'] ) && is_array( $_POST['expected_participants_names'] ) ) {
+            $names_list     = array_values( array_filter( array_map( 'sanitize_text_field', array_map( 'wp_unslash', $_POST['expected_participants_names'] ) ), 'strlen' ) );
+            // Store an empty string (not "[]") when no names are given so the field counts as empty.
+            $expected_names = empty( $names_list ) ? '' : wp_json_encode( $names_list );
+        } else {
+            $expected_names = isset( $_POST['expected_participants_names'] ) ? sanitize_textarea_field( wp_unslash( $_POST['expected_participants_names'] ) ) : '';
+        }
         $is_approved    = isset( $_POST['is_approved'] ) && '1' === $_POST['is_approved'] ? 1 : 0;
         $tag_ids        = isset( $_POST['tags'] ) && is_array( $_POST['tags'] ) ? array_map( 'intval', $_POST['tags'] ) : array();
 
@@ -2396,7 +2480,6 @@ class EventsPage {
             'link'                        => $link,
             'expected_participants_count' => $expected_count,
             'expected_participants_names' => $expected_names,
-            'is_approved'                 => $is_approved,
         );
 
         if ( null !== $logo_url ) {
@@ -2409,6 +2492,19 @@ class EventsPage {
                 wp_send_json_error( array( 'message' => esc_html__( 'Could not update participant.', 'volunteer-exchange-platform' ) ) );
             }
             $this->participant_service->replace_tags( $participant_id, $tag_ids );
+
+            // Approval goes through the service so participant numbers and approval emails are handled.
+            $existing = $this->participant_service->get_by_id( $participant_id );
+            $was_approved = $existing && ! empty( $existing->is_approved );
+            if ( $is_approved && ! $was_approved ) {
+                if ( ! $this->participant_service->approve_participant( $participant_id ) ) {
+                    wp_send_json_error( array( 'message' => esc_html__( 'Participant saved, but could not be approved.', 'volunteer-exchange-platform' ) ) );
+                }
+            } elseif ( ! $is_approved && $was_approved ) {
+                if ( ! $this->participant_service->unapprove_participant( $participant_id ) ) {
+                    wp_send_json_error( array( 'message' => esc_html__( 'Participant saved, but approval could not be removed.', 'volunteer-exchange-platform' ) ) );
+                }
+            }
             wp_send_json_success( array( 'message' => esc_html__( 'Participant updated.', 'volunteer-exchange-platform' ) ) );
         } else {
             $new_id = $this->participant_service->create( $data );
@@ -2416,6 +2512,9 @@ class EventsPage {
                 wp_send_json_error( array( 'message' => esc_html__( 'Could not create participant.', 'volunteer-exchange-platform' ) ) );
             }
             $this->participant_service->replace_tags( $new_id, $tag_ids );
+            if ( $is_approved ) {
+                $this->participant_service->approve_participant( $new_id );
+            }
             wp_send_json_success( array( 'message' => esc_html__( 'Participant created.', 'volunteer-exchange-platform' ) ) );
         }
     }

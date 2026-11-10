@@ -81,6 +81,48 @@ class EmailQueueRepository {
     }
 
     /**
+     * Recover jobs stuck in 'processing' (e.g. a PHP process died mid-send).
+     *
+     * Rows locked for more than $stale_seconds are released. The attempt was already
+     * counted when the job was claimed, so jobs that used up their attempts become
+     * 'failed', others go back to 'pending'.
+     *
+     * @param int $stale_seconds Lock age in seconds. Default 10 minutes.
+     * @return int Number of recovered rows.
+     */
+    public function recover_stuck_jobs( $stale_seconds = 600 ) {
+        $now    = gmdate( 'Y-m-d H:i:s' );
+        $cutoff = gmdate( 'Y-m-d H:i:s', time() - max( 60, (int) $stale_seconds ) );
+        $error  = 'Recovered from stuck processing state.';
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Controlled table name.
+        $failed = $this->wpdb->query(
+            $this->wpdb->prepare(
+                "UPDATE {$this->table}
+                 SET status = 'failed', last_error = %s, lock_token = NULL, locked_at = NULL, updated_at = %s
+                 WHERE status = 'processing' AND locked_at < %s AND attempts >= max_attempts",
+                $error,
+                $now,
+                $cutoff
+            )
+        );
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Controlled table name.
+        $pending = $this->wpdb->query(
+            $this->wpdb->prepare(
+                "UPDATE {$this->table}
+                 SET status = 'pending', last_error = %s, lock_token = NULL, locked_at = NULL, updated_at = %s
+                 WHERE status = 'processing' AND locked_at < %s",
+                $error,
+                $now,
+                $cutoff
+            )
+        );
+
+        return (int) $failed + (int) $pending;
+    }
+
+    /**
      * Claim one pending job for processing.
      *
      * @return object|null

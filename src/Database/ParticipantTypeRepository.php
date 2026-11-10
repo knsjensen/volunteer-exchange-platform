@@ -85,6 +85,19 @@ class ParticipantTypeRepository extends AbstractRepository {
     }
 
     /**
+     * Count participants that use a participant type.
+     *
+     * @param int $type_id Participant type ID.
+     * @return int
+     */
+    public function count_participants_using_type( $type_id ) {
+        $participants_table = $this->wpdb->prefix . 'vep_participants';
+        return (int) $this->wpdb->get_var(
+            $this->wpdb->prepare( "SELECT COUNT(*) FROM {$participants_table} WHERE participant_type_id = %d", (int) $type_id )
+        );
+    }
+
+    /**
      * Delete participant type.
      *
      * @param int $type_id Participant type ID.

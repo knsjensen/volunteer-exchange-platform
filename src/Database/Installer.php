@@ -219,7 +219,7 @@ class Installer {
         dbDelta($sql_competition_winners);
 
         // Update version
-        update_option('vep_db_version', VEP_VERSION);
+        update_option('vep_db_version', VEP_DB_VERSION);
     }
 
     /**
@@ -230,6 +230,65 @@ class Installer {
      * @return void
      */
     public function maybe_upgrade() {
+        $stored = get_option('vep_db_version', '0');
+        if (!is_string($stored) || version_compare($stored, VEP_DB_VERSION, '>=')) {
+            return;
+        }
+
+        // Lock so concurrent requests do not run the upgrade in parallel.
+        if ( ! add_option( 'vep_db_upgrading', time(), '', 'no' ) ) {
+            $started = (int) get_option( 'vep_db_upgrading' );
+            if ( $started && ( time() - $started ) < 300 ) {
+                return;
+            }
+            update_option( 'vep_db_upgrading', time(), false );
+        }
+
+        try {
+            $this->run_legacy_upgrades();
+
+            // 1.1.0: replace guessable (UUID v1) or empty participant keys.
+            $this->regenerate_weak_participant_keys();
+
+            // Let dbDelta add any column/table that install() defines but the legacy
+            // upgrade steps above do not cover (e.g. competitions sort_order/custom_data/is_active,
+            // vep_participant_tags). install() also stores the new vep_db_version.
+            $this->install();
+        } finally {
+            delete_option( 'vep_db_upgrading' );
+        }
+    }
+
+    /**
+     * Regenerate participant randon_key values that are empty or UUID v1 (time based).
+     *
+     * Note: this invalidates links already sent in emails.
+     *
+     * @return void
+     */
+    private function regenerate_weak_participant_keys() {
+        global $wpdb;
+
+        $table = $wpdb->prefix . 'vep_participants';
+        $exists = $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $table));
+        if ($exists !== $table) {
+            return;
+        }
+
+        $ids = $wpdb->get_col(
+            "SELECT id FROM $table WHERE randon_key IS NULL OR randon_key = '' OR (CHAR_LENGTH(randon_key) = 36 AND SUBSTRING(randon_key, 15, 1) = '1')"
+        );
+        foreach ((array) $ids as $id) {
+            $wpdb->update($table, array('randon_key' => wp_generate_uuid4()), array('id' => (int) $id), array('%s'), array('%d'));
+        }
+    }
+
+    /**
+     * Legacy incremental schema upgrades.
+     *
+     * @return void
+     */
+    private function run_legacy_upgrades() {
         global $wpdb;
 
         $table_participants = $wpdb->prefix . 'vep_participants';

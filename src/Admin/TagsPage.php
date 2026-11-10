@@ -224,6 +224,12 @@ class TagsPage {
                 iconPreview.innerHTML = '<i class="' + cls + ' ' + name + '"></i>';
             }
 
+            // Document-level listeners are re-bound on every AJAX tab load: drop the previous ones first.
+            var docReg = window._vepTagsDocHandlers = window._vepTagsDocHandlers || [];
+            docReg.forEach(function (h) { document.removeEventListener(h[0], h[1]); });
+            docReg.length = 0;
+            function bindDoc(type, fn) { document.addEventListener(type, fn); docReg.push([type, fn]); }
+
             function openModal(tag) {
                 if (tag) {
                     modalTitle.textContent = labelEdit;
@@ -254,7 +260,7 @@ class TagsPage {
             });
 
             // Edit buttons (delegated - list table rows).
-            document.addEventListener('click', function (e) {
+            bindDoc('click', function (e) {
                 var btn = e.target.closest('.vep-tag-edit-btn');
                 if (!btn) return;
                 e.preventDefault();
@@ -314,12 +320,12 @@ class TagsPage {
             });
 
             // ESC key.
-            document.addEventListener('keydown', function (e) {
+            bindDoc('keydown', function (e) {
                 if (e.key === 'Escape' && overlay.style.display !== 'none') closeModal();
             });
 
             // Table navigation (pagination + sort) via AJAX — no page reload.
-            document.addEventListener('click', function (e) {
+            bindDoc('click', function (e) {
                 var wrap = document.getElementById('vep-tags-table-wrap');
                 if (!wrap) return;
                 var link = e.target.closest('a');
@@ -470,11 +476,15 @@ class TagsPage {
         }
 
         if ( $tag_id > 0 ) {
-            $this->service->update_tag( $tag_id, $data );
+            $ok      = false !== $this->service->update_tag( $tag_id, $data );
             $message = __( 'Tag updated successfully.', 'volunteer-exchange-platform' );
         } else {
-            $this->service->create( $data );
+            $ok      = (bool) $this->service->create( $data );
             $message = __( 'Tag created successfully.', 'volunteer-exchange-platform' );
+        }
+
+        if ( ! $ok ) {
+            wp_send_json_error( array( 'message' => __( 'Could not save the tag. The name may already be in use.', 'volunteer-exchange-platform' ) ) );
         }
 
         wp_send_json_success( array( 'message' => $message ) );

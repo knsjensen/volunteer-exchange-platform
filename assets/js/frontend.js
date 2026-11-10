@@ -31,6 +31,23 @@
         countdowns.forEach(function(countdown) {
             const startTimestamp = Number(countdown.getAttribute('data-start-timestamp') || 0);
             const endTimestamp = Number(countdown.getAttribute('data-end-timestamp') || 0);
+            // Offset between server clock and client clock (ms), so the countdown follows server time.
+            // Starts at 0 (client clock); corrected via an uncached admin-ajax call below
+            // because the embedded page may be served from a page cache.
+            let clockOffsetMs = 0;
+            if (typeof vepFrontend !== 'undefined' && vepFrontend.ajaxUrl && window.fetch) {
+                const sentAt = Date.now();
+                fetch(vepFrontend.ajaxUrl + '?action=vep_server_time&_=' + sentAt, { cache: 'no-store', credentials: 'omit' })
+                    .then(function(r) { return r.json(); })
+                    .then(function(res) {
+                        const recvAt = Date.now();
+                        if (res && res.success && res.data && res.data.server_now_ms) {
+                            // Server time at the midpoint of the round trip.
+                            clockOffsetMs = Number(res.data.server_now_ms) - (sentAt + (recvAt - sentAt) / 2);
+                        }
+                    })
+                    .catch(function() { /* keep client clock */ });
+            }
             const inProgressText = String(countdown.getAttribute('data-in-progress-text') || '');
             const eventOverText = String(countdown.getAttribute('data-event-over-text') || '');
             const unitMode = String(countdown.getAttribute('data-unit-mode') || 'months').toLowerCase();
@@ -178,7 +195,7 @@
             }
 
             function tick() {
-                const now = new Date();
+                const now = new Date(Date.now() + clockOffsetMs);
                 const startDate = new Date(startTimestamp * 1000);
                 const endDate = endTimestamp ? new Date(endTimestamp * 1000) : null;
 
@@ -478,7 +495,7 @@
             const btn = document.createElement('button');
             btn.type = 'button';
             btn.className = 'vep-remove-name-btn';
-            btn.setAttribute('aria-label', 'Remove');
+            btn.setAttribute('aria-label', t('remove', 'Remove'));
             btn.innerHTML = '&#x2715;';
             btn.addEventListener('click', function() {
                 if (namesList && namesList.querySelectorAll('.vep-names-row').length > 1) {
@@ -635,69 +652,7 @@
             });
         }
 
-        function loadParticipantData() {
-            if (!participantSelect || !eventIdInput) return;
-
-            const participantId = participantSelect.value;
-            if (!participantId) {
-                clearUpdateFields();
-                toggleUpdateFields();
-                return;
-            }
-
-            clearUpdateFields();
-            toggleUpdateFields();
-            setLoadingState(true);
-
-            const requestBody = new FormData();
-            requestBody.append('action', 'vep_get_participant_for_update');
-            requestBody.append('nonce', vepFrontend.nonce);
-            requestBody.append('participant_id', participantId);
-            requestBody.append('event_id', eventIdInput.value || '');
-
-            fetch(vepFrontend.ajaxUrl, {
-                method: 'POST',
-                body: requestBody
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (!data.success || !data.data || !data.data.participant) {
-                    const messageDiv = getUpdateParticipantMessageDiv(form);
-                    if (messageDiv) {
-                        messageDiv.className = 'vep-message vep-error vep-update-participant-message';
-                        messageDiv.textContent = (data.data && data.data.message) ? data.data.message : t('genericError', 'An error occurred. Please try again.');
-                        messageDiv.style.display = 'block';
-                    }
-                    setSelectValue(participantSelect, '');
-                    toggleUpdateFields();
-                    return;
-                }
-
-                const messageDiv = getUpdateParticipantMessageDiv(form);
-                if (messageDiv) {
-                    messageDiv.style.display = 'none';
-                }
-
-                populateUpdateFields(data.data.participant);
-                toggleUpdateFields();
-            })
-            .catch(() => {
-                const messageDiv = getUpdateParticipantMessageDiv(form);
-                if (messageDiv) {
-                    messageDiv.className = 'vep-message vep-error vep-update-participant-message';
-                    messageDiv.textContent = t('genericError', 'An error occurred. Please try again.');
-                    messageDiv.style.display = 'block';
-                }
-                setSelectValue(participantSelect, '');
-                toggleUpdateFields();
-            })
-            .finally(() => {
-                setLoadingState(false);
-            });
-        }
-
         if (participantSelect) {
-            participantSelect.addEventListener('change', loadParticipantData);
             toggleUpdateFields();
         }
 
@@ -1352,6 +1307,8 @@
         data.append('action',      'vep_frontend_toggle_unsubscribe');
         data.append('randon_key',  randonKey);
         data.append('unsubscribe', String(unsubscribe));
+        var typeSource = unsubBtn || resubBtn;
+        data.append('type',        (typeSource && typeSource.getAttribute('data-unsubscribe-type')) || 'aftale-paamindelse');
         data.append('_wpnonce',    vepFrontend.nonce);
 
         if (unsubBtn) { unsubBtn.disabled = true; }

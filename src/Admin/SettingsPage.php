@@ -326,6 +326,7 @@ class SettingsPage {
                 <h2 class="title"><?php esc_html_e( 'Email Templates', 'volunteer-exchange-platform' ); ?></h2>
                 <p class="description"><?php esc_html_e( 'Each template corresponds to an SMTP2GO template ID. The internal key is used in code to queue the right email.', 'volunteer-exchange-platform' ); ?></p>
 
+                <input type="hidden" name="profile_section" value="1">
                 <div id="vep-template-profiles">
                     <?php foreach ( $profiles as $i => $profile ) : ?>
                         <?php $this->render_profile_row( $i, $profile ); ?>
@@ -345,6 +346,102 @@ class SettingsPage {
                 <!-- Row template used by JS to clone new rows. -->
                 <script type="text/html" id="vep-profile-row-template">
                     <?php $this->render_profile_row( '__INDEX__', array() ); ?>
+                </script>
+
+                <script>
+                (function ($) {
+                    var container    = document.getElementById('vep-template-profiles');
+                    var addButton    = document.getElementById('vep-add-profile');
+                    var tplEl        = document.getElementById('vep-profile-row-template');
+                    var templateHtml = tplEl ? tplEl.innerHTML : '';
+                    var index        = container ? container.querySelectorAll('.vep-profile-row').length : 0;
+                    var allKeyOptions = [];
+                    var placeholder  = <?php echo wp_json_encode( __( '— Select a key —', 'volunteer-exchange-platform' ) ); ?>;
+
+                    function profileSelects() {
+                        return $(container).find('select[name^="profile_key["]');
+                    }
+
+                    function collectAllKeyOptions() {
+                        if (allKeyOptions.length > 0) { return; }
+                        var $first = profileSelects().first();
+                        if (!$first.length) { return; }
+                        $first.find('option').each(function () {
+                            var value = $(this).attr('value');
+                            if (value) {
+                                allKeyOptions.push({ value: value, label: $(this).text() });
+                            }
+                        });
+                    }
+
+                    function selectedKeyValues() {
+                        var selected = [];
+                        profileSelects().each(function () {
+                            var value = $(this).val();
+                            if (value) { selected.push(value); }
+                        });
+                        return selected;
+                    }
+
+                    function enforceUniqueSelections() {
+                        var seen = {};
+                        profileSelects().each(function () {
+                            var $select = $(this);
+                            var value = $select.val();
+                            if (!value) { return; }
+                            if (seen[value]) { $select.val(''); return; }
+                            seen[value] = true;
+                        });
+                    }
+
+                    function rebuildSelectOptions() {
+                        var selected = selectedKeyValues();
+                        profileSelects().each(function () {
+                            var $select = $(this);
+                            var currentValue = $select.val();
+                            $select.empty();
+                            $select.append($('<option>', { value: '', text: placeholder }));
+                            allKeyOptions.forEach(function (option) {
+                                if (selected.indexOf(option.value) !== -1 && option.value !== currentValue) { return; }
+                                $select.append($('<option>', { value: option.value, text: option.label }));
+                            });
+                            if (currentValue && $select.find('option[value="' + currentValue.replace(/"/g, '\\"') + '"]').length) {
+                                $select.val(currentValue);
+                            } else {
+                                $select.val('');
+                            }
+                        });
+                    }
+
+                    function updateAddButtonVisibility() {
+                        $(addButton).toggle(selectedKeyValues().length < allKeyOptions.length);
+                    }
+
+                    function refreshKeyUI() {
+                        collectAllKeyOptions();
+                        enforceUniqueSelections();
+                        rebuildSelectOptions();
+                        updateAddButtonVisibility();
+                    }
+
+                    refreshKeyUI();
+
+                    $(addButton).on('click', function () {
+                        if (selectedKeyValues().length >= allKeyOptions.length) { return; }
+                        $(container).append(templateHtml.replace(/__INDEX__/g, index));
+                        index++;
+                        refreshKeyUI();
+                    });
+
+                    $(container).on('click', '.remove-profile', function () {
+                        $(this).closest('.vep-profile-row').remove();
+                        refreshKeyUI();
+                    });
+
+                    $(container).on('change', 'select[name^="profile_key["]', function () {
+                        refreshKeyUI();
+                    });
+                }(jQuery));
                 </script>
 
                 <?php endif; ?>
@@ -392,7 +489,8 @@ class SettingsPage {
                 $uri_params[ $key ] = $_GET[ $key ];
             }
         }
-        $_SERVER['REQUEST_URI'] = '/wp-admin/admin.php?' . http_build_query( $uri_params );
+        $admin_path = wp_parse_url( admin_url( 'admin.php' ), PHP_URL_PATH );
+        $_SERVER['REQUEST_URI'] = ( $admin_path ? $admin_path : '/wp-admin/admin.php' ) . '?' . http_build_query( $uri_params );
 
         ob_start();
         $this->render_sent_emails_tab();
@@ -502,6 +600,15 @@ class SettingsPage {
             var modal   = document.getElementById('vep-payload-modal');
             var content = document.getElementById('vep-payload-modal-content');
 
+            var refreshBtn = document.getElementById('vep-refresh-emails-btn');
+            if (refreshBtn) {
+                refreshBtn.addEventListener('click', function () {
+                    if (window._vepSettingsPage && window._vepSettingsPage.reloadEmailsTable) {
+                        window._vepSettingsPage.reloadEmailsTable();
+                    }
+                });
+            }
+
             function openModal(payloadText) {
                 content.textContent = payloadText;
                 modal.style.display = 'flex';
@@ -512,22 +619,30 @@ class SettingsPage {
                 modal.style.display = 'none';
             }
 
-            document.addEventListener('click', function (e) {
-                var btn = e.target.closest('.vep-payload-view-btn');
-                if (btn) {
-                    openModal(btn.getAttribute('data-payload') || '');
-                }
-            });
+            // Document-level listeners must be bound only once: this script re-runs on every AJAX tab load.
+            if (!window._vepPayloadModalBound) {
+                window._vepPayloadModalBound = true;
+                document.addEventListener('click', function (e) {
+                    var btn = e.target.closest('.vep-payload-view-btn');
+                    var m = document.getElementById('vep-payload-modal');
+                    var c = document.getElementById('vep-payload-modal-content');
+                    if (btn && m && c) {
+                        c.textContent = btn.getAttribute('data-payload') || '';
+                        m.style.display = 'flex';
+                        m.focus();
+                    }
+                });
+                document.addEventListener('keydown', function (e) {
+                    var m = document.getElementById('vep-payload-modal');
+                    if (e.key === 'Escape' && m && m.style.display !== 'none') m.style.display = 'none';
+                });
+            }
 
             document.getElementById('vep-payload-modal-close').addEventListener('click', closeModal);
             document.getElementById('vep-payload-modal-close-footer').addEventListener('click', closeModal);
 
             modal.addEventListener('click', function (e) {
                 if (e.target === modal) closeModal();
-            });
-
-            document.addEventListener('keydown', function (e) {
-                if (e.key === 'Escape' && modal.style.display !== 'none') closeModal();
             });
 
             document.getElementById('vep-payload-modal-copy').addEventListener('click', function () {
@@ -591,7 +706,7 @@ class SettingsPage {
                         );
                         ?>
                         <select name="profile_key[<?php echo esc_attr( $index ); ?>]" class="regular-text">
-                            <option value=""><?php esc_html_e( 'â€” Select a key â€”', 'volunteer-exchange-platform' ); ?></option>
+                            <option value=""><?php esc_html_e( '— Select a key —', 'volunteer-exchange-platform' ); ?></option>
                             <?php foreach ( $known_keys as $k => $label ) : ?>
                                 <option value="<?php echo esc_attr( $k ); ?>" <?php selected( $key, $k ); ?>><?php echo esc_html( $label ); ?></option>
                             <?php endforeach; ?>
@@ -641,134 +756,6 @@ jQuery(function ($) {
     if ($.fn.wpColorPicker) {
         $('.vep-color-picker').wpColorPicker();
     }
-
-    var $container = $('#vep-template-profiles');
-    var $template  = $('#vep-profile-row-template').html();
-    var $addButton = $('#vep-add-profile');
-    var index      = $container.find('.vep-profile-row').length;
-    var allKeyOptions = [];
-
-    function profileSelects() {
-        return $container.find('select[name^="profile_key["]');
-    }
-
-    function collectAllKeyOptions() {
-        if (allKeyOptions.length > 0) {
-            return;
-        }
-
-        var $firstSelect = profileSelects().first();
-        if (!$firstSelect.length) {
-            return;
-        }
-
-        $firstSelect.find('option').each(function () {
-            var value = $(this).attr('value');
-            if (value) {
-                allKeyOptions.push({
-                    value: value,
-                    label: $(this).text()
-                });
-            }
-        });
-    }
-
-    function selectedKeyValues() {
-        var selected = [];
-        profileSelects().each(function () {
-            var value = $(this).val();
-            if (value) {
-                selected.push(value);
-            }
-        });
-        return selected;
-    }
-
-    function enforceUniqueSelections() {
-        var seen = {};
-        profileSelects().each(function () {
-            var $select = $(this);
-            var value = $select.val();
-
-            if (!value) {
-                return;
-            }
-
-            if (seen[value]) {
-                $select.val('');
-                return;
-            }
-
-            seen[value] = true;
-        });
-    }
-
-    function rebuildSelectOptions() {
-        var selected = selectedKeyValues();
-
-        profileSelects().each(function () {
-            var $select = $(this);
-            var currentValue = $select.val();
-
-            $select.empty();
-            $select.append($('<option>', {
-                value: '',
-                text: '\u2014 Select a key \u2014'
-            }));
-
-            allKeyOptions.forEach(function (option) {
-                var isSelectedElsewhere = selected.indexOf(option.value) !== -1 && option.value !== currentValue;
-                if (isSelectedElsewhere) {
-                    return;
-                }
-
-                $select.append($('<option>', {
-                    value: option.value,
-                    text: option.label
-                }));
-            });
-
-            if (currentValue && $select.find('option[value="' + currentValue.replace(/"/g, '\\"') + '"]').length) {
-                $select.val(currentValue);
-            } else {
-                $select.val('');
-            }
-        });
-    }
-
-    function updateAddButtonVisibility() {
-        var usedCount = selectedKeyValues().length;
-        $addButton.toggle(usedCount < allKeyOptions.length);
-    }
-
-    function refreshKeyUI() {
-        collectAllKeyOptions();
-        enforceUniqueSelections();
-        rebuildSelectOptions();
-        updateAddButtonVisibility();
-    }
-
-    refreshKeyUI();
-
-    $('#vep-add-profile').on('click', function () {
-        if (selectedKeyValues().length >= allKeyOptions.length) {
-            return;
-        }
-
-        var html = $template.replace(/__INDEX__/g, index);
-        $container.append(html);
-        index++;
-        refreshKeyUI();
-    });
-
-    $container.on('click', '.remove-profile', function () {
-        $(this).closest('.vep-profile-row').remove();
-        refreshKeyUI();
-    });
-
-    $container.on('change', 'select[name^="profile_key["]', function () {
-        refreshKeyUI();
-    });
 });
 
 // Settings tab switching via AJAX.
@@ -885,6 +872,13 @@ jQuery(function () {
         Array.from(new FormData(form)).forEach(function (pair) { sp.set(pair[0], pair[1]); });
         history.replaceState(null, '', '?' + sp.toString());
         loadEmailsTable(sp);
+    });
+
+    // Refresh button — reloads the emails table with the current filter state.
+    document.addEventListener('click', function (e) {
+        if (!isEmailsTabShown()) return;
+        if (!e.target.closest('#vep-refresh-emails-btn')) return;
+        loadEmailsTable(new URLSearchParams(window.location.search));
     });
 });
 JS;

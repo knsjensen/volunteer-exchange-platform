@@ -51,13 +51,13 @@ class AgreementsList {
         $active_event = $this->event_service->get_active_event();
 
         if (!$active_event) {
-            return '<div class="vep-message vep-error">' . __('No active event at the moment.', 'volunteer-exchange-platform') . '</div>';
+            return '<div class="vep-message vep-error">' . esc_html__( 'No active event at the moment.', 'volunteer-exchange-platform' ) . '</div>';
         }
 
         $agreements = $this->event_service->get_agreements_for_event($active_event->id);
 
         if (empty($agreements)) {
-            return '<div class="vep-message vep-info">' . __('No agreements yet.', 'volunteer-exchange-platform') . '</div>';
+            return '<div class="vep-message vep-info">' . esc_html__( 'No agreements yet.', 'volunteer-exchange-platform' ) . '</div>';
         }
 
         ob_start();

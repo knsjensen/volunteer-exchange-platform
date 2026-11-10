@@ -101,6 +101,7 @@ class UpdateParticipantPage {
         $randon_key = sanitize_text_field( (string) $randon_key );
         $participant = $this->participant_service->get_by_randon_key( $randon_key );
 
+        nocache_headers();
         get_header();
 
         echo '<div class="vep-page-wrapper">';

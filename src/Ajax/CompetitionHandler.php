@@ -52,7 +52,13 @@ class CompetitionHandler {
             return false;
         }
 
-        return (bool) ( wp_verify_nonce( $nonce, 'vep_competitions_nonce' ) || wp_verify_nonce( $nonce, 'vep_admin_nonce' ) );
+        if ( wp_verify_nonce( $nonce, 'vep_competitions_nonce' ) || wp_verify_nonce( $nonce, 'vep_admin_nonce' ) ) {
+            return true;
+        }
+
+        // Per-competition nonce emitted by the competitions page.
+        $competition_id = isset( $_POST['competition_id'] ) ? (int) $_POST['competition_id'] : 0;
+        return $competition_id > 0 && (bool) wp_verify_nonce( $nonce, 'vep_set_competition_winner_' . $competition_id );
     }
 
     /**
@@ -69,7 +75,6 @@ class CompetitionHandler {
         $this->event_service = $event_service ?: new EventService();
 
         add_action( 'wp_ajax_vep_reorder_competitions', array( $this, 'reorder_competitions_ajax' ) );
-        add_action( 'wp_ajax_vep_set_competition_winner', array( $this, 'set_winner_ajax' ) );
         add_action( 'wp_ajax_vep_set_competition_winner_text', array( $this, 'set_winner_text_ajax' ) );
         add_action( 'wp_ajax_vep_toggle_competition_active', array( $this, 'toggle_active_ajax' ) );
         add_action( 'wp_ajax_vep_delete_competition', array( $this, 'delete_competition_ajax' ) );
@@ -107,51 +112,6 @@ class CompetitionHandler {
             wp_send_json_success( array( 'message' => __( 'Competitions reordered successfully', 'volunteer-exchange-platform' ) ) );
         } else {
             wp_send_json_error( array( 'message' => __( 'Failed to reorder competitions', 'volunteer-exchange-platform' ) ) );
-        }
-    }
-
-    /**
-     * Set competition winner via AJAX
-     *
-     * @return void
-     */
-    public function set_winner_ajax() {
-        if ( ! $this->validate_ajax_nonce() ) {
-            wp_send_json_error( array( 'message' => __( 'Security check failed', 'volunteer-exchange-platform' ) ) );
-        }
-
-        if ( ! current_user_can( 'manage_options' ) ) {
-            wp_send_json_error( array( 'message' => __( 'Unauthorized', 'volunteer-exchange-platform' ) ) );
-        }
-
-        $competition_id = isset( $_POST['competition_id'] ) ? (int) $_POST['competition_id'] : 0;
-        $winner_id = isset( $_POST['winner_id'] ) ? sanitize_text_field( wp_unslash( $_POST['winner_id'] ) ) : '';
-
-        if ( ! $competition_id ) {
-            wp_send_json_error( array( 'message' => __( 'Competition ID is required', 'volunteer-exchange-platform' ) ) );
-        }
-
-        // Handle "auto" or specific winner_id
-        $winner_id_int = null;
-        if ( 'auto' === $winner_id ) {
-            // Will be handled by auto-select logic
-            $winner_id_int = null;
-        } elseif ( $winner_id ) {
-            $winner_id_int = (int) $winner_id;
-        }
-
-        $active_event = $this->event_service->get_active_event();
-
-        if ( ! $active_event ) {
-            wp_send_json_error( array( 'message' => __( 'No active event', 'volunteer-exchange-platform' ) ) );
-        }
-
-        $result = $this->competition_service->set_winner( $competition_id, $winner_id_int, (int) $active_event->id );
-
-        if ( $result ) {
-            wp_send_json_success( array( 'message' => __( 'Winner set successfully', 'volunteer-exchange-platform' ) ) );
-        } else {
-            wp_send_json_error( array( 'message' => __( 'Failed to set winner', 'volunteer-exchange-platform' ) ) );
         }
     }
 
@@ -246,6 +206,7 @@ class CompetitionHandler {
         $result = $this->competition_service->reset_all_winners_for_event( $active_event->id );
 
         if ( $result ) {
+            \VolunteerExchangePlatform\Ajax\EventDisplayHandler::flush_competition_cache( $active_event->id );
             wp_send_json_success( array( 'message' => __( 'All winners reset successfully', 'volunteer-exchange-platform' ) ) );
         } else {
             wp_send_json_error( array( 'message' => __( 'Failed to reset winners', 'volunteer-exchange-platform' ) ) );
@@ -282,6 +243,7 @@ class CompetitionHandler {
         $result = $this->competition_service->set_winner_text( $competition_id, $winner_text, (int) $active_event->id );
 
         if ( false !== $result ) {
+            \VolunteerExchangePlatform\Ajax\EventDisplayHandler::flush_competition_cache( $active_event->id );
             wp_send_json_success( array( 'message' => __( 'Winner set successfully', 'volunteer-exchange-platform' ) ) );
         } else {
             wp_send_json_error( array( 'message' => __( 'Failed to set winner', 'volunteer-exchange-platform' ) ) );

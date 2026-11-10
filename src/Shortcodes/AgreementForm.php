@@ -59,7 +59,7 @@ class AgreementForm {
         $active_event = $this->event_service->get_active_event();
         
         if (!$active_event) {
-            return '<div class="vep-message vep-error">' . __('No active event at the moment.', 'volunteer-exchange-platform') . '</div>';
+            return '<div class="vep-message vep-error">' . esc_html__( 'No active event at the moment.', 'volunteer-exchange-platform' ) . '</div>';
         }
 
         $event_end_ts = isset( $active_event->end_date ) ? strtotime( (string) $active_event->end_date ) : false;
@@ -68,6 +68,7 @@ class AgreementForm {
             $event_name = isset( $active_event->name ) ? (string) $active_event->name : '';
 
             return '<div class="vep-message vep-info">' . sprintf(
+                /* translators: %s: event name */
                 esc_html__( '%s is over for this time.', 'volunteer-exchange-platform' ),
                 esc_html( $event_name )
             ) . '</div>';
@@ -77,7 +78,7 @@ class AgreementForm {
         $participants = $this->participant_service->get_approved_for_event_select($active_event->id);
         
         if (count($participants) < 2) {
-            return '<div class="vep-message vep-info">' . __('At least 2 approved participants are required to create agreements.', 'volunteer-exchange-platform') . '</div>';
+            return '<div class="vep-message vep-info">' . esc_html__( 'At least 2 approved participants are required to create agreements.', 'volunteer-exchange-platform' ) . '</div>';
         }
         
         ob_start();

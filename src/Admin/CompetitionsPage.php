@@ -284,9 +284,14 @@ class CompetitionsPage {
         $active_event = $this->event_service->get_active_event();
         $event_id     = $active_event ? (int) $active_event->id : 0;
 
+        if ( $event_id <= 0 ) {
+            wp_send_json_error( array( 'message' => esc_html__( 'No active event', 'volunteer-exchange-platform' ) ) );
+        }
+
         $updated = $this->competition_service->set_winner( $competition_id, $winner_id > 0 ? $winner_id : null, $event_id );
 
         if ( false !== $updated ) {
+            \VolunteerExchangePlatform\Ajax\EventDisplayHandler::flush_competition_cache( $event_id );
             wp_send_json_success( array( 'message' => esc_html__( 'Winner set successfully', 'volunteer-exchange-platform' ) ) );
         } else {
             wp_send_json_error( array( 'message' => esc_html__( 'Failed to set winner', 'volunteer-exchange-platform' ) ) );

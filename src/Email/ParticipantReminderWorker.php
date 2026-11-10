@@ -8,6 +8,7 @@
 
 namespace VolunteerExchangePlatform\Email;
 
+use VolunteerExchangePlatform\Services\ParticipantEmailService;
 use VolunteerExchangePlatform\Services\ParticipantService;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -21,14 +22,20 @@ class ParticipantReminderWorker {
     private $participant_service;
 
     /**
+     * @var ParticipantEmailService
+     */
+    private $participant_email_service;
+
+    /**
      * @var \wpdb
      */
     private $wpdb;
 
-    public function __construct( ?ParticipantService $participant_service = null, ?\wpdb $wpdb_instance = null ) {
+    public function __construct( ?ParticipantService $participant_service = null, ?\wpdb $wpdb_instance = null, ?ParticipantEmailService $participant_email_service = null ) {
         global $wpdb;
 
-        $this->participant_service = $participant_service ? $participant_service : new ParticipantService();
+        $this->participant_service       = $participant_service ? $participant_service : new ParticipantService();
+        $this->participant_email_service = $participant_email_service ?: new ParticipantEmailService( $this->participant_service );
         $this->wpdb = $wpdb_instance ? $wpdb_instance : $wpdb;
 
         add_action( 'init', array( $this, 'ensure_schedule' ) );
@@ -49,31 +56,45 @@ class ParticipantReminderWorker {
     /**
      * Process automatic reminders (1 month, 14 days, 7 days before event).
      *
+     * Windows are used instead of exact dates so a missed cron day does not lose a
+     * reminder. Windows are processed from the narrowest to the widest, and a
+     * participant is handled by only the narrowest window that applies to the event
+     * (earlier, wider reminders are skipped). Dedupe relies on has_sent_reminder().
+     *
+     * NOTE: the '21d' key is persisted in the vep_participant_reminders table (historical
+     * name for the "1 month" reminder) and must keep its value.
+     *
      * @return void
      */
     public function process_reminders() {
         $today = current_datetime();
 
         $targets = array(
-            '21d'  => $today->modify( '+1 month' )->format( 'Y-m-d' ),
-            '14d' => $today->modify( '+14 days' )->format( 'Y-m-d' ),
             '7d'  => $today->modify( '+7 days' )->format( 'Y-m-d' ),
+            '14d' => $today->modify( '+14 days' )->format( 'Y-m-d' ),
+            '21d' => $today->modify( '+1 month' )->format( 'Y-m-d' ), // Persisted key for the "1 month" reminder.
         );
 
+        $handled = array();
+
         foreach ( $targets as $reminder_type => $target_date ) {
+            // Candidates: events starting after now and on/before $target_date.
             $participants = $this->participant_service->get_reminder_candidates_by_event_date( $target_date );
 
             foreach ( $participants as $participant ) {
                 $participant_id = isset( $participant->id ) ? (int) $participant->id : 0;
-                if ( $participant_id <= 0 ) {
+                if ( $participant_id <= 0 || isset( $handled[ $participant_id ] ) ) {
                     continue;
                 }
+
+                // The narrowest applicable window owns this participant for this run.
+                $handled[ $participant_id ] = true;
 
                 if ( $this->has_sent_reminder( $participant_id, $reminder_type ) ) {
                     continue;
                 }
 
-                $queued = $this->participant_service->queue_update_participant_reminder( $participant_id );
+                $queued = $this->participant_email_service->queue_update_participant_reminder( $participant_id );
                 if ( $queued ) {
                     $this->mark_reminder_sent( $participant_id, $reminder_type );
                 }

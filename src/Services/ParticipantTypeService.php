@@ -179,13 +179,36 @@ class ParticipantTypeService extends AbstractService {
     }
 
     /**
-     * Delete participant type.
+     * Count participants using a participant type.
+     *
+     * @param int $type_id Participant type ID.
+     * @return int
+     */
+    public function count_participants_using_type( $type_id ) {
+        if ( ! $this->is_valid_id( $type_id ) ) {
+            return 0;
+        }
+
+        return (int) $this->run_guarded(
+            function () use ( $type_id ) {
+                return $this->repository->count_participants_using_type( (int) $type_id );
+            },
+            0
+        );
+    }
+
+    /**
+     * Delete participant type (refuses when participants still use it).
      *
      * @param int $type_id Participant type ID.
      * @return bool
      */
     public function delete_type( $type_id ) {
         if ( ! $this->is_valid_id( $type_id ) ) {
+            return false;
+        }
+
+        if ( $this->count_participants_using_type( $type_id ) > 0 ) {
             return false;
         }
 

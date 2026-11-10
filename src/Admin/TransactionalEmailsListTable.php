@@ -171,6 +171,7 @@ class TransactionalEmailsListTable extends \WP_List_Table {
             );
             echo ' <a href="' . esc_url( $clear_url ) . '" class="button">' . esc_html__( 'Clear', 'volunteer-exchange-platform' ) . '</a>';
         }
+        echo ' <button type="button" id="vep-refresh-emails-btn" class="button">&#x21bb; ' . esc_html__( 'Update', 'volunteer-exchange-platform' ) . '</button>';
         echo '</div>';
 
         // Rows per page + total count – right.
@@ -284,11 +285,11 @@ class TransactionalEmailsListTable extends \WP_List_Table {
         }
         if ( '' !== $this->date_from ) {
             $where_parts[] = 'COALESCE(sent_at, scheduled_at) >= %s';
-            $where_args[]  = str_replace( 'T', ' ', $this->date_from ) . ':00';
+            $where_args[]  = get_gmt_from_date( str_replace( 'T', ' ', $this->date_from ) . ':00' );
         }
         if ( '' !== $this->date_to ) {
             $where_parts[] = 'COALESCE(sent_at, scheduled_at) <= %s';
-            $where_args[]  = str_replace( 'T', ' ', $this->date_to ) . ':59';
+            $where_args[]  = get_gmt_from_date( str_replace( 'T', ' ', $this->date_to ) . ':59' );
         }
         if ( '' !== $this->search_email ) {
             $where_parts[] = "JSON_SEARCH(payload, 'one', %s, NULL, '$.to[*]') IS NOT NULL";
@@ -342,6 +343,10 @@ class TransactionalEmailsListTable extends \WP_List_Table {
 
             $subject = isset( $payload['subject'] ) ? (string) $payload['subject'] : '';
             $date = ! empty( $row->sent_at ) ? (string) $row->sent_at : (string) $row->scheduled_at;
+            // Stored as UTC; display in site-local time.
+            if ( '' !== $date && '0000-00-00 00:00:00' !== $date ) {
+                $date = get_date_from_gmt( $date, 'Y-m-d H:i:s' );
+            }
 
             $items[] = (object) array(
                 'id'                  => (int) $row->id,

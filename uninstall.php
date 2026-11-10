@@ -19,6 +19,7 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 function volunteer_exchange_platform_delete_options() {
     $options = array(
         'vep_db_version',
+        'vep_db_upgrading',
         'vep_display_title',
         'vep_display_mode',
         'vep_display_background_type',
@@ -31,6 +32,13 @@ function volunteer_exchange_platform_delete_options() {
         'vep_display_background_gradient_stop_3',
         'vep_display_background_gradient_angle',
         'vep_display_text_color',
+        'vep_display_auto_switch_stats',
+        'vep_display_closing_text',
+        'vep_display_time_up_text',
+        'vep_display_hide_buttons',
+        'vep_display_show_competitions',
+        'vep_email_settings',
+        'vep_rewrite_version',
         // Legacy key retained for safe uninstall cleanup.
         'vep_display_countdown_datetime',
     );
@@ -41,6 +49,21 @@ function volunteer_exchange_platform_delete_options() {
     
     // Clear all transients
     delete_transient( 'vep_admin_notices' );
+
+    // Remove per-event / per-user transients and scheduled events.
+    global $wpdb;
+    // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Direct cleanup of plugin transients during uninstall.
+    $wpdb->query(
+        "DELETE FROM {$wpdb->options} WHERE option_name LIKE '\_transient\_vep\_%' OR option_name LIKE '\_transient\_timeout\_vep\_%'"
+    );
+    // Per-event display presentation state and screen presence options.
+    // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Direct cleanup of plugin options during uninstall.
+    $wpdb->query(
+        "DELETE FROM {$wpdb->options} WHERE option_name LIKE 'vep\_display\_pstate\_%' OR option_name LIKE 'vep\_display\_presence\_%'"
+    );
+    foreach ( array( 'vep_process_transactional_email_queue', 'vep_send_participant_update_reminders', 'vep_email_cleanup_run' ) as $hook ) {
+        wp_clear_scheduled_hook( $hook );
+    }
 }
 
 /**
@@ -50,15 +73,16 @@ function volunteer_exchange_platform_drop_tables() {
     global $wpdb;
 
     $tables = array(
-        $wpdb->prefix . 'vep_events',
-        $wpdb->prefix . 'vep_participant_types',
-        $wpdb->prefix . 'vep_we_offer_tags',
-        $wpdb->prefix . 'vep_we_seek_tags',
-        $wpdb->prefix . 'vep_participants',
-        $wpdb->prefix . 'vep_participant_we_offer',
-        $wpdb->prefix . 'vep_participant_we_seek',
+        $wpdb->prefix . 'vep_competition_winners',
+        $wpdb->prefix . 'vep_competitions',
+        $wpdb->prefix . 'vep_participant_reminders',
+        $wpdb->prefix . 'vep_transactional_emails',
+        $wpdb->prefix . 'vep_participant_tags',
         $wpdb->prefix . 'vep_agreements',
-        $wpdb->prefix . 'vep_agreement_tags',
+        $wpdb->prefix . 'vep_participants',
+        $wpdb->prefix . 'vep_we_offer_tags',
+        $wpdb->prefix . 'vep_participant_types',
+        $wpdb->prefix . 'vep_events',
     );
 
     // Drop each table

@@ -5,6 +5,7 @@
 namespace VolunteerExchangePlatform\Ajax;
 
 use VolunteerExchangePlatform\Admin\EventParticipantsListTable;
+use VolunteerExchangePlatform\Services\ParticipantEmailService;
 use VolunteerExchangePlatform\Services\ParticipantService;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -42,6 +43,7 @@ class EventParticipantsTableHandler {
 
         $message = '';
         $service = new ParticipantService();
+        $email_service = new ParticipantEmailService( $service );
 
         // --- Handle single participant quick-actions (approve, unapprove, delete, send_reminder) ---
         $participant_action = isset( $_POST['participant_action'] ) ? sanitize_key( wp_unslash( $_POST['participant_action'] ) ) : '';
@@ -66,8 +68,11 @@ class EventParticipantsTableHandler {
                     $message = __( 'Participant deleted.', 'volunteer-exchange-platform' );
                     break;
                 case 'send_reminder':
-                    $service->queue_update_participant_reminder( $participant_id );
-                    $message = __( 'Reminder queued.', 'volunteer-exchange-platform' );
+                    if ( $email_service->queue_update_participant_reminder( $participant_id ) ) {
+                        $message = __( 'Reminder queued.', 'volunteer-exchange-platform' );
+                    } else {
+                        $message = __( 'Reminder was not queued (participant is not approved, has no email, has unsubscribed, or has nothing missing).', 'volunteer-exchange-platform' );
+                    }
                     break;
             }
         }

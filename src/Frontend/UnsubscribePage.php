@@ -109,7 +109,7 @@ class UnsubscribePage {
     }
 
     /**
-     * Handle page rendering and immediately apply the unsubscribe action on landing.
+     * Handle page rendering. The unsubscribe is applied only on an explicit POST.
      *
      * @return void
      */
@@ -126,6 +126,14 @@ class UnsubscribePage {
 
         $participant = $this->participant_service->get_by_randon_key( $randon_key );
 
+        // Key-based pages must never be cached.
+        nocache_headers();
+
+        // Unsubscribe only on an explicit POST. A plain GET (e.g. from a mail link scanner)
+        // only shows a confirmation page.
+        $is_post   = isset( $_SERVER['REQUEST_METHOD'] ) && 'POST' === strtoupper( (string) $_SERVER['REQUEST_METHOD'] );
+        $confirmed = $is_post && isset( $_POST['vep_unsubscribe_confirm'] ) && '1' === (string) wp_unslash( $_POST['vep_unsubscribe_confirm'] ); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Anonymous email link; the secret key is the credential.
+
         get_header();
         echo '<div class="vep-page-wrapper">';
 
@@ -134,13 +142,14 @@ class UnsubscribePage {
                 esc_html__( 'Participant not found.', 'volunteer-exchange-platform' ) .
                 '</div></div>';
         } else {
-            // Apply the unsubscribe immediately on landing.
-            if ( 'reminder_unsubscribed' === $db_field ) {
-                $this->participant_service->set_reminder_unsubscribed( (int) $participant->id, 1 );
-                $participant->reminder_unsubscribed = 1;
-            } else {
-                $this->participant_service->set_agreement_overview_unsubscribed( (int) $participant->id, 1 );
-                $participant->agreement_overview_unsubscribed = 1;
+            if ( $confirmed ) {
+                if ( 'reminder_unsubscribed' === $db_field ) {
+                    $this->participant_service->set_reminder_unsubscribed( (int) $participant->id, 1 );
+                    $participant->reminder_unsubscribed = 1;
+                } else {
+                    $this->participant_service->set_agreement_overview_unsubscribed( (int) $participant->id, 1 );
+                    $participant->agreement_overview_unsubscribed = 1;
+                }
             }
             echo $this->render( $participant, $randon_key, $type, $db_field ); // Output is escaped within render().
         }
@@ -198,18 +207,53 @@ class UnsubscribePage {
                 <?php echo esc_html( $btn_resub ); ?>
             </button>
 
+            <?php if ( ! $is_unsubscribed ) : ?>
+                <form method="post" action="" id="vep-unsubscribe-form" class="vep-unsubscribe-form">
+                    <input type="hidden" name="vep_unsubscribe_confirm" value="1">
+                    <button type="submit" class="vep-button vep-button-danger">
+                        <?php echo esc_html( $btn_unsub ); ?>
+                    </button>
+                </form>
+            <?php endif; ?>
+
             <button
                 type="button"
                 id="vep-unsubscribe-btn"
                 class="vep-button vep-button-danger"
                 data-randon-key="<?php echo esc_attr( $randon_key ); ?>"
                 data-unsubscribe-type="<?php echo esc_attr( $type ); ?>"
-                style="<?php echo $is_unsubscribed ? 'display:none;' : ''; ?>"
+                style="display:none;"
             >
                 <?php echo esc_html( $btn_unsub ); ?>
             </button>
         </div>
         <?php
         return ob_get_clean();
+    }
+
+    /**
+     * Get unsubscribe URL for a participant key and type.
+     *
+     * Works with pretty and plain permalinks.
+     *
+     * @param string $randon_key Participant key.
+     * @param string $type       Type slug (see self::TYPES). Defaults to participant reminders.
+     * @return string
+     */
+    public static function get_unsubscribe_url( $randon_key, $type = self::DEFAULT_TYPE ) {
+        $randon_key = sanitize_text_field( (string) $randon_key );
+        $type       = isset( self::TYPES[ $type ] ) ? $type : self::DEFAULT_TYPE;
+
+        if ( empty( get_option( 'permalink_structure' ) ) ) {
+            return add_query_arg(
+                array(
+                    'vep_unsubscribe_type' => $type,
+                    'vep_unsubscribe_key'  => rawurlencode( $randon_key ),
+                ),
+                home_url( '/' )
+            );
+        }
+
+        return home_url( user_trailingslashit( 'vep/afmeld/' . $type . '/' . rawurlencode( $randon_key ) ) );
     }
 }

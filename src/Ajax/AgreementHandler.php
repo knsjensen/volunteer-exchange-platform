@@ -11,6 +11,7 @@ namespace VolunteerExchangePlatform\Ajax;
 
 use VolunteerExchangePlatform\Services\CompetitionService;
 use VolunteerExchangePlatform\Services\EventService;
+use VolunteerExchangePlatform\Services\ParticipantService;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -35,15 +36,26 @@ class AgreementHandler {
     private $competition_service;
 
     /**
+     * @var ParticipantService
+     */
+    private $participant_service;
+
+    /**
+     * Grace window after event end in which agreements may still be created (same as AgreementForm).
+     */
+    const AGREEMENT_GRACE_SECONDS = 1800;
+
+    /**
      * Constructor.
      *
      * @param EventService|null       $event_service Event service instance.
      * @param CompetitionService|null $competition_service Competition service instance.
      * @return void
      */
-    public function __construct( ?EventService $event_service = null, ?CompetitionService $competition_service = null ) {
+    public function __construct( ?EventService $event_service = null, ?CompetitionService $competition_service = null, ?ParticipantService $participant_service = null ) {
         $this->event_service = $event_service ?: new EventService();
         $this->competition_service = $competition_service ?: new CompetitionService();
+        $this->participant_service = $participant_service ?: new ParticipantService();
         add_action('wp_ajax_vep_create_agreement', array($this, 'create'));
         add_action('wp_ajax_nopriv_vep_create_agreement', array($this, 'create'));
     }
@@ -81,6 +93,37 @@ class AgreementHandler {
             $initiator_id = $participant2_id;
         } else {
             wp_send_json_error(array('message' => __('Please select who initiates the agreement.', 'volunteer-exchange-platform')));
+        }
+
+        // The event must be the active event and still open (event end + grace window, WP-local time).
+        $active_event = $this->event_service->get_active_event();
+        if ( ! $active_event || (int) $active_event->id !== (int) $event_id ) {
+            wp_send_json_error(array('message' => __('Agreements can only be created for the active event.', 'volunteer-exchange-platform')));
+        }
+
+        $end_date = isset( $active_event->end_date ) ? trim( (string) $active_event->end_date ) : '';
+        if ( '' !== $end_date ) {
+            try {
+                $event_end = new \DateTimeImmutable( $end_date, wp_timezone() );
+            } catch ( \Exception $e ) {
+                $event_end = null;
+            }
+
+            if ( $event_end && current_datetime()->getTimestamp() > ( $event_end->getTimestamp() + self::AGREEMENT_GRACE_SECONDS ) ) {
+                $event_name = isset( $active_event->name ) ? (string) $active_event->name : '';
+                wp_send_json_error(array(
+                    /* translators: %s: event name */
+                    'message' => sprintf( __( '%s is over for this time.', 'volunteer-exchange-platform' ), $event_name ),
+                ));
+            }
+        }
+
+        // Both participants must be approved and belong to this event.
+        foreach ( array( $participant1_id, $participant2_id ) as $check_id ) {
+            $check_participant = $this->participant_service->get_by_id( $check_id );
+            if ( ! $check_participant || empty( $check_participant->is_approved ) || (int) $check_participant->event_id !== (int) $event_id ) {
+                wp_send_json_error(array('message' => __('Invalid participant selection.', 'volunteer-exchange-platform')));
+            }
         }
 
         $data = array(

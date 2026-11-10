@@ -2,10 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Volunteer Exchange Platform\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-03-04 08:36+0000
-"
-"PO-Revision-Date: 2026-03-04 08:36+0000
-"
+"POT-Creation-Date: 2026-11-10 17:33+0000\n"
+"PO-Revision-Date: 2026-11-10 17:33+0000\n"
 "Last-Translator: knsj\n"
 "Language-Team: \n"
 "Language: da_DK\n"
@@ -44,6 +42,7 @@ msgid "An error occurred. Please try again."
 msgstr "Der opstod en fejl. Prøv igen."
 
 #: src/Plugin/Plugin.php
+#: src/Admin/EventsPage.php src/Plugin/Plugin.php
 msgid "Saving…"
 msgstr "Gemmer…"
 
@@ -60,6 +59,9 @@ msgid "No active event at the moment."
 msgstr "Der er ingen aktiv begivenhed i øjeblikket."
 
 #: src/Shortcodes/Registration.php
+#: src/Shortcodes/Registration.php:126
+#: src/Shortcodes/Registration.php:84
+#: src/Admin/ParticipantsPage.php
 msgid "Organization Name"
 msgstr "Navnet på din organisation/projekt/afdeling"
 
@@ -72,34 +74,25 @@ msgid "Tell us about your organization..."
 msgstr "Fortæl os om din organisation..."
 
 #: src/Shortcodes/Registration.php
-msgid "Describe what your organization does and what makes you unique."
-msgstr "Beskriv hvad din organisation laver, og hvad der gør den unik."
-
-#: src/Shortcodes/Registration.php
 msgid "Participants Expected"
 msgstr "Forventede antal deltagere"
-
-#: src/Shortcodes/Registration.php
-msgid "e.g., 2"
-msgstr "f.eks. 2"
 
 #: src/Shortcodes/Registration.php
 msgid "The number of participants expected to attend the event."
 msgstr "Antallet af deltagere, der forventes at deltage i begivenheden."
 
 #: src/Shortcodes/Registration.php
+#: src/Admin/ParticipantsPage.php
 msgid "Participant Names"
 msgstr "Navne på deltager(e)"
-
-#: src/Shortcodes/Registration.php
-msgid "e.g., Jane, John"
-msgstr "f.eks. Jens, Maria, mf."
 
 #: src/Shortcodes/Registration.php
 msgid "The names of the participants expected to attend the event."
 msgstr "Navnene på de deltagere, der forventes at deltage i begivenheden."
 
 #: src/Shortcodes/Registration.php
+#: src/Shortcodes/Registration.php:131
+#: src/Shortcodes/Registration.php:89
 msgid "Organization Type"
 msgstr "Hvilket område repræsenterer du?"
 
@@ -108,14 +101,14 @@ msgid "Select Type"
 msgstr "Vælg type"
 
 #: src/Shortcodes/Registration.php
-msgid "Your Name"
-msgstr "Dit navn"
-
-#: src/Shortcodes/Registration.php
+#: src/Admin/ParticipantsPage.php
 msgid "Email"
 msgstr "E-mail"
 
 #: src/Shortcodes/Registration.php
+#: src/Shortcodes/Registration.php:109
+#: src/Shortcodes/Registration.php:159
+#: src/Admin/ParticipantsPage.php
 msgid "Phone"
 msgstr "Telefon"
 
@@ -156,10 +149,14 @@ msgid "%s is over for this time."
 msgstr "%s er overstået for denne gang."
 
 #: src/Shortcodes/AgreementForm.php
+#: src/Admin/ParticipantsPage.php
+#: src/Admin/EventsPage.php
 msgid "Participant 1"
 msgstr "Deltager 1"
 
 #: src/Shortcodes/AgreementForm.php
+#: src/Admin/ParticipantsPage.php
+#: src/Admin/EventsPage.php
 msgid "Participant 2"
 msgstr "Deltager 2"
 
@@ -180,6 +177,7 @@ msgid "Describe what the agreement is about and what each party will do."
 msgstr "Beskriv hvad aftalen handler om, og hvad hver part skal gøre."
 
 #: src/Shortcodes/AgreementForm.php
+#: src/Admin/EventsPage.php
 msgid "Create Agreement"
 msgstr "Opret aftale"
 
@@ -188,14 +186,12 @@ msgid "No agreements yet."
 msgstr "Ingen aftaler endnu."
 
 #: src/Shortcodes/AgreementsList.php
-msgid "Agreements for %s"
-msgstr "Aftaler for %s"
-
-#: src/Shortcodes/AgreementsList.php
 msgid "#"
 msgstr "#"
 
 #: src/Shortcodes/AgreementsList.php
+#: src/Admin/EventsPage.php
+#: src/Admin/ParticipantsPage.php
 msgid "Description"
 msgstr "Beskrivelse"
 
@@ -208,22 +204,7 @@ msgid "View Details"
 msgstr "Se mere"
 
 #: src/Shortcodes/ParticipantsGrid.php
-msgid "Participant #"
-msgstr "Deltager #"
-
-#: src/Shortcodes/ParticipantsGrid.php
-msgid "Type:"
-msgstr "Type:"
-
-#: src/Shortcodes/ParticipantsGrid.php
-msgid "About:"
-msgstr "Om:"
-
-#: src/Shortcodes/ParticipantsGrid.php
-msgid "What We Offer:"
-msgstr "Det du tilbyder:"
-
-#: src/Shortcodes/ParticipantsGrid.php
+#: src/Admin/ParticipantsPage.php
 msgid "Close"
 msgstr "Luk"
 
@@ -254,16 +235,8 @@ msgid "Agreement created successfully!"
 msgstr "Aftalen blev oprettet!"
 
 #: src/Ajax/ParticipantHandler.php
-msgid "Please select at least one tag for what you offer."
-msgstr "Vælg mindst ét tag for det, du tilbyder."
-
-#: src/Ajax/ParticipantHandler.php
 msgid "Logo file size must be less than 2MB."
 msgstr "Logoets filstørrelse skal være under 2 MB."
-
-#: src/Ajax/ParticipantHandler.php
-msgid "Logo must be JPG, PNG, or GIF format."
-msgstr "Logoet skal være i JPG-, PNG- eller GIF-format."
 
 #: src/Ajax/ParticipantHandler.php
 msgid "Error uploading logo."
@@ -274,7 +247,6 @@ msgid "Error saving registration. Please try again."
 msgstr "Fejl ved gemning af tilmelding. Prøv igen."
 
 #: src/Admin/Menu.php
-
 #: src/Admin/ParticipantsPage.php
 msgid "Missing to fill in"
 msgstr "Mangler at udfylde"
@@ -296,20 +268,9 @@ msgid "Reminder"
 msgstr "Påmindelse"
 
 #: src/Admin/Menu.php
+#: src/Admin/CompetitionsPage.php
 msgid "Competitions"
 msgstr "Konkurrencer"
-
-#: src/Admin/CompetitionsPage.php
-msgid "Competition functionality will be added later."
-msgstr "Konkurrencefunktionen bliver tilføjet senere."
-
-#: src/Admin/CompetitionsPage.php
-msgid "Create Competition"
-msgstr "Opret konkurrence"
-
-#: src/Admin/CompetitionsPage.php
-msgid "The create competition flow is planned and will be implemented in a future update."
-msgstr "Oprettelse af konkurrencer er planlagt og bliver implementeret i en kommende opdatering."
 
 #: src/Ajax/ParticipantHandler.php
 msgid "Registration submitted successfully! Your registration is pending approval."
@@ -317,6 +278,7 @@ msgstr "Tilmelding sendt! Din tilmelding afventer godkendelse."
 
 #: src/Admin/EventsListTable.php
 #: src/Admin/EventsPage.php
+#: src/Admin/CompetitionsPage.php
 msgid "Active"
 msgstr "Aktiv"
 
@@ -360,12 +322,9 @@ msgid "Agreements Made"
 msgstr "Indgåede aftaler"
 
 #: src/Admin/ParticipantsListTable.php
+#: src/Shortcodes/ParticipantsGrid.php:109
 msgid "All"
 msgstr "Alle"
-
-#: src/Admin/ParticipantsListTable.php
-msgid "All Events"
-msgstr "Alle begivenheder"
 
 #: src/Admin/ParticipantsListTable.php
 msgid "Rows per page"
@@ -373,7 +332,7 @@ msgstr "Rækker pr. side"
 
 #: src/Services/AgreementStatus.php
 msgid "Agreed"
-msgstr "Indgået"
+msgstr "Ikke påbegyndt"
 
 #: src/Services/AgreementStatus.php
 msgid "Started"
@@ -385,7 +344,7 @@ msgstr "Udført"
 
 #: src/Admin/EventAgreementsListTable.php src/Services/AgreementStatus.php
 msgid "Cancelled"
-msgstr "Annulleret"
+msgstr "Ikke realiserbar"
 
 #: src/Services/AgreementStatus.php
 msgid "Needs help (FCO contacts)"
@@ -408,6 +367,7 @@ msgid "View Agreement"
 msgstr "Vis aftale"
 
 #: src/Admin/EventsPage.php
+#: src/Admin/ParticipantsListTable.php
 msgid "Updated"
 msgstr "Opdateret"
 
@@ -422,10 +382,6 @@ msgstr "Vælg mindst én deltager i tabellen."
 #: src/Plugin/Plugin.php
 msgid "Select at least one field."
 msgstr "Vælg mindst ét felt."
-
-#: src/Admin/ParticipantsListTable.php
-msgid "✗ Unapprove"
-msgstr "✗ Fjern godkendelse"
 
 #: src/Admin/ParticipantPrintPage.php
 msgid "Unknown"
@@ -448,11 +404,8 @@ msgstr "Søg deltager"
 msgid "Search words"
 msgstr "Søge ord"
 
-#: src/Shortcodes/ParticipantsGrid.php:109
-msgid "All"
-msgstr "Alle"
-
 #: src/Shortcodes/AgreementsList.php:57
+#: src/Admin/EventsPage.php
 msgid "Search agreements"
 msgstr "Søg i aftaler"
 
@@ -506,10 +459,6 @@ msgstr "Indstillinger"
 #: src/Admin/SettingsPage.php:173
 msgid "Design"
 msgstr "Design"
-
-#: src/Admin/SettingsPage.php:177
-msgid "Button"
-msgstr "Knap"
 
 #: src/Admin/SettingsPage.php:170
 msgid "Button background"
@@ -631,10 +580,6 @@ msgstr "opdater_deltager"
 msgid "new_participant_registration"
 msgstr "ny_deltagerregistrering"
 
-#: src/Admin/SettingsPage.php:382
-msgid "Label"
-msgstr "Etiket"
-
 #: src/Admin/SettingsPage.php:388
 msgid "Template ID (SMTP2GO)"
 msgstr "Skabelon-id (SMTP2GO)"
@@ -646,10 +591,6 @@ msgstr "Standardemne"
 #: src/Admin/SettingsPage.php:397
 msgid "Used when no subject is passed in code."
 msgstr "Bruges når der ikke sendes noget emne i koden."
-
-#: src/Admin/SettingsPage.php:401
-msgid "Allowed template_data Keys"
-msgstr "Tilladte template_data-nøgler"
 
 #: src/Shortcodes/EventCountdown.php
 msgid "The event is in progress."
@@ -716,10 +657,6 @@ msgstr "Tekst efter arrangement"
 msgid "Text shown after the event has ended. Leave blank to use default."
 msgstr "Tekst vist efter arrangementet er slut. Lad feltet være tomt for at bruge standardteksten."
 
-#: src/Admin/SettingsPage.php:404
-msgid "One key per line. Only keys listed here are forwarded to SMTP2GO."
-msgstr "En nøgle pr. linje. Kun nøgler på listen videresendes til SMTP2GO."
-
 #: src/Admin/SettingsPage.php:408
 msgid "Default HTML Body (fallback)"
 msgstr "Standard HTML-indhold (fallback)"
@@ -749,14 +686,6 @@ msgid "Failed"
 msgstr "Fejlet"
 
 #: src/Admin/ParticipantsListTable.php
-msgid "✓ Approve"
-msgstr "✓ Godkend"
-
-#: src/Admin/ParticipantsPage.php
-msgid "✓ Approve Participant"
-msgstr "✓ Godkend deltager"
-
-#: src/Admin/ParticipantsListTable.php
 msgid "Approve"
 msgstr "Godkend"
 
@@ -782,13 +711,6 @@ msgid "Select bulk action"
 msgstr "Vælg massehandling"
 
 #: src/Admin/EventsPage.php
-#, php-format
-msgid "%d participant approved."
-msgid_plural "%d participants approved."
-msgstr[0] "%d deltager godkendt."
-msgstr[1] "%d deltagere godkendt."
-
-#: src/Admin/EventsPage.php
 msgid "1 participant approved."
 msgstr "1 deltager godkendt."
 
@@ -796,13 +718,6 @@ msgstr "1 deltager godkendt."
 #, php-format
 msgid "%d participants approved."
 msgstr "%d deltagere godkendt."
-
-#: src/Admin/EventsPage.php
-#, php-format
-msgid "%d participant deleted."
-msgid_plural "%d participants deleted."
-msgstr[0] "%d deltager slettet."
-msgstr[1] "%d deltagere slettet."
 
 #: src/Admin/EventsPage.php
 msgid "1 participant deleted."
@@ -813,15 +728,12 @@ msgstr "1 deltager slettet."
 msgid "%d participants deleted."
 msgstr "%d deltagere slettet."
 
-#: src/Admin/EventsPage.php
-msgid "Approved Participants"
-msgstr "Godkendte deltagere"
-
 #: src/Admin/ParticipantsListTable.php
 msgid "Are you sure you want to delete this participant?"
 msgstr "Er du sikker på, at du vil slette denne deltager?"
 
 #: src/Admin/ParticipantsListTable.php
+#: src/Admin/CompetitionsPage.php
 msgid "Are you sure?"
 msgstr "Er du sikker?"
 
@@ -831,12 +743,13 @@ msgstr "Tilbage til begivenheder"
 
 #: src/Admin/ParticipantsPage.php
 msgid "Back to Participants"
-msgstr "Tilbage til oversigten"
+msgstr "Tilbage til deltagere"
 
 #: src/Admin/EventsPage.php
 #: src/Admin/ParticipantsPage.php
 #: src/Admin/ParticipantTypesPage.php
 #: src/Admin/TagsPage.php
+#: src/Admin/CompetitionsPage.php
 msgid "Cancel"
 msgstr "Annuller"
 
@@ -844,15 +757,12 @@ msgstr "Annuller"
 msgid "Click the button below to launch the fullscreen event presentation."
 msgstr "Klik på knappen nedenfor for at åbne begivenhedspræsentationen i fuld skærm."
 
-#: src/Admin/EventDisplayPage.php
-msgid "Close Display (ESC)"
-msgstr "Luk visning (ESC)"
-
 #: src/Admin/ParticipantsPage.php
 msgid "Contact Email"
 msgstr "Kontakt e-mail"
 
 #: src/Admin/ParticipantsListTable.php
+#: src/Admin/ParticipantsPage.php
 msgid "Contact Person"
 msgstr "Kontaktperson"
 
@@ -888,12 +798,14 @@ msgid "Created"
 msgstr "Oprettet"
 
 #: src/Admin/EventsListTable.php
+#: src/Admin/CompetitionsPage.php
 msgid "Deactivate"
 msgstr "Deaktiver"
 
 #: src/Admin/ParticipantsListTable.php
 #: src/Admin/ParticipantTypesListTable.php
 #: src/Admin/TagsListTable.php
+#: src/Admin/CompetitionsPage.php
 msgid "Delete"
 msgstr "Slet"
 
@@ -906,23 +818,14 @@ msgstr "Har ikke logo"
 msgid "Has no homepage / Socialkompas link"
 msgstr "Har ikke hjemmeside / Socialkompas link"
 
-msgid "Has no expected number of participants"
-msgstr "Kender ikke antal"
-
 msgid "Does not know number of participants"
 msgstr "Kender ikke antal"
-
-msgid "Has no participant names"
-msgstr "Kender ikke navne"
 
 msgid "Does not know participant names"
 msgstr "Kender ikke navne"
 
 msgid "e.g., Jane Doe"
 msgstr "f.eks. Jane Doe"
-
-msgid "Remove"
-msgstr "Fjern"
 
 msgid "+ Add participant"
 msgstr "+ Tilføj deltager"
@@ -967,6 +870,9 @@ msgstr "f.eks. Velkommen til vores begivenhed"
 #: src/Admin/ParticipantsListTable.php
 #: src/Admin/ParticipantTypesListTable.php
 #: src/Admin/TagsListTable.php
+#: src/Admin/ParticipantsPage.php
+#: src/Admin/EventsPage.php
+#: src/Admin/CompetitionsPage.php
 msgid "Edit"
 msgstr "Rediger"
 
@@ -992,10 +898,6 @@ msgid "End Date"
 msgstr "Slutdato"
 
 #: src/Admin/EventDisplayPage.php
-msgid "Enter the countdown target date and time. Format: YYYY-MM-DD HH:MM:SS (e.g., 2026-02-15 18:00:00)"
-msgstr "Indtast nedtællingens måldato og -tid. Format: ÅÅÅÅ-MM-DD TT:MM:SS (f.eks. 2026-02-15 18:00:00)"
-
-#: src/Admin/EventDisplayPage.php
 msgid "Enter the title to display in the fullscreen view."
 msgstr "Indtast titlen der skal vises i fuldskærmsvisningen."
 
@@ -1011,10 +913,6 @@ msgstr "Begivenheden blev oprettet og sat som aktiv."
 #: src/Admin/EventsPage.php
 msgid "Event deactivated."
 msgstr "Begivenheden blev deaktiveret."
-
-#: src/Admin/EventsPage.php
-msgid "Event Details"
-msgstr "Begivenhedsdetaljer"
 
 #: src/Admin/Menu.php
 msgid "Presentation"
@@ -1045,10 +943,6 @@ msgstr "Begivenheder"
 msgid "Expected Participants (Approved)"
 msgstr "Forventede deltagere (godkendte)"
 
-#: src/Admin/ParticipantsListTable.php
-msgid "Filter by event"
-msgstr "Filtrér efter begivenhed"
-
 #: src/Admin/EventsPage.php
 msgid "ID"
 msgstr "ID"
@@ -1071,19 +965,12 @@ msgstr "Logo"
 msgid "Name"
 msgstr "Navn"
 
-#: src/Admin/ParticipantsPage.php
-msgid "New participants are automatically added to the active event."
-msgstr "Nye deltagere tilføjes automatisk til den aktive begivenhed."
-
-#: src/Admin/ParticipantsPage.php
-msgid "No active event found. Please create and activate an event before adding participants."
-msgstr "Ingen aktiv begivenhed fundet. Opret og aktivér en begivenhed før du tilføjer deltagere."
-
 #: src/Admin/EventDisplayPage.php
 msgid "No active event found. Please create and activate an event first."
 msgstr "Ingen aktiv begivenhed fundet. Opret og aktivér en begivenhed først."
 
 #: src/Admin/EventDisplayPage.php
+#: src/Plugin/Plugin.php
 msgid "No agreements yet..."
 msgstr "Ingen aftaler endnu..."
 
@@ -1120,10 +1007,6 @@ msgstr "Påmindelse sat i kø."
 #: src/Plugin/Plugin.php
 msgid "Are you sure you want to delete the selected participants?"
 msgstr "Er du sikker på, at du vil slette de valgte deltagere?"
-
-#: src/Admin/EventsPage.php
-msgid "Participant"
-msgstr "Deltager"
 
 #: src/Admin/ParticipantsPage.php
 msgid "Participant Details"
@@ -1179,10 +1062,6 @@ msgstr "Afventer godkendelse"
 msgid "Save Settings"
 msgstr "Gem indstillinger"
 
-#: src/Admin/ParticipantsPage.php
-msgid "Select Event"
-msgstr "Vælg begivenhed"
-
 #: src/Admin/EventDisplayPage.php
 msgid "Settings saved successfully."
 msgstr "Indstillingerne blev gemt."
@@ -1197,6 +1076,7 @@ msgid "Start Presentation"
 msgstr "Start præsentation"
 
 #: src/Admin/EventsPage.php
+#: src/Admin/CompetitionsPage.php
 msgid "Status"
 msgstr "Status"
 
@@ -1219,14 +1099,6 @@ msgstr "Tagget blev slettet."
 #: src/Admin/TagsPage.php
 msgid "Tag updated successfully."
 msgstr "Tagget blev opdateret."
-
-#: src/Admin/EventDisplayPage.php
-msgid "This will open a fullscreen display with countdown timer and live agreement count. Press ESC to exit fullscreen."
-msgstr "Dette åbner en fuldskærmsvisning med nedtælling og live optælling af aftaler. Tryk ESC for at afslutte fuld skærm."
-
-#: src/Admin/EventDisplayPage.php
-msgid "Times up!"
-msgstr "Tiden er gået!"
 
 #: src/Admin/EventDisplayPage.php
 msgid "Show Statistics"
@@ -1327,6 +1199,7 @@ msgstr "Nulstil baggrund"
 
 #: src/Admin/ParticipantsListTable.php
 #: src/Admin/ParticipantsPage.php
+#: src/Admin/CompetitionsPage.php
 msgid "Type"
 msgstr "Type"
 
@@ -1376,11 +1249,6 @@ msgstr "Frivilligbørs"
 
 #: src/Admin/ParticipantsPage.php
 #: src/Admin/EventsPage.php
-msgid "Edit"
-msgstr "Rediger"
-
-#: src/Admin/ParticipantsPage.php
-#: src/Admin/EventsPage.php
 msgid "Actions"
 msgstr "Handlinger"
 
@@ -1399,7 +1267,7 @@ msgstr "Send aftaleoversigt"
 
 #: src/Frontend/UnsubscribePage.php
 msgid "Reminder preferences"
-msgstr "Påmindelsespræferencer"
+msgstr "Påmindelsesindstillinger"
 
 #: src/Frontend/UnsubscribePage.php
 msgid "You are now unsubscribed from future reminders."
@@ -1411,7 +1279,7 @@ msgstr "Du er tilmeldt påmindelser."
 
 #: src/Frontend/UnsubscribePage.php
 msgid "Re-subscribe to reminders"
-msgstr "Tilmeld igen"
+msgstr "Tilmeld påmindelser igen"
 
 #: src/Frontend/UnsubscribePage.php
 msgid "Unsubscribe from reminders"
@@ -1439,7 +1307,7 @@ msgstr "Status gemt."
 
 #: src/Frontend/UpdateAgreementsPage.php
 msgid "My exchange agreements"
-msgstr "Mine børsaftaler"
+msgstr "Børsaftaler"
 
 #: src/Admin/EventsPage.php
 msgid "Exchange agreements"
@@ -1448,23 +1316,20 @@ msgstr "Børsaftaler"
 #: src/Frontend/UpdateAgreementsPage.php
 #, php-format
 msgid "My exchange agreements from %s"
-msgstr "Mine børsaftaler fra %s"
+msgstr "Børsaftaler fra %s"
+
+#: src/Frontend/UpdateAgreementsPage.php
+#, php-format
+msgid "Exchange agreement with %s"
+msgstr "Børsaftale med %s"
 
 #: src/Frontend/UpdateAgreementsPage.php
 msgid "No agreements found."
 msgstr "Ingen aftaler fundet."
 
 #: src/Frontend/UpdateAgreementsPage.php
-msgid "Unsubscribe from reminder emails"
-msgstr "Afmeld påmindelses-e-mails"
-
-#: src/Frontend/UpdateAgreementsPage.php
 msgid "Unsubscribe"
 msgstr "Afmeld"
-
-#: src/Frontend/UpdateAgreementsPage.php
-msgid "You are unsubscribed from reminder emails."
-msgstr "Du er afmeldt påmindelses-e-mails."
 
 #: src/Frontend/UpdateAgreementsPage.php
 msgid "Re-subscribe"
@@ -1479,14 +1344,6 @@ msgstr "Send en aftaleoversigt over indgåede aftaler til aktøren."
 msgid "Edit Agreement"
 msgstr "Rediger aftale"
 
-#: src/Admin/ParticipantsPage.php
-msgid "Back to Participants"
-msgstr "Tilbage til deltagere"
-
-#: src/Admin/EventsPage.php
-msgid "Back to Events"
-msgstr "Tilbage til begivenheder"
-
 #: src/Admin/EventDisplayPage.php
 msgid "Advanced"
 msgstr "Vis avanceret"
@@ -1494,16 +1351,6 @@ msgstr "Vis avanceret"
 #: src/Admin/EventDisplayPage.php
 msgid "Hide Advanced"
 msgstr "Skjul avanceret"
-
-#: src/Admin/ParticipantsPage.php
-#: src/Admin/EventsPage.php
-msgid "Participant 1"
-msgstr "Deltager 1"
-
-#: src/Admin/ParticipantsPage.php
-#: src/Admin/EventsPage.php
-msgid "Participant 2"
-msgstr "Deltager 2"
 
 #: src/Admin/ParticipantsPage.php
 #: src/Admin/EventsPage.php
@@ -1521,6 +1368,7 @@ msgid "Agreement updated successfully."
 msgstr "Aftale blev opdateret."
 
 #: src/Admin/EventsPage.php
+#: src/Admin/ParticipantsPage.php
 msgid "We Offer"
 msgstr "Vi tilbyder"
 
@@ -1549,11 +1397,6 @@ msgstr "Gå til deltagertyper"
 #: src/Admin/EventsPage.php
 msgid "Go to We Offer Tags"
 msgstr "Gå til Det du tilbyder-tags"
-
-#: src/Frontend/ParticipantPage.php
-msgctxt "URL slug"
-msgid "participant"
-msgstr "deltager"
 
 #: src/Frontend/ParticipantPage.php:159
 msgid "About"
@@ -1629,10 +1472,6 @@ msgid "Contact"
 msgstr "Kontakt"
 
 #: src/Admin/EventsPage.php
-msgid "Create Agreement"
-msgstr "Opret aftale"
-
-#: src/Admin/EventsPage.php
 msgid "Create & New Agreement"
 msgstr "Opret & ny aftale"
 
@@ -1671,10 +1510,6 @@ msgid "Add New Agreement"
 msgstr "Tilføj ny aftale"
 
 #: src/Admin/EventsPage.php
-msgid "Description"
-msgstr "Beskrivelse"
-
-#: src/Admin/EventsPage.php
 msgid "Add the description for this agreement."
 msgstr "Tilføj beskrivelsen til denne aftale."
 
@@ -1698,10 +1533,6 @@ msgstr "Fejl ved opdatering af deltager. Prøv igen."
 msgid "Event and all associated data deleted successfully."
 msgstr "Begivenheden og alle tilknyttede data blev slettet."
 
-#: src/Frontend/ParticipantPage.php:144
-msgid "Event:"
-msgstr "Begivenhed:"
-
 #: src/Admin/ParticipantsListTable.php:293
 msgid "Filter"
 msgstr "Filtrer"
@@ -1713,24 +1544,10 @@ msgstr "Filtrer"
 msgid "Icon"
 msgstr "Ikon"
 
-#: src/Frontend/ParticipantPage.php:140
-msgid "Information"
-msgstr "Information"
-
 #: src/Ajax/ParticipantHandler.php:161
 #: src/Ajax/ParticipantHandler.php:253
 msgid "Invalid participant selection."
 msgstr "Ugyldigt valg af deltager."
-
-#: src/Shortcodes/Registration.php:126
-#: src/Shortcodes/Registration.php:84
-msgid "Organization Name"
-msgstr "Navnet på din organisation/projekt/afdeling"
-
-#: src/Shortcodes/Registration.php:131
-#: src/Shortcodes/Registration.php:89
-msgid "Organization Type"
-msgstr "Hvilket område repræsenterer du?"
 
 #: src/Frontend/ParticipantPage.php:112
 msgid "Participant not found or not approved."
@@ -1780,51 +1597,14 @@ msgstr "Vælg ikon"
 msgid "Select an icon from the picker."
 msgstr "Vælg et ikon fra vælgeren."
 
-#: src/Shortcodes/Registration.php:109
-#: src/Shortcodes/Registration.php:159
-msgid "Phone"
-msgstr "Telefon"
-
 #: src/Admin/ParticipantsPage.php
 #: src/Admin/ParticipantsPage.php
 msgid "Allow boxes to break across pages (save paper)"
 msgstr "Tillad at bokse skæres over på siderne (spar papir)"
 
 #: src/Admin/ParticipantsPage.php
-msgid "Participant Number"
-msgstr "Deltagernummer"
-
-#: src/Admin/ParticipantsPage.php
-msgid "Organization Name"
-msgstr "Organisationsnavn"
-
-#: src/Admin/ParticipantsPage.php
-msgid "Description"
-msgstr "Beskrivelse"
-
-#: src/Admin/ParticipantsPage.php
 msgid "Expected Participants"
 msgstr "Forventede antal deltagere"
-
-#: src/Admin/ParticipantsPage.php
-msgid "Participant Names"
-msgstr "Navne på deltager(e)"
-
-#: src/Admin/ParticipantsPage.php
-msgid "Contact Person"
-msgstr "Kontaktperson"
-
-#: src/Admin/ParticipantsPage.php
-msgid "Email"
-msgstr "E-mail"
-
-#: src/Admin/ParticipantsPage.php
-msgid "Phone"
-msgstr "Telefon"
-
-#: src/Admin/ParticipantsPage.php
-msgid "We Offer"
-msgstr "Vi tilbyder"
 
 #: src/Admin/ParticipantsPage.php
 msgid "Missing Fields"
@@ -1874,10 +1654,6 @@ msgstr "Liggende"
 msgid "Paper Format"
 msgstr "Papirformat"
 
-#: src/Admin/ParticipantsPage.php
-msgid "Close"
-msgstr "Luk"
-
 #: src/Frontend/ParticipantPage.php:198
 msgid "Phone:"
 msgstr "Telefon:"
@@ -1902,16 +1678,6 @@ msgstr "Volunteer Exchange Platform kræver WordPress-version %1$s eller nyere. 
 msgid "Volunteer Exchange Platform requires the PHP %s extension to be installed."
 msgstr "Volunteer Exchange Platform kræver, at PHP-udvidelsen %s er installeret."
 
-msgid "Select Organization"
-msgstr "Vælg organisation"
-
-#: src/Frontend/ParticipantPage.php:192
-msgid "Website:"
-msgstr "Website:"
-
-msgid "e.g., Jane Doe, John Smith"
-msgstr "f.eks. Jane Doe, John Smith"
-
 #: src/Shortcodes/ParticipantsTable.php:103
 msgid "Number"
 msgstr "Deltagernummer"
@@ -1927,10 +1693,6 @@ msgstr "aftale"
 #: src/Plugin/Plugin.php
 msgid "agreements"
 msgstr "aftaler"
-
-#: src/Plugin/Plugin.php
-msgid "No agreements yet..."
-msgstr "Ingen aftaler endnu..."
 
 #: src/Plugin/Plugin.php
 msgid "Please set a countdown time first."
@@ -1995,10 +1757,6 @@ msgstr "Link til hjemmeside/socialkompas"
 #: src/Frontend/ParticipantPage.php
 msgid "Read more"
 msgstr "Læs mere"
-
-#: src/Admin/ParticipantsListTable.php
-msgid "Updated"
-msgstr "Opdateret"
 
 #: src/Admin/ParticipantsListTable.php
 msgid "Complete"
@@ -2098,10 +1856,6 @@ msgid "Failed to delete competition"
 msgstr "Kunne ikke slette konkurrencen"
 
 #: src/Admin/CompetitionsPage.php
-msgid "Competitions"
-msgstr "Konkurrencer"
-
-#: src/Admin/CompetitionsPage.php
 msgid "No active event. Please activate an event first."
 msgstr "Ingen aktiv begivenhed. Aktivér en begivenhed først."
 
@@ -2122,36 +1876,12 @@ msgid "Winner:"
 msgstr "Vinder:"
 
 #: src/Admin/CompetitionsPage.php
-msgid "Edit"
-msgstr "Rediger"
-
-#: src/Admin/CompetitionsPage.php
-msgid "Deactivate"
-msgstr "Deaktivér"
-
-#: src/Admin/CompetitionsPage.php
-msgid "Delete"
-msgstr "Slet"
-
-#: src/Admin/CompetitionsPage.php
 msgid "Activate"
 msgstr "Aktivér"
 
 #: src/Admin/CompetitionsPage.php
-msgid "Create New Competition"
-msgstr "Opret ny konkurrence"
-
-#: src/Admin/CompetitionsPage.php
-msgid "Are you sure?"
-msgstr "Er du sikker?"
-
-#: src/Admin/CompetitionsPage.php
 msgid "Title"
 msgstr "Titel"
-
-#: src/Admin/CompetitionsPage.php
-msgid "Type"
-msgstr "Type"
 
 #: src/Admin/CompetitionsPage.php
 msgid "Winner"
@@ -2162,20 +1892,8 @@ msgid "Automatic"
 msgstr "Automatisk"
 
 #: src/Admin/CompetitionsPage.php
-msgid "Status"
-msgstr "Status"
-
-#: src/Admin/CompetitionsPage.php
-msgid "Active"
-msgstr "Aktiv"
-
-#: src/Admin/CompetitionsPage.php
 msgid "Save Changes"
 msgstr "Gem ændringer"
-
-#: src/Admin/CompetitionsPage.php
-msgid "Cancel"
-msgstr "Annullér"
 
 #: src/Admin/CompetitionsPage.php
 msgid "Competition not found."
@@ -2242,14 +1960,6 @@ msgid "Custom Competition"
 msgstr "Brugerdefineret konkurrence"
 
 #: src/Plugin/Plugin.php
-msgid "Copied %d active participant emails to clipboard."
-msgstr "Kopierede %d aktive deltageres e-mailadresser til udklipsholderen."
-
-#: src/Plugin/Plugin.php
-msgid "Could not copy active participant emails. Please try again."
-msgstr "Kunne ikke kopiere aktive deltageres e-mailadresser. Prøv igen."
-
-#: src/Plugin/Plugin.php
 msgid "No active participant emails found."
 msgstr "Ingen aktive deltageres e-mailadresser fundet."
 
@@ -2285,10 +1995,6 @@ msgstr "Skift automatisk til statistik"
 msgid "Automatically switch to the statistics view when the countdown expires."
 msgstr "Skift automatisk til statistikvisningen, når nedtællingen udløber."
 
-#: src/Admin/EventDisplayPage.php
-msgid "Time's up!"
-msgstr "Tiden er gået!"
-
 #: src/Admin/CompetitionsPage.php
 msgid "Reset Winner"
 msgstr "Nulstil vinder"
@@ -2314,20 +2020,8 @@ msgid "Are you sure you want to reset all winners? This cannot be undone."
 msgstr "Er du sikker på, at du vil nulstille alle vindere? Dette kan ikke fortrydes."
 
 #: src/Admin/EventsPage.php
-msgid "Search agreements"
-msgstr "Søg i aftaler"
-
-#: src/Admin/EventsPage.php
-msgid "Search in agreements..."
-msgstr "Søg i aftaler..."
-
-#: src/Admin/EventsPage.php
 msgid "Search"
 msgstr "Søg"
-
-#: src/Admin/EventsPage.php
-msgid "No agreements match your search."
-msgstr "Ingen aftaler matcher din søgning."
 
 #: src/Admin/EventDisplayPage.php
 msgid "Back to Countdown"
@@ -2340,10 +2034,6 @@ msgstr "Tilbage til statistik"
 #: src/Admin/EventDisplayPage.php
 msgid "No competitions available."
 msgstr "Ingen konkurrencer tilgængelige."
-
-#: src/Admin/EventsPage.php src/Plugin/Plugin.php
-msgid "Saving…"
-msgstr "Gemmer…"
 
 #: src/Admin/EventsPage.php src/Plugin/Plugin.php
 msgid "Agreement updated."
@@ -2394,16 +2084,13 @@ msgid "Could not create participant."
 msgstr "Kunne ikke oprette deltager."
 
 #: src/Admin/EventsPage.php
+#: src/Plugin/Plugin.php
 msgid "Agreement Overview Sent"
 msgstr "Aftaleoversigt sendt"
 
 #: src/Admin/EventsPage.php
 msgid "Agreement Overview"
 msgstr "Aftaleoversigt"
-
-#: src/Admin/EventsPage.php
-msgid "Send Agreement Overview"
-msgstr "Send aftaleoversigt"
 
 #: src/Ajax/AgreementOverviewHandler.php
 msgid "Agreement overview has already been sent for this event."
@@ -2441,31 +2128,6 @@ msgstr "Send aftaleoversigt til alle berettigede deltagere?"
 msgid "Sending…"
 msgstr "Sender…"
 
-
-#: src/Plugin/Plugin.php
-msgid "Agreement Overview Sent"
-msgstr "Aftaleoversigt sendt"
-
-#: src/Frontend/UnsubscribePage.php
-msgid "Reminder preferences"
-msgstr "Påmindelsesindstillinger"
-
-#: src/Frontend/UnsubscribePage.php
-msgid "You are now unsubscribed from future reminders."
-msgstr "Du er nu afmeldt fremtidige påmindelser."
-
-#: src/Frontend/UnsubscribePage.php
-msgid "You are subscribed to reminders."
-msgstr "Du er tilmeldt påmindelser."
-
-#: src/Frontend/UnsubscribePage.php
-msgid "Re-subscribe to reminders"
-msgstr "Tilmeld påmindelser igen"
-
-#: src/Frontend/UnsubscribePage.php
-msgid "Unsubscribe from reminders"
-msgstr "Afmeld påmindelser"
-
 #: src/Frontend/UnsubscribePage.php
 msgid "Agreement email preferences"
 msgstr "Indstillinger for aftale-e-mails"
@@ -2494,10 +2156,725 @@ msgstr "Du er afmeldt aftale-oversigtsmails."
 msgid "You have been re-subscribed to agreement overview emails."
 msgstr "Du er igen tilmeldt aftale-oversigtsmails."
 
-#: src/Ajax/FrontendAgreementsHandler.php
-msgid "You have been unsubscribed from future reminders."
-msgstr "Du er afmeldt fremtidige påmindelser."
+#: src/Admin/CompetitionsPage.php
+#: src/Admin/EventsPage.php
+#: src/Ajax/CompetitionHandler.php
+msgid "Security check failed"
+msgstr "Sikkerhedstjek mislykkedes"
+
+#: src/Admin/CompetitionsPage.php
+msgid "Competition updated"
+msgstr "Konkurrence opdateret"
+
+#: src/Admin/CompetitionsPage.php
+msgid "Failed to update competition"
+msgstr "Kunne ikke opdatere konkurrencen"
+
+#: src/Admin/CompetitionsPage.php
+msgid "No competitions provided"
+msgstr "Ingen konkurrencer angivet"
+
+#: src/Admin/CompetitionsPage.php
+msgid "Competitions reordered"
+msgstr "Konkurrencer omsorteret"
+
+#: src/Admin/CompetitionsPage.php
+msgid "Add New Competition"
+msgstr "Tilføj ny konkurrence"
+
+#: src/Admin/CompetitionsPage.php
+msgid "Add Competition"
+msgstr "Tilføj konkurrence"
+
+#: src/Admin/EventDisplayPage.php
+#: src/Plugin/Plugin.php
+msgid "Tak for denne gang"
+msgstr "Tak for denne gang"
+
+#: src/Admin/EventDisplayPage.php
+#: src/Plugin/Plugin.php
+msgid "Tiden er gået"
+msgstr "Tiden er gået"
+
+#: src/Admin/EventDisplayPage.php
+msgid "Settings reset to defaults."
+msgstr "Indstillinger nulstillet til standard."
+
+#: src/Admin/EventDisplayPage.php
+msgid "Vis konkurrencer"
+msgstr "Vis konkurrencer"
+
+#: src/Admin/EventDisplayPage.php
+msgid "Vis konkurrenceknapper i visningerne"
+msgstr "Vis konkurrenceknapper i visningerne"
+
+#: src/Admin/EventDisplayPage.php
+msgid "Skjul alle knapper"
+msgstr "Skjul alle knapper"
+
+#: src/Admin/EventDisplayPage.php
+msgid "Skjul alle navigationsknapper i bunden af visningerne"
+msgstr "Skjul alle navigationsknapper i bunden af visningerne"
+
+#: src/Admin/EventDisplayPage.php
+msgid "Tiden er gået tekst"
+msgstr "Tiden er gået tekst"
+
+#: src/Admin/EventDisplayPage.php
+msgid "Afsluttende tekst"
+msgstr "Afsluttende tekst"
+
+#: src/Admin/EventDisplayPage.php
+msgid "Nulstil indstillinger"
+msgstr "Nulstil indstillinger"
+
+#: src/Admin/EventDisplayPage.php
+msgid "Er du sikker på at du vil nulstille alle indstillinger til standard?"
+msgstr "Er du sikker på at du vil nulstille alle indstillinger til standard?"
+
+#: src/Admin/EventDisplayPage.php
+msgid "This will open a fullscreen display with countdown timer and live agreement count. The display keeps its state if it is closed by accident; use the close button (X) to close it. If fullscreen is exited, a button appears to re-enter it."
+msgstr "Dette åbner en fuldskærmsvisning med nedtælling og live optælling af aftaler. Visningen bevarer sin tilstand, hvis den lukkes ved en fejl; brug lukkeknappen (X) for at lukke den. Hvis fuldskærm afsluttes, vises en knap til at gå til fuldskærm igen."
+
+#: src/Admin/EventDisplayPage.php
+msgid "Visningsnavigation"
+msgstr "Visningsnavigation"
+
+#: src/Admin/EventDisplayPage.php
+msgid "Styr visningen fra denne side. Knapperne synkroniseres med det aktive display."
+msgstr "Styr visningen fra denne side. Knapperne synkroniseres med det aktive display."
+
+#: src/Admin/EventDisplayPage.php
+msgid "Vis statistik"
+msgstr "Vis statistik"
+
+#: src/Admin/EventDisplayPage.php
+#: src/Plugin/Plugin.php
+msgid "Afslut"
+msgstr "Afslut"
+
+#: src/Admin/EventDisplayPage.php
+msgid "Tilbage til nedtælling"
+msgstr "Tilbage til nedtælling"
+
+#: src/Admin/EventDisplayPage.php
+msgid "Vis første vinder"
+msgstr "Vis første vinder"
+
+#: src/Admin/EventDisplayPage.php
+#: src/Plugin/Plugin.php
+msgid "Konkurrence oversigt"
+msgstr "Konkurrence oversigt"
+
+#: src/Admin/EventDisplayPage.php
+#: src/Plugin/Plugin.php
+msgid "Forrige vinder"
+msgstr "Forrige vinder"
+
+#: src/Admin/EventDisplayPage.php
+#: src/Plugin/Plugin.php
+msgid "Næste vinder"
+msgstr "Næste vinder"
+
+#: src/Admin/EventDisplayPage.php
+msgid "Tilbage til konkurrence oversigten"
+msgstr "Tilbage til konkurrence oversigten"
+
+#: src/Admin/EventDisplayPage.php
+msgid "Tilbage til statistik"
+msgstr "Tilbage til statistik"
+
+#: src/Admin/EventDisplayPage.php
+msgid "Nulstil navigationssystem"
+msgstr "Nulstil navigationssystem"
+
+#: src/Admin/EventDisplayPage.php
+msgid "Brug kun hvis navigationen er fastlåst. Sletter visningsdata i databasen."
+msgstr "Brug kun hvis navigationen er fastlåst. Sletter visningsdata i databasen."
+
+#: src/Admin/EventDisplayPage.php
+msgid "Your session has expired. Please reload the page to continue."
+msgstr "Din session er udløbet. Genindlæs siden for at fortsætte."
+
+#: src/Admin/EventDisplayPage.php
+msgid "Reload"
+msgstr "Genindlæs"
+
+#: src/Admin/EventDisplayPage.php
+msgid "Re-enter fullscreen"
+msgstr "Gå til fuldskærm igen"
+
+#: src/Admin/EventDisplayPage.php
+msgid "Click again to close the display"
+msgstr "Klik igen for at lukke visningen"
+
+#: src/Admin/EventDisplayPage.php
+msgid "Connection to the server was lost. Trying to reconnect…"
+msgstr "Forbindelsen til serveren blev afbrudt. Forsøger at genoprette forbindelsen…"
+
+#: src/Admin/EventDisplayPage.php
+msgid "%d sec."
+msgstr "%d sek."
+
+#: src/Admin/EventDisplayPage.php
+msgid "%d min."
+msgstr "%d min."
+
+#: src/Admin/EventDisplayPage.php
+msgid "Close Display"
+msgstr "Luk visning"
+
+#: src/Admin/EventDisplayPage.php
+msgid "Vinderen er:"
+msgstr "Vinderen er:"
+
+#: src/Admin/EventDisplayPage.php
+#: src/Plugin/Plugin.php
+msgid "Tilbage til konkurrence oversigt"
+msgstr "Tilbage til konkurrence oversigt"
+
+#: src/Admin/EventsPage.php
+msgid "Layout"
+msgstr "Layout"
+
+#: src/Admin/EventsPage.php
+msgid "Box"
+msgstr "Boks"
+
+#: src/Admin/EventsPage.php
+msgid "Grid"
+msgstr "Gitter"
+
+#: src/Admin/EventsPage.php
+msgid "A5"
+msgstr "A5"
+
+#: src/Admin/EventsPage.php
+msgid "A4"
+msgstr "A4"
+
+#: src/Admin/EventsPage.php
+msgid "A3"
+msgstr "A3"
+
+#: src/Admin/EventsPage.php
+msgid "Print"
+msgstr "Udskriv"
+
+#: src/Admin/EventsPage.php
+msgid "Are you sure you want to remove approval from this participant?"
+msgstr "Er du sikker på, at du vil fjerne godkendelsen fra denne deltager?"
+
+#: src/Admin/EventsPage.php
+msgid "Send Reminder"
+msgstr "Send påmindelse"
+
+#: src/Admin/EventsPage.php
+msgid "One name per line."
+msgstr "Ét navn pr. linje."
+
+#: src/Admin/EventsPage.php
+msgid "Reminder queued for sending."
+msgstr "Påmindelsen er sat i kø til afsendelse."
+
+#: src/Admin/EventsPage.php
+msgid "Reminder was not sent (participant may already be fully updated or missing required data)."
+msgstr "Påmindelsen blev ikke sendt (deltageren er muligvis allerede fuldt opdateret eller mangler påkrævede data)."
+
+#: src/Admin/EventsPage.php
+msgid "Invalid ID"
+msgstr "Ugyldigt id"
+
+#: src/Admin/EventsPage.php
+msgid "Agreement not found"
+msgstr "Aftalen blev ikke fundet"
+
+#: src/Admin/EventsPage.php
+msgid "The initiator must be one of the two participants."
+msgstr "Initiativtageren skal være en af de to deltagere."
+
+#: src/Admin/EventsPage.php
+msgid "Participant not found"
+msgstr "Deltageren blev ikke fundet"
+
+#: src/Admin/EventsPage.php
+msgid "Participant saved, but could not be approved."
+msgstr "Deltageren er gemt, men kunne ikke godkendes."
+
+#: src/Admin/EventsPage.php
+msgid "Participant saved, but approval could not be removed."
+msgstr "Deltageren er gemt, men godkendelsen kunne ikke fjernes."
+
+#: src/Admin/EventsPage.php
+msgid "Event not found"
+msgstr "Begivenheden blev ikke fundet"
+
+#: src/Admin/EventsPage.php
+msgid "Event name is required."
+msgstr "Begivenhedens navn skal udfyldes."
+
+#: src/Admin/EventsPage.php
+msgid "Could not update event."
+msgstr "Kunne ikke opdatere begivenheden."
+
+#: src/Admin/EventsPage.php
+msgid "Event updated."
+msgstr "Begivenheden er opdateret."
+
+#: src/Admin/EventsPage.php
+msgid "Participant unapproved."
+msgstr "Deltagerens godkendelse er fjernet."
+
+#: src/Admin/ParticipantAgreementsListTable.php
+msgid "Id"
+msgstr "Id"
+
+#: src/Admin/ParticipantPrintPage.php
+msgid "Permission denied."
+msgstr "Tilladelse nægtet."
+
+#: src/Admin/ParticipantPrintPage.php
+msgid "Deltagernummer"
+msgstr "Deltagernummer"
+
+#: src/Admin/ParticipantPrintPage.php
+msgid "Organisationsnavn"
+msgstr "Organisationsnavn"
+
+#: src/Admin/ParticipantPrintPage.php
+msgid "Beskrivelse"
+msgstr "Beskrivelse"
+
+#: src/Admin/ParticipantPrintPage.php
+msgid "Forventede antal deltagere"
+msgstr "Forventede antal deltagere"
+
+#: src/Admin/ParticipantPrintPage.php
+msgid "Navne på deltager(e)"
+msgstr "Navne på deltager(e)"
+
+#: src/Admin/ParticipantPrintPage.php
+msgid "Kontaktperson"
+msgstr "Kontaktperson"
+
+#: src/Admin/ParticipantPrintPage.php
+msgid "Telefon"
+msgstr "Telefon"
+
+#: src/Admin/ParticipantPrintPage.php
+msgid "Vi tilbyder"
+msgstr "Vi tilbyder"
+
+#: src/Admin/ParticipantPrintPage.php
+msgid "Mangler at udfylde"
+msgstr "Mangler at udfylde"
+
+#: src/Admin/ParticipantPrintPage.php
+msgid "(intet logo)"
+msgstr "(intet logo)"
+
+#: src/Admin/ParticipantPrintPage.php
+msgid "(ikke oplyst)"
+msgstr "(ikke oplyst)"
+
+#: src/Admin/ParticipantPrintPage.php
+msgid "Godkendt"
+msgstr "Godkendt"
+
+#: src/Admin/ParticipantPrintPage.php
+msgid "Afventer godkendelse"
+msgstr "Afventer godkendelse"
+
+#: src/Admin/ParticipantPrintPage.php
+msgid "Intet mangler"
+msgstr "Intet mangler"
+
+#: src/Admin/ParticipantPrintPage.php
+msgid "Udskrift af deltagere"
+msgstr "Udskrift af deltagere"
+
+#: src/Admin/ParticipantTypesPage.php
+msgid "Could not save the type. The name may already be in use."
+msgstr "Kunne ikke gemme typen. Navnet er muligvis allerede i brug."
+
+#: src/Admin/ParticipantTypesPage.php
+msgid "This type cannot be deleted because %d participant uses it."
+msgid_plural "This type cannot be deleted because %d participants use it."
+msgstr[0] "Denne type kan ikke slettes, fordi %d deltager bruger den."
+msgstr[1] "Denne type kan ikke slettes, fordi %d deltagere bruger den."
+
+#: src/Admin/ParticipantTypesPage.php
+msgid "Could not delete type."
+msgstr "Kunne ikke slette typen."
+
+#: src/Admin/SettingsPage.php
+msgid "You do not have permission to access this page."
+msgstr "Du har ikke tilladelse til at tilgå denne side."
+
+#: src/Admin/SettingsPage.php
+msgid "Security check failed. Please try again."
+msgstr "Sikkerhedstjek mislykkedes. Prøv igen."
+
+#: src/Admin/SettingsPage.php
+msgid "Email Payload"
+msgstr "E-mail-payload"
+
+#: src/Admin/SettingsPage.php
+msgid "Copied to clipboard."
+msgstr "Kopieret til udklipsholderen."
+
+#: src/Admin/SettingsPage.php
+msgid "indgaaede_aftale_oversigt"
+msgstr "indgaaede_aftale_oversigt"
+
+#: src/Admin/TagsPage.php
+msgid "Could not save the tag. The name may already be in use."
+msgstr "Kunne ikke gemme tagget. Navnet er muligvis allerede i brug."
+
+#: src/Admin/TransactionalEmailsListTable.php
+msgid "Date"
+msgstr "Dato"
+
+#: src/Admin/TransactionalEmailsListTable.php
+msgid "Template Key"
+msgstr "Skabelonnøgle"
+
+#: src/Admin/TransactionalEmailsListTable.php
+msgid "Subject"
+msgstr "Emne"
+
+#: src/Admin/TransactionalEmailsListTable.php
+msgid "Attempts"
+msgstr "Forsøg"
+
+#: src/Admin/TransactionalEmailsListTable.php
+msgid "Provider Message ID"
+msgstr "Udbyderens besked-id"
+
+#: src/Admin/TransactionalEmailsListTable.php
+msgid "Last Error"
+msgstr "Seneste fejl"
+
+#: src/Admin/TransactionalEmailsListTable.php
+msgid "Payload"
+msgstr "Payload"
+
+#: src/Admin/TransactionalEmailsListTable.php
+msgid "View payload"
+msgstr "Vis payload"
+
+#: src/Admin/TransactionalEmailsListTable.php
+msgid "Vis payload"
+msgstr "Vis payload"
+
+#: src/Admin/TransactionalEmailsListTable.php
+msgid "No transactional emails found."
+msgstr "Ingen transaktionelle e-mails fundet."
+
+#: src/Ajax/AgreementHandler.php
+msgid "Agreements can only be created for the active event."
+msgstr "Aftaler kan kun oprettes for den aktive begivenhed."
+
+#: src/Ajax/AgreementOverviewHandler.php
+msgid "Invalid event."
+msgstr "Ugyldig begivenhed."
+
+#: src/Ajax/AgreementOverviewHandler.php
+msgid "The agreement overview can only be sent after the event has ended."
+msgstr "Aftaleoversigten kan først sendes, når begivenheden er afsluttet."
+
+#: src/Ajax/AgreementOverviewHandler.php
+msgid "Invalid participant or event."
+msgstr "Ugyldig deltager eller begivenhed."
+
+#: src/Ajax/AgreementOverviewHandler.php
+msgid "This participant has unsubscribed from agreement overview emails."
+msgstr "Denne deltager har afmeldt sig aftale-oversigtsmails."
+
+#: src/Ajax/EventParticipantsTableHandler.php
+msgid "Reminder was not queued (participant is not approved, has no email, has unsubscribed, or has nothing missing)."
+msgstr "Påmindelsen blev ikke sat i kø (deltageren er ikke godkendt, har ingen e-mailadresse, har afmeldt sig eller mangler ikke noget)."
 
 #: src/Ajax/FrontendAgreementsHandler.php
-msgid "You have been re-subscribed to reminders."
-msgstr "Du er igen tilmeldt påmindelser."
+msgid "Invalid request."
+msgstr "Ugyldig forespørgsel."
+
+#: src/Ajax/FrontendAgreementsHandler.php
+msgid "Access denied."
+msgstr "Adgang nægtet."
+
+#: src/Ajax/ParticipantHandler.php
+msgid "Too many registrations from your connection. Please try again later."
+msgstr "For mange tilmeldinger fra din forbindelse. Prøv igen senere."
+
+#: src/Ajax/ParticipantHandler.php
+msgid "Please enter a valid email address."
+msgstr "Indtast en gyldig e-mailadresse."
+
+#: src/Ajax/ParticipantHandler.php
+msgid "Registration is not open for this event."
+msgstr "Tilmeldingen er ikke åben for denne begivenhed."
+
+#: src/Ajax/ParticipantHandler.php
+msgid "Logo must be JPG, PNG, GIF, or WebP format."
+msgstr "Logoet skal være i JPG-, PNG-, GIF- eller WebP-format."
+
+#: src/Email/TransactionalEmailWorker.php
+msgid "Every Minute (VEP)"
+msgstr "Hvert minut (VEP)"
+
+#: src/Frontend/UpdateAgreementsPage.php
+msgid "You are unsubscribed from agreement overview emails."
+msgstr "Du er afmeldt aftale-oversigtsmails."
+
+#: src/Plugin/Plugin.php
+msgid "Agreement between"
+msgstr "Aftale mellem"
+
+#: src/Plugin/Plugin.php
+msgid "Første vinder"
+msgstr "Første vinder"
+
+#: src/Plugin/WPBakeryIntegration.php
+msgid "Volunteer registration form."
+msgstr "Tilmeldingsformular for frivillige."
+
+#: src/Plugin/WPBakeryIntegration.php
+msgid "Form Type"
+msgstr "Formulartype"
+
+#: src/Plugin/WPBakeryIntegration.php
+msgid "Simple"
+msgstr "Enkel"
+
+#: src/Plugin/WPBakeryIntegration.php
+msgid "Multistep"
+msgstr "Flere trin"
+
+#: src/Plugin/WPBakeryIntegration.php
+msgid "Grid of approved participants."
+msgstr "Gitter med godkendte deltagere."
+
+#: src/Plugin/WPBakeryIntegration.php
+msgid "Create agreements between participants."
+msgstr "Opret aftaler mellem deltagere."
+
+#: src/Plugin/WPBakeryIntegration.php
+msgid "List of agreements for active event."
+msgstr "Liste over aftaler for den aktive begivenhed."
+
+#: src/Services/CompetitionService.php
+msgid "Gives til den deltager, der først blev registreret til eventet."
+msgstr "Gives til den deltager, der først blev registreret til eventet."
+
+#: src/Services/CompetitionService.php
+msgid "Gives til den deltager, der registrerede sig senest op mod eventstart."
+msgstr "Gives til den deltager, der registrerede sig senest op mod eventstart."
+
+#: src/Services/CompetitionService.php
+msgid "Gives til den deltager, der har skrevet den længste profilbeskrivelse."
+msgstr "Gives til den deltager, der har skrevet den længste profilbeskrivelse."
+
+#: src/Services/CompetitionService.php
+msgid "Gives til begge deltagere i den første aftale, der blev indgået på eventet."
+msgstr "Gives til begge deltagere i den første aftale, der blev indgået på eventet."
+
+#: src/Services/CompetitionService.php
+msgid "Gives til begge deltagere i dagens sidste aftale."
+msgstr "Gives til begge deltagere i dagens sidste aftale."
+
+#: src/Services/CompetitionService.php
+msgid "Gives til begge deltagere i den aftale, der blev indgået tættest på eventets afslutning."
+msgstr "Gives til begge deltagere i den aftale, der blev indgået tættest på eventets afslutning."
+
+#: src/Services/CompetitionService.php
+msgid "Gives til den deltager, der har indgået flest aftaler i løbet af eventet."
+msgstr "Gives til den deltager, der har indgået flest aftaler i løbet af eventet."
+
+#: src/Services/CompetitionService.php
+msgid "Gives til den deltager, der hurtigst lavede to aftaler efter hinanden."
+msgstr "Gives til den deltager, der hurtigst lavede to aftaler efter hinanden."
+
+#: src/Services/CompetitionService.php
+msgid "Bedste børsudklædning"
+msgstr "Bedste børsudklædning"
+
+#: src/Services/CompetitionService.php
+msgid "Gives til den aktør, der har den mest kreative og gennemførte udklædning."
+msgstr "Gives til den aktør, der har den mest kreative og gennemførte udklædning."
+
+#: src/Services/CompetitionService.php
+msgid "Bedste børsoptræden"
+msgstr "Bedste børsoptræden"
+
+#: src/Services/CompetitionService.php
+msgid "Gives til den stand, der skaber den bedste energi, formidling og oplevelse."
+msgstr "Gives til den stand, der skaber den bedste energi, formidling og oplevelse."
+
+#: src/Shortcodes/AgreementsList.php
+msgid "Type to search all columns..."
+msgstr "Skriv for at søge i alle kolonner..."
+
+#: src/Shortcodes/Registration.php
+msgid "Your name"
+msgstr "Dit navn"
+
+#~ msgid "Describe what your organization does and what makes you unique."
+#~ msgstr "Beskriv hvad din organisation laver, og hvad der gør den unik."
+
+#~ msgid "e.g., 2"
+#~ msgstr "f.eks. 2"
+
+#~ msgid "e.g., Jane, John"
+#~ msgstr "f.eks. Jens, Maria, mf."
+
+#~ msgid "Your Name"
+#~ msgstr "Dit navn"
+
+#~ msgid "Agreements for %s"
+#~ msgstr "Aftaler for %s"
+
+#~ msgid "Participant #"
+#~ msgstr "Deltager #"
+
+#~ msgid "Type:"
+#~ msgstr "Type:"
+
+#~ msgid "About:"
+#~ msgstr "Om:"
+
+#~ msgid "What We Offer:"
+#~ msgstr "Det du tilbyder:"
+
+#~ msgid "Please select at least one tag for what you offer."
+#~ msgstr "Vælg mindst ét tag for det, du tilbyder."
+
+#~ msgid "Logo must be JPG, PNG, or GIF format."
+#~ msgstr "Logoet skal være i JPG-, PNG- eller GIF-format."
+
+#~ msgid "Competition functionality will be added later."
+#~ msgstr "Konkurrencefunktionen bliver tilføjet senere."
+
+#~ msgid "Create Competition"
+#~ msgstr "Opret konkurrence"
+
+#~ msgid "The create competition flow is planned and will be implemented in a future update."
+#~ msgstr "Oprettelse af konkurrencer er planlagt og bliver implementeret i en kommende opdatering."
+
+#~ msgid "All Events"
+#~ msgstr "Alle begivenheder"
+
+#~ msgid "✗ Unapprove"
+#~ msgstr "✗ Fjern godkendelse"
+
+#~ msgid "Button"
+#~ msgstr "Knap"
+
+#~ msgid "Label"
+#~ msgstr "Etiket"
+
+#~ msgid "Allowed template_data Keys"
+#~ msgstr "Tilladte template_data-nøgler"
+
+#~ msgid "One key per line. Only keys listed here are forwarded to SMTP2GO."
+#~ msgstr "En nøgle pr. linje. Kun nøgler på listen videresendes til SMTP2GO."
+
+#~ msgid "✓ Approve"
+#~ msgstr "✓ Godkend"
+
+#~ msgid "✓ Approve Participant"
+#~ msgstr "✓ Godkend deltager"
+
+#, php-format
+#~ msgid "%d participant approved."
+#~ msgid_plural "%d participants approved."
+#~ msgstr[0] "%d deltager godkendt."
+#~ msgstr[1] "%d deltagere godkendt."
+
+#, php-format
+#~ msgid "%d participant deleted."
+#~ msgid_plural "%d participants deleted."
+#~ msgstr[0] "%d deltager slettet."
+#~ msgstr[1] "%d deltagere slettet."
+
+#~ msgid "Approved Participants"
+#~ msgstr "Godkendte deltagere"
+
+#~ msgid "Close Display (ESC)"
+#~ msgstr "Luk visning (ESC)"
+
+#~ msgid "Has no expected number of participants"
+#~ msgstr "Kender ikke antal"
+
+#~ msgid "Has no participant names"
+#~ msgstr "Kender ikke navne"
+
+#~ msgid "Enter the countdown target date and time. Format: YYYY-MM-DD HH:MM:SS (e.g., 2026-02-15 18:00:00)"
+#~ msgstr "Indtast nedtællingens måldato og -tid. Format: ÅÅÅÅ-MM-DD TT:MM:SS (f.eks. 2026-02-15 18:00:00)"
+
+#~ msgid "Event Details"
+#~ msgstr "Begivenhedsdetaljer"
+
+#~ msgid "Filter by event"
+#~ msgstr "Filtrér efter begivenhed"
+
+#~ msgid "New participants are automatically added to the active event."
+#~ msgstr "Nye deltagere tilføjes automatisk til den aktive begivenhed."
+
+#~ msgid "No active event found. Please create and activate an event before adding participants."
+#~ msgstr "Ingen aktiv begivenhed fundet. Opret og aktivér en begivenhed før du tilføjer deltagere."
+
+#~ msgid "Participant"
+#~ msgstr "Deltager"
+
+#~ msgid "Select Event"
+#~ msgstr "Vælg begivenhed"
+
+#~ msgid "This will open a fullscreen display with countdown timer and live agreement count. Press ESC to exit fullscreen."
+#~ msgstr "Dette åbner en fuldskærmsvisning med nedtælling og live optælling af aftaler. Tryk ESC for at afslutte fuld skærm."
+
+#~ msgid "Times up!"
+#~ msgstr "Tiden er gået!"
+
+#~ msgid "Unsubscribe from reminder emails"
+#~ msgstr "Afmeld påmindelses-e-mails"
+
+#~ msgid "You are unsubscribed from reminder emails."
+#~ msgstr "Du er afmeldt påmindelses-e-mails."
+
+#~ msgctxt "URL slug"
+#~ msgid "participant"
+#~ msgstr "deltager"
+
+#~ msgid "Event:"
+#~ msgstr "Begivenhed:"
+
+#~ msgid "Information"
+#~ msgstr "Information"
+
+#~ msgid "Select Organization"
+#~ msgstr "Vælg organisation"
+
+#~ msgid "Website:"
+#~ msgstr "Website:"
+
+#~ msgid "e.g., Jane Doe, John Smith"
+#~ msgstr "f.eks. Jane Doe, John Smith"
+
+#~ msgid "Create New Competition"
+#~ msgstr "Opret ny konkurrence"
+
+#~ msgid "Copied %d active participant emails to clipboard."
+#~ msgstr "Kopierede %d aktive deltageres e-mailadresser til udklipsholderen."
+
+#~ msgid "Could not copy active participant emails. Please try again."
+#~ msgstr "Kunne ikke kopiere aktive deltageres e-mailadresser. Prøv igen."
+
+#~ msgid "Time's up!"
+#~ msgstr "Tiden er gået!"
+
+#~ msgid "Search in agreements..."
+#~ msgstr "Søg i aftaler..."
+
+#~ msgid "No agreements match your search."
+#~ msgstr "Ingen aftaler matcher din søgning."

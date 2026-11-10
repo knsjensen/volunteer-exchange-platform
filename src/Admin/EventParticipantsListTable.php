@@ -10,6 +10,7 @@
 namespace VolunteerExchangePlatform\Admin;
 
 use VolunteerExchangePlatform\Services\EventService;
+use VolunteerExchangePlatform\Services\ParticipantEmailService;
 use VolunteerExchangePlatform\Services\ParticipantService;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -28,6 +29,11 @@ class EventParticipantsListTable extends \WP_List_Table {
      * @var ParticipantService
      */
     private $participant_service;
+
+    /**
+     * @var ParticipantEmailService
+     */
+    private $participant_email_service;
 
     /**
      * @var EventService
@@ -51,9 +57,10 @@ class EventParticipantsListTable extends \WP_List_Table {
      * @param ParticipantService|null $participant_service Participant service instance.
      * @param EventService|null       $event_service Event service instance.
      */
-    public function __construct( $event_id, ?ParticipantService $participant_service = null, ?EventService $event_service = null ) {
+    public function __construct( $event_id, ?ParticipantService $participant_service = null, ?EventService $event_service = null, ?ParticipantEmailService $participant_email_service = null ) {
         $this->event_id = absint( $event_id );
-        $this->participant_service = $participant_service ?: new ParticipantService();
+        $this->participant_service       = $participant_service ?: new ParticipantService();
+        $this->participant_email_service = $participant_email_service ?: new ParticipantEmailService( $this->participant_service );
         $this->event_service = $event_service ?: new EventService();
 
         parent::__construct(
@@ -192,9 +199,9 @@ class EventParticipantsListTable extends \WP_List_Table {
                 __( 'Edit', 'volunteer-exchange-platform' )
             ),
             'delete' => sprintf(
-                '<a href="%s" onclick="return confirm(\'%s\')">%s</a>',
+                '<a href="%s" data-confirm-msg="%s">%s</a>',
                 esc_url( $this->get_participant_quick_action_url( 'delete', $participant_id ) ),
-                esc_js( __( 'Are you sure you want to delete this participant?', 'volunteer-exchange-platform' ) ),
+                esc_attr( __( 'Are you sure you want to delete this participant?', 'volunteer-exchange-platform' ) ),
                 __( 'Delete', 'volunteer-exchange-platform' )
             ),
         );
@@ -413,7 +420,7 @@ class EventParticipantsListTable extends \WP_List_Table {
      * @return string
      */
     private function render_update_progress( $item ) {
-        $missing_fields = $this->participant_service->get_update_reminder_missing_fields( $item );
+        $missing_fields = $this->participant_email_service->get_update_reminder_missing_fields( $item );
         $missing_count = count( $missing_fields );
         $total_part_two_fields = 5;
 

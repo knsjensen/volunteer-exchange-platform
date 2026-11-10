@@ -178,7 +178,10 @@ class ParticipantRepository extends AbstractRepository {
      * A participant is considered incomplete (eligible for reminder) when one or more
      * of these are missing: logo_url, description, at least one we_offer tag.
      *
-     * @param string $target_date Date in Y-m-d format.
+     * $target_date is the (inclusive) upper bound of a window: events starting after now
+     * and on or before this date (Y-m-d, WP-local) match. Unsubscribed participants are excluded.
+     *
+     * @param string $target_date Window end date in Y-m-d format.
      * @return array
      */
     public function get_reminder_candidates_by_event_date( $target_date ) {
@@ -207,16 +210,18 @@ class ParticipantRepository extends AbstractRepository {
              LEFT JOIN {$participant_tags_table} pt ON p.id = pt.participant_id
              WHERE p.is_approved = 1
                AND p.contact_email <> ''
-               AND DATE(e.start_date) = %s
+               AND COALESCE(p.reminder_unsubscribed, 0) = 0
+               AND e.start_date > %s
+               AND DATE(e.start_date) <= %s
              GROUP BY p.id
              HAVING (
                 (COALESCE(p.no_logo, 0) = 0 AND (p.logo_url IS NULL OR p.logo_url = ''))
                 OR (p.description IS NULL OR p.description = '')
                 OR (COALESCE(p.no_expected_count, 0) = 0 AND (p.expected_participants_count IS NULL OR CAST(p.expected_participants_count AS CHAR) = ''))
-                OR (COALESCE(p.no_expected_names, 0) = 0 AND (p.expected_participants_names IS NULL OR TRIM(p.expected_participants_names) = ''))
+                OR (COALESCE(p.no_expected_names, 0) = 0 AND (p.expected_participants_names IS NULL OR TRIM(p.expected_participants_names) IN ('', '[]')))
                 OR COUNT(pt.tag_id) = 0
              )",
-            array( $target_date )
+            array( current_time( 'mysql' ), $target_date )
         );
     }
 
@@ -401,7 +406,7 @@ class ParticipantRepository extends AbstractRepository {
                         CASE WHEN (p.logo_url IS NOT NULL AND p.logo_url <> '') OR COALESCE(p.no_logo, 0) = 1 THEN 1 ELSE 0 END +
                         CASE WHEN TRIM(COALESCE(p.description, '')) <> '' THEN 1 ELSE 0 END +
                         CASE WHEN (p.expected_participants_count IS NOT NULL AND CAST(p.expected_participants_count AS CHAR) <> '') OR COALESCE(p.no_expected_count, 0) = 1 THEN 1 ELSE 0 END +
-                        CASE WHEN TRIM(COALESCE(p.expected_participants_names, '')) <> '' OR COALESCE(p.no_expected_names, 0) = 1 THEN 1 ELSE 0 END +
+                        CASE WHEN TRIM(COALESCE(p.expected_participants_names, '')) NOT IN ('', '[]') OR COALESCE(p.no_expected_names, 0) = 1 THEN 1 ELSE 0 END +
                         CASE WHEN COALESCE(ptags.tag_count, 0) > 0 THEN 1 ELSE 0 END
                     ) as update_progress_filled_count
              FROM {$this->table()} p
@@ -467,6 +472,10 @@ class ParticipantRepository extends AbstractRepository {
      * @return int|false
      */
     public function create( $data ) {
+        if ( ! isset( $data['created_at'] ) ) {
+            // Store site-local time explicitly instead of relying on MySQL CURRENT_TIMESTAMP.
+            $data['created_at'] = current_time( 'mysql' );
+        }
         $result = $this->insert( $data );
         if ( false === $result ) {
             return false;
@@ -535,9 +544,17 @@ class ParticipantRepository extends AbstractRepository {
      */
     public function delete_participant( $participant_id ) {
         $participant_tags_table = $this->wpdb->prefix . 'vep_participant_tags';
+        $agreements_table       = $this->wpdb->prefix . 'vep_agreements';
+        $reminders_table        = $this->wpdb->prefix . 'vep_participant_reminders';
 
         // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Uses wpdb::delete with controlled table name and where format.
         $this->wpdb->delete( $participant_tags_table, array( 'participant_id' => $participant_id ), array( '%d' ) );
+        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Uses wpdb::delete with controlled table name and where format.
+        $this->wpdb->delete( $agreements_table, array( 'participant1_id' => $participant_id ), array( '%d' ) );
+        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Uses wpdb::delete with controlled table name and where format.
+        $this->wpdb->delete( $agreements_table, array( 'participant2_id' => $participant_id ), array( '%d' ) );
+        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Uses wpdb::delete with controlled table name and where format.
+        $this->wpdb->delete( $reminders_table, array( 'participant_id' => $participant_id ), array( '%d' ) );
 
         return $this->delete( array( 'id' => $participant_id ), array( '%d' ) );
     }
