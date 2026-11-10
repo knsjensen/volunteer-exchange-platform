@@ -365,10 +365,16 @@ class EventDisplayPage {
                 </div>
             <?php endif; ?>
             
-            <div class="vep-display-settings-container" style="max-width: 800px; margin-top: 20px;">
+            <div class="vep-display-settings-container vep-display-layout<?php echo $active_event ? ' vep-display-layout--with-stats' : ''; ?>" style="margin-top: 20px;">
+            <div class="vep-admin-display-left">
                 <div class="card" id="vep-display-settings-card" style="padding: 20px;">
-                    <h2 style="margin-top:0;"><?php esc_html_e('Presentation Settings', 'volunteer-exchange-platform'); ?></h2>
-                    <div id="vep-display-settings-body" style="margin-top:16px;">
+                    <h2 class="vep-collapsible-title">
+                        <button type="button" id="vep-display-settings-toggle" class="vep-collapsible-toggle" aria-expanded="false" aria-controls="vep-display-settings-body">
+                            <span><?php esc_html_e('Presentation Settings', 'volunteer-exchange-platform'); ?></span>
+                            <span id="vep-display-settings-caret" class="dashicons dashicons-arrow-down-alt2" aria-hidden="true" style="transform: rotate(-90deg);"></span>
+                        </button>
+                    </h2>
+                    <div id="vep-display-settings-body" style="margin-top:16px; display:none;">
                     <form method="post" action="">
                         <?php wp_nonce_field('vep_display_settings', 'vep_display_nonce'); ?>
 
@@ -791,9 +797,28 @@ class EventDisplayPage {
                         <?php esc_html_e( 'Brug kun hvis navigationen er fastlåst. Sletter visningsdata i databasen.', 'volunteer-exchange-platform' ); ?>
                     </p>
                 </div>
+            </div><!-- .vep-display-left -->
+
+            <?php if ( $active_event ) : ?>
+                <!-- Live event statistics: admin only, never shown on the fullscreen display. -->
+                <div id="vep-event-stats" class="vep-event-stats" data-event-id="<?php echo esc_attr( (string) $active_event->id ); ?>">
+                    <div class="card vep-stats-header">
+                        <h2><?php esc_html_e( 'Event statistics', 'volunteer-exchange-platform' ); ?></h2>
+                        <div class="vep-stats-header-meta">
+                            <span id="vep-stats-updated" class="vep-stats-updated"></span>
+                            <button type="button" id="vep-stats-refresh" class="button button-small" title="<?php esc_attr_e( 'Refresh', 'volunteer-exchange-platform' ); ?>" aria-label="<?php esc_attr_e( 'Refresh', 'volunteer-exchange-platform' ); ?>">
+                                <span class="dashicons dashicons-update" aria-hidden="true"></span>
+                            </button>
+                        </div>
+                        <div id="vep-stats-error" class="vep-stats-error" role="status" style="display:none;"></div>
+                        <div id="vep-stats-summary" class="vep-stats-summary"></div>
+                    </div>
+                    <div id="vep-stats-grid" class="vep-stats-grid"></div>
+                </div>
+            <?php endif; ?>
             </div>
         </div>
-        
+
         <script>
         window.vepDisplayI18n = <?php
         echo wp_json_encode(
@@ -805,6 +830,30 @@ class EventDisplayPage {
                 'connectionLost'    => __( 'Connection to the server was lost. Trying to reconnect…', 'volunteer-exchange-platform' ),
                 'secondsShort'      => __( '%d sec.', 'volunteer-exchange-platform' ),
                 'minutesShort'      => __( '%d min.', 'volunteer-exchange-platform' ),
+                'stats'             => array(
+                    'updated'         => __( 'Updated', 'volunteer-exchange-platform' ),
+                    'refreshFailed'   => __( 'Could not refresh statistics. Showing the last loaded data.', 'volunteer-exchange-platform' ),
+                    'loading'         => __( 'Loading statistics…', 'volunteer-exchange-platform' ),
+                    'totalAgreements' => __( 'Total agreements', 'volunteer-exchange-platform' ),
+                    'participantsWithAgreements' => __( '%1$d of %2$d participants have made agreements', 'volunteer-exchange-platform' ),
+                    'firstAgreement'  => __( 'First agreement', 'volunteer-exchange-platform' ),
+                    'lastAgreement'   => __( 'Last agreement before end', 'volunteer-exchange-platform' ),
+                    'mostAgreements'  => __( 'Most agreements', 'volunteer-exchange-platform' ),
+                    'shortestGap'     => __( 'Shortest time between two agreements', 'volunteer-exchange-platform' ),
+                    'hotNow'          => __( 'Hot right now', 'volunteer-exchange-platform' ),
+                    'mostInitiatives' => __( 'Most initiatives', 'volunteer-exchange-platform' ),
+                    'mostPartners'    => __( 'Most different partners', 'volunteer-exchange-platform' ),
+                    'busiestMinute'   => __( 'Busiest minute', 'volunteer-exchange-platform' ),
+                    'tie'             => __( 'tied', 'volunteer-exchange-platform' ),
+                    'noAgreementsYet' => __( 'No agreements yet', 'volunteer-exchange-platform' ),
+                    'agreementOne'    => __( '%d agreement', 'volunteer-exchange-platform' ),
+                    'agreementMany'   => __( '%d agreements', 'volunteer-exchange-platform' ),
+                    'partnerOne'      => __( '%d partner', 'volunteer-exchange-platform' ),
+                    'partnerMany'     => __( '%d partners', 'volunteer-exchange-platform' ),
+                    'moreSameValue'   => __( '+%d more with the same value', 'volunteer-exchange-platform' ),
+                    'lastMinutes'     => __( 'last %d min.', 'volunteer-exchange-platform' ),
+                    'lastMinutesBeforeEnd' => __( 'last %d min. before end', 'volunteer-exchange-platform' ),
+                ),
             )
         );
         ?>;

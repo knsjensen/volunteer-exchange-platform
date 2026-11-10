@@ -2821,3 +2821,91 @@ msgstr ""
 #: src/Shortcodes/Registration.php
 msgid "Back"
 msgstr ""
+
+#: src/Admin/EventDisplayPage.php
+msgid "Event statistics"
+msgstr ""
+
+#: src/Admin/EventDisplayPage.php
+msgid "Refresh"
+msgstr ""
+
+#: src/Admin/EventDisplayPage.php
+msgid "Could not refresh statistics. Showing the last loaded data."
+msgstr ""
+
+#: src/Admin/EventDisplayPage.php
+msgid "Loading statistics…"
+msgstr ""
+
+#: src/Admin/EventDisplayPage.php
+msgid "%1$d of %2$d participants have made agreements"
+msgstr ""
+
+#: src/Admin/EventDisplayPage.php
+msgid "First agreement"
+msgstr ""
+
+#: src/Admin/EventDisplayPage.php
+msgid "Last agreement before end"
+msgstr ""
+
+#: src/Admin/EventDisplayPage.php
+msgid "Most agreements"
+msgstr ""
+
+#: src/Admin/EventDisplayPage.php
+msgid "Shortest time between two agreements"
+msgstr ""
+
+#: src/Admin/EventDisplayPage.php
+msgid "Hot right now"
+msgstr ""
+
+#: src/Admin/EventDisplayPage.php
+msgid "Most initiatives"
+msgstr ""
+
+#: src/Admin/EventDisplayPage.php
+msgid "Most different partners"
+msgstr ""
+
+#: src/Admin/EventDisplayPage.php
+msgid "Busiest minute"
+msgstr ""
+
+#: src/Admin/EventDisplayPage.php
+msgid "tied"
+msgstr ""
+
+#: src/Admin/EventDisplayPage.php
+msgid "No agreements yet"
+msgstr ""
+
+#: src/Admin/EventDisplayPage.php
+msgid "%d agreement"
+msgstr ""
+
+#: src/Admin/EventDisplayPage.php
+msgid "%d agreements"
+msgstr ""
+
+#: src/Admin/EventDisplayPage.php
+msgid "%d partner"
+msgstr ""
+
+#: src/Admin/EventDisplayPage.php
+msgid "%d partners"
+msgstr ""
+
+#: src/Admin/EventDisplayPage.php
+msgid "+%d more with the same value"
+msgstr ""
+
+#: src/Admin/EventDisplayPage.php
+msgid "last %d min."
+msgstr ""
+
+#: src/Admin/EventDisplayPage.php
+msgid "last %d min. before end"
+msgstr ""

@@ -2719,6 +2719,94 @@ msgstr "Skriv for at søge i alle kolonner..."
 msgid "Your name"
 msgstr "Dit navn"
 
+#: src/Admin/EventDisplayPage.php
+msgid "Event statistics"
+msgstr "Eventstatistik"
+
+#: src/Admin/EventDisplayPage.php
+msgid "Refresh"
+msgstr "Opdater"
+
+#: src/Admin/EventDisplayPage.php
+msgid "Could not refresh statistics. Showing the last loaded data."
+msgstr "Kunne ikke opdatere statistikken. Viser de senest indlæste data."
+
+#: src/Admin/EventDisplayPage.php
+msgid "Loading statistics…"
+msgstr "Indlæser statistik…"
+
+#: src/Admin/EventDisplayPage.php
+msgid "%1$d of %2$d participants have made agreements"
+msgstr "%1$d af %2$d deltagere har lavet aftaler"
+
+#: src/Admin/EventDisplayPage.php
+msgid "First agreement"
+msgstr "Første aftale"
+
+#: src/Admin/EventDisplayPage.php
+msgid "Last agreement before end"
+msgstr "Sidste aftale før slut"
+
+#: src/Admin/EventDisplayPage.php
+msgid "Most agreements"
+msgstr "Flest aftaler"
+
+#: src/Admin/EventDisplayPage.php
+msgid "Shortest time between two agreements"
+msgstr "Korteste tid mellem to aftaler"
+
+#: src/Admin/EventDisplayPage.php
+msgid "Hot right now"
+msgstr "Hot lige nu"
+
+#: src/Admin/EventDisplayPage.php
+msgid "Most initiatives"
+msgstr "Flest initiativer"
+
+#: src/Admin/EventDisplayPage.php
+msgid "Most different partners"
+msgstr "Flest forskellige partnere"
+
+#: src/Admin/EventDisplayPage.php
+msgid "Busiest minute"
+msgstr "Travleste minut"
+
+#: src/Admin/EventDisplayPage.php
+msgid "tied"
+msgstr "uafgjort"
+
+#: src/Admin/EventDisplayPage.php
+msgid "No agreements yet"
+msgstr "Ingen aftaler endnu"
+
+#: src/Admin/EventDisplayPage.php
+msgid "%d agreement"
+msgstr "%d aftale"
+
+#: src/Admin/EventDisplayPage.php
+msgid "%d agreements"
+msgstr "%d aftaler"
+
+#: src/Admin/EventDisplayPage.php
+msgid "%d partner"
+msgstr "%d partner"
+
+#: src/Admin/EventDisplayPage.php
+msgid "%d partners"
+msgstr "%d partnere"
+
+#: src/Admin/EventDisplayPage.php
+msgid "+%d more with the same value"
+msgstr "+%d mere med samme værdi"
+
+#: src/Admin/EventDisplayPage.php
+msgid "last %d min."
+msgstr "seneste %d min."
+
+#: src/Admin/EventDisplayPage.php
+msgid "last %d min. before end"
+msgstr "sidste %d min. før slut"
+
 #~ msgid "Describe what your organization does and what makes you unique."
 #~ msgstr "Beskriv hvad din organisation laver, og hvad der gør den unik."
 

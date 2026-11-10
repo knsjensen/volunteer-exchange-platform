@@ -2034,3 +2034,256 @@ table.wp-list-table td.column-agreements_count {
     padding: 6px 12px !important;
     line-height: 1.4 !important;
 }
+
+/* =========================================================
+   Presentation page: two-column layout + live event statistics
+   ========================================================= */
+
+.vep-display-layout {
+    max-width: 800px;
+}
+
+.vep-display-layout--with-stats {
+    display: grid;
+    grid-template-columns: minmax(280px, 1fr) minmax(0, 2fr);
+    gap: 20px;
+    align-items: start;
+    max-width: none;
+}
+
+.vep-admin-display-left {
+    min-width: 0;
+}
+
+.vep-admin-display-left > .card,
+.vep-event-stats .card {
+    max-width: none;
+    box-sizing: border-box;
+    margin-top: 0;
+}
+
+.vep-admin-display-left > .card + .card,
+.vep-admin-display-left > #vep-nav-box {
+    margin-top: 20px !important;
+}
+
+/* No gap above the first visible card when the settings card is hidden. */
+.vep-admin-display-left > .vep-card-hidden + .card {
+    margin-top: 0 !important;
+}
+
+.vep-collapsible-title {
+    margin: 0;
+}
+
+.vep-collapsible-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    font: inherit;
+    color: inherit;
+    text-align: left;
+}
+
+.vep-collapsible-toggle:focus-visible {
+    outline: 2px solid #2271b1;
+    outline-offset: 2px;
+}
+
+.vep-collapsible-toggle .dashicons {
+    transition: transform 0.15s ease;
+}
+
+.vep-event-stats {
+    min-width: 0;
+}
+
+.vep-stats-header {
+    padding: 16px 20px !important;
+    margin-bottom: 20px;
+    position: relative;
+}
+
+.vep-stats-header h2 {
+    margin: 0;
+    padding-right: 200px;
+}
+
+.vep-stats-header-meta {
+    position: absolute;
+    top: 14px;
+    right: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.vep-stats-updated {
+    color: #646970;
+    font-size: 12px;
+}
+
+.vep-stats-header-meta .button .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    line-height: 26px;
+}
+
+.vep-stats-error {
+    margin-top: 10px;
+    padding: 6px 10px;
+    border-left: 3px solid #dba617;
+    background: #fcf9e8;
+    color: #50575e;
+    font-size: 12px;
+}
+
+.vep-stats-summary {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 8px 28px;
+    margin-top: 12px;
+}
+
+.vep-stat-big {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+}
+
+.vep-stat-big-number {
+    font-size: 40px;
+    font-weight: 600;
+    line-height: 1;
+    color: #1d2327;
+}
+
+.vep-stat-big-label,
+.vep-stat-big-text {
+    color: #50575e;
+    font-size: 14px;
+}
+
+.vep-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+}
+
+.vep-stat-card {
+    padding: 14px 18px !important;
+}
+
+.vep-stat-card h3 {
+    margin: 0 0 4px;
+    font-size: 14px;
+}
+
+.vep-stat-subtitle {
+    margin: 0 0 8px;
+    color: #646970;
+    font-size: 12px;
+}
+
+.vep-stat-list,
+.vep-stat-pairs {
+    margin: 8px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.vep-stat-list {
+    counter-reset: vep-rank;
+}
+
+.vep-stat-list li,
+.vep-stat-pairs li {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 4px 0;
+    border-top: 1px solid #f0f0f1;
+}
+
+.vep-stat-list li:first-child,
+.vep-stat-pairs li:first-child {
+    border-top: 0;
+}
+
+.vep-stat-list li::before {
+    counter-increment: vep-rank;
+    content: counter(vep-rank) ".";
+    flex: 0 0 18px;
+    color: #8c8f94;
+    font-size: 12px;
+}
+
+.vep-stat-name {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.vep-live-stat-value {
+    flex: 0 0 auto;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.vep-stat-tie {
+    flex: 0 0 auto;
+    padding: 1px 6px;
+    border-radius: 8px;
+    background: #f0f0f1;
+    color: #50575e;
+    font-size: 11px;
+}
+
+.vep-stat-empty,
+.vep-stat-more {
+    margin: 8px 0 0;
+    color: #646970;
+    font-size: 12px;
+}
+
+.vep-stat-minute-count {
+    margin: 8px 0 0;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+@media (max-width: 1100px) {
+    .vep-display-layout--with-stats {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .vep-display-layout--with-stats .vep-admin-display-left {
+        order: 2;
+    }
+
+    .vep-display-layout--with-stats .vep-event-stats {
+        order: 1;
+    }
+}
+
+@media (max-width: 700px) {
+    .vep-stats-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .vep-stats-header h2 {
+        padding-right: 0;
+    }
+
+    .vep-stats-header-meta {
+        position: static;
+        margin-top: 8px;
+    }
+}

@@ -449,40 +449,43 @@ class EventRepository extends AbstractRepository {
      * Returns one row per minute (with at least one agreement) containing
      * the minute offset from $start_date and the count of agreements in that minute.
      *
+     * All agreements of the event up to and including the event end_date are
+     * returned; there is deliberately NO lower bound on the event start, so
+     * agreements registered before start_date (negative offsets) are included.
+     *
      * @param int    $event_id   Event ID.
-     * @param string $start_date Event start datetime (MySQL Y-m-d H:i:s).
-     * @param string $end_date   Event end datetime (MySQL Y-m-d H:i:s).
+     * @param string $start_date Event start datetime (MySQL Y-m-d H:i:s), used as offset origin.
      * @return array  Objects with minute_offset (int) and cnt (int).
      */
-    public function get_agreements_over_time( $event_id, $start_date, $window_start_date, $window_end_date ) {
+    public function get_agreements_over_time( $event_id, $start_date ) {
         $agreements_table = $this->wpdb->prefix . 'vep_agreements';
         $events_table     = $this->table();
 
-        // The window end is additionally capped at the event end_date (final).
+        // Only the event end_date (final) limits which agreements count.
         return $this->get_results(
             "SELECT FLOOR( TIMESTAMPDIFF( SECOND, %s, a.created_at ) / 60 ) AS minute_offset,
                     COUNT(*) AS cnt
              FROM {$agreements_table} a
              INNER JOIN {$events_table} e ON e.id = a.event_id
              WHERE a.event_id = %d
-               AND a.created_at >= %s
-               AND a.created_at <= %s
                AND a.created_at <= e.end_date
              GROUP BY minute_offset
              ORDER BY minute_offset ASC",
-            array( $start_date, (int) $event_id, $window_start_date, $window_end_date )
+            array( $start_date, (int) $event_id )
         );
     }
 
     /**
      * Get seconds from event start to the first agreement.
      *
-     * @param int    $event_id          Event ID.
-     * @param string $start_date        Event start datetime (MySQL format).
-     * @param string $window_start_date Earliest datetime allowed for the lookup.
-     * @return int|null Seconds offset, or null if no agreements exist.
+     * Only agreements registered at or after the event start (and at or before
+     * the event end) are considered, so the offset is never negative.
+     *
+     * @param int    $event_id   Event ID.
+     * @param string $start_date Event start datetime (MySQL format).
+     * @return int|null Seconds offset, or null if no agreements exist in the window.
      */
-    public function get_first_agreement_offset_seconds( $event_id, $start_date, $window_start_date ) {
+    public function get_first_agreement_offset_seconds( $event_id, $start_date ) {
         $agreements_table = $this->wpdb->prefix . 'vep_agreements';
         $events_table     = $this->table();
 
@@ -493,14 +496,61 @@ class EventRepository extends AbstractRepository {
              WHERE a.event_id = %d
                AND a.created_at >= %s
                AND a.created_at <= e.end_date",
-            array( $start_date, (int) $event_id, $window_start_date )
+            array( $start_date, (int) $event_id, $start_date )
         );
 
         if ( ! $row || is_null( $row->first_offset ) ) {
             return null;
         }
 
-        return max( 0, (int) $row->first_offset );
+        return (int) $row->first_offset;
+    }
+
+    /**
+     * Get every counted agreement of an event for the live statistics panel.
+     *
+     * Only agreements created at or before the event end_date count (end_date is
+     * final). There is no lower bound on start_date here; the service applies it
+     * only where the business rules ask for it. Status is deliberately ignored.
+     * One indexed query (event_id) returns the compact rows the service needs.
+     *
+     * @param int $event_id Event ID.
+     * @return array Rows with id, participant1_id, participant2_id, initiator_id, created_at.
+     */
+    public function get_counted_agreements_for_stats( $event_id ) {
+        $agreements_table = $this->wpdb->prefix . 'vep_agreements';
+        $events_table     = $this->table();
+
+        $rows = $this->get_results(
+            "SELECT a.id, a.participant1_id, a.participant2_id, a.initiator_id, a.created_at
+             FROM {$agreements_table} a
+             INNER JOIN {$events_table} e ON e.id = a.event_id
+             WHERE a.event_id = %d
+               AND a.created_at <= e.end_date
+             ORDER BY a.created_at ASC, a.id ASC",
+            array( (int) $event_id )
+        );
+
+        return is_array( $rows ) ? $rows : array();
+    }
+
+    /**
+     * Get id, name and approval flag of all participants of an event.
+     *
+     * @param int $event_id Event ID.
+     * @return array Rows with id, organization_name, is_approved.
+     */
+    public function get_participant_names_for_stats( $event_id ) {
+        $participants_table = $this->wpdb->prefix . 'vep_participants';
+
+        $rows = $this->get_results(
+            "SELECT id, organization_name, is_approved
+             FROM {$participants_table}
+             WHERE event_id = %d",
+            array( (int) $event_id )
+        );
+
+        return is_array( $rows ) ? $rows : array();
     }
 
     /**

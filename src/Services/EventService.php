@@ -567,19 +567,17 @@ class EventService extends AbstractService {
                 $timezone            = wp_timezone();
                 $start_dt            = new \DateTimeImmutable( $event->start_date, $timezone );
                 $end_dt              = new \DateTimeImmutable( $event->end_date, $timezone );
-                $pre_window_minutes  = 10;
-                $window_start_dt     = $start_dt->modify( sprintf( '-%d minutes', $pre_window_minutes ) );
-                // The event end_date is final: agreements registered during the
-                // registration grace window after it must NOT count in statistics.
-                $window_end_dt       = $end_dt;
+                // Only the event end_date limits which agreements count (it is final;
+                // agreements in the registration grace window after it don't count).
+                // There is deliberately no lower bound on start_date: all agreements
+                // of the event count, and ones registered before the start are put
+                // in the chart's first minute.
                 $duration_seconds    = max( 1, $end_dt->getTimestamp() - $start_dt->getTimestamp() );
                 $duration_minutes    = max( 1, (int) ceil( $duration_seconds / 60 ) );
 
                 $rows       = $this->repository->get_agreements_over_time(
                     $event_id,
-                    $event->start_date,
-                    $window_start_dt->format( 'Y-m-d H:i:s' ),
-                    $window_end_dt->format( 'Y-m-d H:i:s' )
+                    $event->start_date
                 );
                 $per_minute = array();
 
@@ -601,8 +599,7 @@ class EventService extends AbstractService {
 
                 $first_seconds = $this->repository->get_first_agreement_offset_seconds(
                     $event_id,
-                    $event->start_date,
-                    $window_start_dt->format( 'Y-m-d H:i:s' )
+                    $event->start_date
                 );
 
                 return array(
@@ -689,6 +686,307 @@ class EventService extends AbstractService {
                 return $this->repository->claim_agreement_overview_sent( (int) $event_id );
             },
             false
+        );
+    }
+
+    /**
+     * Maximum rows shown per top list in the live statistics panel (ties included).
+     */
+    const LIVE_STATS_LIMIT = 5;
+
+    /**
+     * Hard cap on rows per list when many entries tie for the last place.
+     */
+    const LIVE_STATS_HARD_CAP = 10;
+
+    /**
+     * Length of the "hot right now" window in minutes.
+     */
+    const LIVE_STATS_HOT_MINUTES = 15;
+
+    /**
+     * Get live statistics for the admin presentation page.
+     *
+     * Business rules: end_date is final (only agreements with created_at <= end_date
+     * count); start_date is only a lower bound for the "first agreement" stat;
+     * agreements count regardless of status and for both participants.
+     *
+     * @param int $event_id Event ID.
+     * @return array|null null on invalid input, unknown event or error.
+     */
+    public function get_live_event_stats( $event_id ) {
+        if ( ! $this->is_valid_id( $event_id ) ) {
+            return null;
+        }
+
+        return $this->run_guarded(
+            function () use ( $event_id ) {
+                $event_id = (int) $event_id;
+                $event    = $this->repository->get_by_id( $event_id );
+
+                if ( ! $event ) {
+                    return null;
+                }
+
+                return $this->compute_live_event_stats(
+                    $this->repository->get_counted_agreements_for_stats( $event_id ),
+                    $this->repository->get_participant_names_for_stats( $event_id ),
+                    (string) $event->start_date,
+                    (string) $event->end_date,
+                    current_time( 'mysql' )
+                );
+            },
+            null
+        );
+    }
+
+    /**
+     * Compute the live statistics from already fetched rows (no database access).
+     *
+     * All datetimes are WP-local wall-clock 'Y-m-d H:i:s' strings. They are only
+     * compared/subtracted as wall-clock values, so no timezone conversion is needed.
+     *
+     * @param array  $agreements Rows (id, participant1_id, participant2_id, initiator_id, created_at) with created_at <= end_date, ordered by created_at.
+     * @param array  $participants Rows (id, organization_name, is_approved).
+     * @param string $start_date Event start (local).
+     * @param string $end_date   Event end (local).
+     * @param string $now        Current local time.
+     * @return array
+     */
+    public function compute_live_event_stats( array $agreements, array $participants, $start_date, $end_date, $now ) {
+        $names    = array();
+        $approved = array();
+        foreach ( $participants as $participant ) {
+            $pid           = (int) $participant->id;
+            $names[ $pid ] = (string) $participant->organization_name;
+            if ( ! empty( $participant->is_approved ) ) {
+                $approved[ $pid ] = true;
+            }
+        }
+
+        $to_ts = static function ( $value ) {
+            return strtotime( $value . ' UTC' );
+        };
+
+        $window_end = $now < $end_date ? $now : $end_date;
+        $window_ts  = $to_ts( $window_end );
+        $hot_from   = gmdate( 'Y-m-d H:i:s', $window_ts - self::LIVE_STATS_HOT_MINUTES * 60 );
+        $after_end  = $now >= $end_date;
+
+        $total       = 0;
+        $counts      = array();
+        $initiatives = array();
+        $hot         = array();
+        $partners    = array();
+        $times       = array();
+        $per_minute  = array();
+        $first_time  = null;
+        $first_rows  = array();
+        $last_time   = null;
+        $last_rows   = array();
+
+        foreach ( $agreements as $row ) {
+            $p1      = (int) $row->participant1_id;
+            $p2      = (int) $row->participant2_id;
+            $created = (string) $row->created_at;
+            ++$total;
+
+            $is_hot = $created >= $hot_from && $created <= $window_end;
+            foreach ( array_unique( array( $p1, $p2 ) ) as $pid ) {
+                $counts[ $pid ] = ( isset( $counts[ $pid ] ) ? $counts[ $pid ] : 0 ) + 1;
+                if ( $is_hot ) {
+                    $hot[ $pid ] = ( isset( $hot[ $pid ] ) ? $hot[ $pid ] : 0 ) + 1;
+                }
+                $times[ $pid ][] = $to_ts( $created );
+            }
+
+            if ( $p1 !== $p2 ) {
+                $partners[ $p1 ][ $p2 ] = true;
+                $partners[ $p2 ][ $p1 ] = true;
+            }
+
+            $initiator = (int) $row->initiator_id;
+            if ( $initiator > 0 && ( $initiator === $p1 || $initiator === $p2 ) ) {
+                $initiatives[ $initiator ] = ( isset( $initiatives[ $initiator ] ) ? $initiatives[ $initiator ] : 0 ) + 1;
+            }
+
+            $minute                = substr( $created, 11, 5 );
+            $per_minute[ $minute ] = ( isset( $per_minute[ $minute ] ) ? $per_minute[ $minute ] : 0 ) + 1;
+
+            // Rows are ordered by created_at ASC: first qualifying row(s) and last row(s).
+            if ( $created >= $start_date ) {
+                if ( null === $first_time ) {
+                    $first_time = $created;
+                }
+                if ( $created === $first_time ) {
+                    $first_rows[] = $row;
+                }
+            }
+            if ( $created !== $last_time ) {
+                $last_time = $created;
+                $last_rows = array();
+            }
+            $last_rows[] = $row;
+        }
+
+        // Approved participants with at least one counted agreement.
+        $active = 0;
+        foreach ( $approved as $pid => $unused ) {
+            if ( isset( $counts[ $pid ] ) ) {
+                ++$active;
+            }
+        }
+
+        // Shortest gap between two consecutive agreements per participant.
+        // Same-second agreements (gap 0) are ignored, like the competition logic.
+        $gaps = array();
+        foreach ( $times as $pid => $list ) {
+            sort( $list );
+            $min = null;
+            for ( $i = 1, $n = count( $list ); $i < $n; $i++ ) {
+                $gap = $list[ $i ] - $list[ $i - 1 ];
+                if ( $gap > 0 && ( null === $min || $gap < $min ) ) {
+                    $min = $gap;
+                }
+            }
+            if ( null !== $min ) {
+                $gaps[ $pid ] = $min;
+            }
+        }
+
+        $distinct = array();
+        foreach ( $partners as $pid => $set ) {
+            $distinct[ $pid ] = count( $set );
+        }
+
+        $only_approved = static function ( array $values ) use ( $approved ) {
+            return array_intersect_key( $values, $approved );
+        };
+
+        $name_of = static function ( $pid ) use ( $names ) {
+            return isset( $names[ $pid ] ) ? $names[ $pid ] : '';
+        };
+
+        $describe = static function ( array $rows ) use ( $name_of ) {
+            $items = array();
+            foreach ( array_slice( $rows, 0, EventService::LIVE_STATS_LIMIT ) as $row ) {
+                $items[] = array(
+                    'org1' => $name_of( (int) $row->participant1_id ),
+                    'org2' => $name_of( (int) $row->participant2_id ),
+                    'time' => substr( (string) $row->created_at, 11, 8 ),
+                );
+            }
+            return array(
+                'items' => $items,
+                'more'  => max( 0, count( $rows ) - count( $items ) ),
+            );
+        };
+
+        // Busiest minute(s).
+        $max_minute = $per_minute ? max( $per_minute ) : 0;
+        $busiest    = array();
+        foreach ( $per_minute as $minute => $cnt ) {
+            if ( $cnt === $max_minute ) {
+                $busiest[] = (string) $minute;
+            }
+        }
+        sort( $busiest );
+
+        return array(
+            'generated_at'    => substr( $now, 11, 8 ),
+            'summary'         => array(
+                'total'                        => $total,
+                'participants_with_agreements' => $active,
+                'participants_total'           => count( $approved ),
+            ),
+            'first'           => $describe( $first_rows ),
+            'last'            => $describe( $last_rows ),
+            'most_agreements' => $this->rank_live_stats( $only_approved( $counts ), $names, true ),
+            'shortest_gap'    => $this->rank_live_stats( $only_approved( $gaps ), $names, false ),
+            'hot'             => array_merge(
+                $this->rank_live_stats( $only_approved( $hot ), $names, true ),
+                array(
+                    'minutes'   => self::LIVE_STATS_HOT_MINUTES,
+                    'after_end' => $after_end,
+                    'from'      => substr( $hot_from, 11, 5 ),
+                    'to'        => substr( $window_end, 11, 5 ),
+                )
+            ),
+            'initiatives'     => $this->rank_live_stats( $only_approved( $initiatives ), $names, true ),
+            'partners'        => $this->rank_live_stats( $only_approved( $distinct ), $names, true ),
+            'busiest_minute'  => array(
+                'count' => $max_minute,
+                'items' => array_slice( $busiest, 0, self::LIVE_STATS_LIMIT ),
+                'more'  => max( 0, count( $busiest ) - self::LIVE_STATS_LIMIT ),
+            ),
+        );
+    }
+
+    /**
+     * Rank participants into a Top N list that keeps ties together.
+     *
+     * Takes the first LIVE_STATS_LIMIT entries, then keeps adding entries that tie
+     * with the last place (up to LIVE_STATS_HARD_CAP rows). Remaining tied entries
+     * are reported as "more". Every row whose value equals another row's value
+     * (including entries cut off by the cap) is flagged as tied.
+     *
+     * @param array $values     participant_id => numeric value (zero values are skipped).
+     * @param array $names      participant_id => name.
+     * @param bool  $descending True when the highest value ranks first.
+     * @return array {items: [{name, value, tie}], more: int}
+     */
+    private function rank_live_stats( array $values, array $names, $descending ) {
+        $entries = array();
+        foreach ( $values as $pid => $value ) {
+            if ( $value > 0 ) {
+                $entries[] = array(
+                    'name'  => isset( $names[ $pid ] ) ? (string) $names[ $pid ] : '',
+                    'value' => (int) $value,
+                );
+            }
+        }
+
+        usort(
+            $entries,
+            static function ( $a, $b ) use ( $descending ) {
+                if ( $a['value'] !== $b['value'] ) {
+                    return $descending ? $b['value'] - $a['value'] : $a['value'] - $b['value'];
+                }
+                return strcasecmp( $a['name'], $b['name'] );
+            }
+        );
+
+        $total = count( $entries );
+        $shown = min( self::LIVE_STATS_LIMIT, $total );
+        if ( $shown > 0 ) {
+            $last_value = $entries[ $shown - 1 ]['value'];
+            while ( $shown < $total && $shown < self::LIVE_STATS_HARD_CAP && $entries[ $shown ]['value'] === $last_value ) {
+                ++$shown;
+            }
+        }
+
+        $items = array_slice( $entries, 0, $shown );
+        $more  = 0;
+        if ( $shown > 0 ) {
+            $last_value = $items[ $shown - 1 ]['value'];
+            for ( $i = $shown; $i < $total && $entries[ $i ]['value'] === $last_value; $i++ ) {
+                ++$more;
+            }
+        }
+
+        $frequency = array();
+        foreach ( $items as $item ) {
+            $frequency[ $item['value'] ] = ( isset( $frequency[ $item['value'] ] ) ? $frequency[ $item['value'] ] : 0 ) + 1;
+        }
+        foreach ( $items as $index => $item ) {
+            $tie = $frequency[ $item['value'] ] > 1
+                || ( $more > 0 && $item['value'] === $items[ $shown - 1 ]['value'] );
+            $items[ $index ]['tie'] = $tie;
+        }
+
+        return array(
+            'items' => $items,
+            'more'  => $more,
         );
     }
 }

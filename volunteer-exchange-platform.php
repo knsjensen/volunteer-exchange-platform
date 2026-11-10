@@ -72,6 +72,7 @@ require_once VEP_PLUGIN_DIR . 'src/Ajax/ParticipantHandler.php';
 require_once VEP_PLUGIN_DIR . 'src/Ajax/AgreementHandler.php';
 require_once VEP_PLUGIN_DIR . 'src/Ajax/CompetitionHandler.php';
 require_once VEP_PLUGIN_DIR . 'src/Ajax/EventDisplayHandler.php';
+require_once VEP_PLUGIN_DIR . 'src/Ajax/EventStatsHandler.php';
 require_once VEP_PLUGIN_DIR . 'src/Ajax/EventParticipantsTableHandler.php';
 require_once VEP_PLUGIN_DIR . 'src/Ajax/EventAgreementsTableHandler.php';
 require_once VEP_PLUGIN_DIR . 'src/Ajax/ParticipantAgreementsTableHandler.php';

@@ -991,6 +991,8 @@
         initCompetitionsPage();
         initCopyActiveEmails();
         initAdminChoices();
+        initDisplaySettingsToggle();
+        initEventLiveStats();
         initDisplayNavBox();
         initPrintModal();
         initPerPageControls();
@@ -3343,18 +3345,215 @@
         const caret  = document.getElementById('vep-display-settings-caret');
         if (!toggle || !body) return;
 
+        const storageKey = 'vepDisplaySettingsOpen';
+
+        function apply(open) {
+            body.style.display = open ? '' : 'none';
+            if (caret) caret.style.transform = open ? '' : 'rotate(-90deg)';
+            toggle.setAttribute('aria-expanded', String(open));
+        }
+
+        // Collapsed by default; remember the choice per browser.
+        let startOpen = false;
+        try {
+            startOpen = window.localStorage.getItem(storageKey) === '1';
+        } catch (e) { /* storage unavailable */ }
+        apply(startOpen);
+
         toggle.addEventListener('click', function() {
-            const collapsed = body.style.display === 'none';
-            body.style.display = collapsed ? '' : 'none';
-            if (caret) caret.style.transform = collapsed ? '' : 'rotate(-90deg)';
-            toggle.setAttribute('aria-expanded', String(collapsed));
+            const open = body.style.display === 'none';
+            apply(open);
+            try {
+                window.localStorage.setItem(storageKey, open ? '1' : '0');
+            } catch (e) { /* storage unavailable */ }
         });
+    }
+
+    /**
+     * Live event statistics panel (organizer/judges only).
+     * Loads once, then polls every 30 s while the tab is visible.
+     */
+    function initEventLiveStats() {
+        const panel = document.getElementById('vep-event-stats');
+        if (!panel || typeof vepAdmin === 'undefined') return;
+
+        const eventId = panel.dataset.eventId;
+        const t = (window.vepDisplayI18n && window.vepDisplayI18n.stats) || {};
+        const dI18n = window.vepDisplayI18n || {};
+        const summaryEl = document.getElementById('vep-stats-summary');
+        const gridEl = document.getElementById('vep-stats-grid');
+        const updatedEl = document.getElementById('vep-stats-updated');
+        const errorEl = document.getElementById('vep-stats-error');
+        const refreshBtn = document.getElementById('vep-stats-refresh');
+        const POLL_MS = 30000;
+        let timer = null;
+        let inFlight = false;
+        let hasData = false;
+
+        function fmt(template, args) {
+            let i = 0;
+            return String(template || '').replace(/%(?:(\d+)\$)?d/g, function(match, pos) {
+                const idx = pos ? parseInt(pos, 10) - 1 : i++;
+                return String(args[idx]);
+            });
+        }
+
+        function plural(one, many, n) {
+            return fmt(n === 1 ? one : many, [n]);
+        }
+
+        function formatGap(seconds) {
+            const s = parseInt(seconds, 10) || 0;
+            const m = Math.floor(s / 60);
+            const rest = s % 60;
+            if (m <= 0) return fmt(dI18n.secondsShort || '%d sec.', [s]);
+            if (rest === 0) return fmt(dI18n.minutesShort || '%d min.', [m]);
+            return fmt(dI18n.minutesShort || '%d min.', [m]) + ' ' + fmt(dI18n.secondsShort || '%d sec.', [rest]);
+        }
+
+        function card(title, subtitle, bodyHtml) {
+            return '<div class="card vep-stat-card"><h3>' + escapeHtml(title) + '</h3>' +
+                (subtitle ? '<p class="vep-stat-subtitle">' + escapeHtml(subtitle) + '</p>' : '') +
+                bodyHtml + '</div>';
+        }
+
+        function empty() {
+            return '<p class="vep-stat-empty">' + escapeHtml(t.noAgreementsYet || 'No agreements yet') + '</p>';
+        }
+
+        function moreNote(more) {
+            return more > 0 ? '<p class="vep-stat-more">' + escapeHtml(fmt(t.moreSameValue || '+%d more with the same value', [more])) + '</p>' : '';
+        }
+
+        function rankList(block, formatValue) {
+            if (!block || !block.items || !block.items.length) return empty();
+            let html = '<ol class="vep-stat-list">';
+            block.items.forEach(function(item) {
+                html += '<li><span class="vep-stat-name">' + escapeHtml(item.name) + '</span>' +
+                    '<span class="vep-live-stat-value">' + escapeHtml(formatValue(item.value)) + '</span>' +
+                    (item.tie ? '<span class="vep-stat-tie">' + escapeHtml(t.tie || 'tied') + '</span>' : '') + '</li>';
+            });
+            html += '</ol>' + moreNote(block.more);
+            return html;
+        }
+
+        function pairList(block) {
+            if (!block || !block.items || !block.items.length) return empty();
+            let html = '<ul class="vep-stat-pairs">';
+            block.items.forEach(function(item) {
+                html += '<li><span class="vep-stat-name">' + escapeHtml(item.org1) + ' &amp; ' + escapeHtml(item.org2) + '</span>' +
+                    '<span class="vep-live-stat-value">' + escapeHtml(item.time) + '</span></li>';
+            });
+            html += '</ul>' + moreNote(block.more);
+            return html;
+        }
+
+        function render(d) {
+            const s = d.summary || {};
+            summaryEl.innerHTML =
+                '<div class="vep-stat-big"><span class="vep-stat-big-number">' + escapeHtml(s.total) + '</span>' +
+                '<span class="vep-stat-big-label">' + escapeHtml(t.totalAgreements || 'Total agreements') + '</span></div>' +
+                '<div class="vep-stat-big-text">' + escapeHtml(fmt(t.participantsWithAgreements || '%1$d of %2$d participants have made agreements',
+                    [s.participants_with_agreements || 0, s.participants_total || 0])) + '</div>';
+
+            const hot = d.hot || {};
+            const hotSubtitle = fmt(hot.after_end ? (t.lastMinutesBeforeEnd || 'last %d min. before end') : (t.lastMinutes || 'last %d min.'), [hot.minutes || 15]) +
+                (hot.from && hot.to ? ' (' + hot.from + '–' + hot.to + ')' : '');
+            const agreementsFmt = function(v) { return plural(t.agreementOne || '%d agreement', t.agreementMany || '%d agreements', v); };
+
+            const bm = d.busiest_minute || {};
+            let busiestHtml;
+            if (!bm.items || !bm.items.length) {
+                busiestHtml = empty();
+            } else {
+                busiestHtml = '<p class="vep-stat-minute-count">' + escapeHtml(agreementsFmt(bm.count)) + '</p><ul class="vep-stat-pairs">';
+                bm.items.forEach(function(minute) {
+                    busiestHtml += '<li><span class="vep-stat-name">' + escapeHtml(minute) + '</span>' +
+                        (bm.items.length > 1 ? '<span class="vep-stat-tie">' + escapeHtml(t.tie || 'tied') + '</span>' : '') + '</li>';
+                });
+                busiestHtml += '</ul>' + moreNote(bm.more);
+            }
+
+            gridEl.innerHTML =
+                card(t.firstAgreement || 'First agreement', '', pairList(d.first)) +
+                card(t.lastAgreement || 'Last agreement before end', '', pairList(d.last)) +
+                card(t.mostAgreements || 'Most agreements', '', rankList(d.most_agreements, agreementsFmt)) +
+                card(t.shortestGap || 'Shortest time between two agreements', '', rankList(d.shortest_gap, formatGap)) +
+                card(t.hotNow || 'Hot right now', hotSubtitle, rankList(hot, agreementsFmt)) +
+                card(t.mostInitiatives || 'Most initiatives', '', rankList(d.initiatives, agreementsFmt)) +
+                card(t.mostPartners || 'Most different partners', '', rankList(d.partners, function(v) {
+                    return plural(t.partnerOne || '%d partner', t.partnerMany || '%d partners', v);
+                })) +
+                card(t.busiestMinute || 'Busiest minute', '', busiestHtml);
+
+            updatedEl.textContent = (t.updated || 'Updated') + ' ' + (d.generated_at || '');
+        }
+
+        function load() {
+            if (inFlight) return;
+            inFlight = true;
+            if (refreshBtn) refreshBtn.disabled = true;
+            vepAjax('vep_event_live_stats', { event_id: eventId })
+                .then(function(response) {
+                    if (!response || !response.success || !response.data) throw new Error('bad response');
+                    render(response.data);
+                    hasData = true;
+                    errorEl.style.display = 'none';
+                })
+                .catch(function() {
+                    // Keep the last data on screen; only show a subtle notice.
+                    errorEl.textContent = t.refreshFailed || 'Could not refresh statistics. Showing the last loaded data.';
+                    errorEl.style.display = '';
+                })
+                .then(function() {
+                    inFlight = false;
+                    if (refreshBtn) refreshBtn.disabled = false;
+                });
+        }
+
+        function startTimer() {
+            stopTimer();
+            timer = window.setInterval(load, POLL_MS);
+        }
+
+        function stopTimer() {
+            if (timer) {
+                window.clearInterval(timer);
+                timer = null;
+            }
+        }
+
+        if (!hasData) summaryEl.textContent = t.loading || 'Loading statistics…';
+
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', function() {
+                load();
+                if (!document.hidden) startTimer();
+            });
+        }
+
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                stopTimer();
+            } else {
+                load();
+                startTimer();
+            }
+        });
+
+        if (!document.hidden) {
+            load();
+            startTimer();
+        }
     }
 
     /** Collapse or expand the settings card (called by nav box polling). */
     function setSettingsCollapsed(collapsed) {
         const card = document.getElementById('vep-display-settings-card');
-        if (card) card.style.display = collapsed ? 'none' : '';
+        if (card) {
+            card.style.display = collapsed ? 'none' : '';
+            card.classList.toggle('vep-card-hidden', !!collapsed);
+        }
     }
 
     /**

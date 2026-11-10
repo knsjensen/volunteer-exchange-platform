@@ -22,6 +22,7 @@ use VolunteerExchangePlatform\Ajax\EventAgreementsTableHandler;
 use VolunteerExchangePlatform\Ajax\FrontendAgreementsHandler;
 use VolunteerExchangePlatform\Ajax\ParticipantAgreementsTableHandler;
 use VolunteerExchangePlatform\Ajax\EventDisplayHandler;
+use VolunteerExchangePlatform\Ajax\EventStatsHandler;
 use VolunteerExchangePlatform\Ajax\EventParticipantsTableHandler;
 use VolunteerExchangePlatform\Ajax\ParticipantHandler;
 use VolunteerExchangePlatform\Ajax\AgreementOverviewHandler;
@@ -182,6 +183,7 @@ class Plugin {
         new ParticipantHandler( $services['participant'] );
         new AgreementHandler( $services['event'], $services['competition'] );
         new EventDisplayHandler( $services['event'], $services['competition'] );
+        new EventStatsHandler( $services['event'] );
         new CompetitionHandler( $services['competition'], $services['event'] );
         new EventParticipantsTableHandler();
         new EventAgreementsTableHandler();
